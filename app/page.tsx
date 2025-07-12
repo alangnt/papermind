@@ -57,6 +57,8 @@ export default function App() {
             className={'text-sm w-full focus:outline-none focus:ring-O focus:border-transparent'}
           />
           
+          <button type="submit" className="hidden"></button>
+          
           <p className={'text-xs text-center'}>Enter any scientific question and get a sample of research papers to work on.</p>
         </form>
         
