@@ -41,13 +41,21 @@ export default function App() {
   return (
     <div className={'flex flex-col justify-center items-center gap-y-2 grow p-4 lg:p-0 w-full max-w-screen-md place-self-center'}>
       <StarfieldBackground></StarfieldBackground>
-      <form className={'flex gap-x-2 w-full'} onSubmit={(event) => getDocument(event)}>
+      
+      <form
+        className={'flex flex-col gap-6 w-full bg-foreground text-gray-300 p-4 border border-gray-400 rounded-xl'}
+        onSubmit={(event) => getDocument(event)}
+      >
         <input
           type="text"
           value={query}
+          autoFocus={true}
+          placeholder={'I\'m looking for...'}
           onChange={(e) => setQuery(e.target.value)}
-          className={'border rounded-md py-1 px-2 text-sm w-full'}
+          className={'text-sm w-full focus:outline-none focus:ring-O focus:border-transparent'}
         />
+        
+        <p className={'text-xs text-center'}>Enter any scientific question and get a sample of research papers to work on.</p>
       </form>
       
       {documents.length > 0 && (
