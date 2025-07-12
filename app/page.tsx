@@ -35,11 +35,15 @@ export default function App() {
   };
   
   return (
-    <div className={'flex flex-col justify-center items-center gap-y-2 grow py-4 px-4 lg:px-0 w-full max-w-screen-md place-self-center'}>
+    <div className={'flex flex-col justify-center items-center gap-y-2 grow py-4 px-4 lg:px-0 w-full max-w-screen-md place-self-center text-gray-300'}>
       <StarfieldBackground></StarfieldBackground>
       
+      <header className={'absolute top-2 left-2'}>
+        <h1 className={'text-lg'}>Papermind</h1>
+      </header>
+      
       <form
-        className={'flex flex-col gap-6 w-full bg-foreground text-gray-300 p-4 border border-gray-400 rounded-xl'}
+        className={'flex flex-col gap-6 w-full bg-foreground p-4 border border-gray-400 rounded-xl'}
         onSubmit={(event) => getDocument(event)}
       >
         <input
