@@ -45,7 +45,7 @@ export default function App() {
       <StarfieldBackground></StarfieldBackground>
       
       <header className={'mb-6 px-4 lg:px-0 py-4'}>
-        <h1 className={'text-center text-xl border rounded-md p-2 bg-foreground'}>Papermind</h1>
+        <h1 className={'text-center text-xl border border-gray-400 rounded-md p-2 bg-foreground'}>Papermind</h1>
       </header>
       
       <main className={'flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0'}>
