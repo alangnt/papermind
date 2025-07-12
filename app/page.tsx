@@ -5,14 +5,17 @@ import { Document } from '@/types/documents';
 import DocumentCard from '@/components/cards/DocumentCard';
 import StarfieldBackground from '@/components/Starfield';
 import Footer from '@/components/Footer';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, LoaderCircle } from 'lucide-react';
 
 export default function App() {
   const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
   const getDocument = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    setIsLoading(true);
     
     if (!query.length) return;
     
@@ -34,6 +37,7 @@ export default function App() {
     if (results.error) return setDocuments([]);
     
     setDocuments(results);
+    setIsLoading(false);
   };
   
   return (
@@ -67,7 +71,7 @@ export default function App() {
               type="submit"
               className="bg-gray-300 text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
             >
-              <ArrowUp className={'w-4 h-4'} />
+              {isLoading ? <LoaderCircle className={'w-4 h-4 animate-spin'} /> : <ArrowUp className={'w-4 h-4'} /> }
             </button>
           </div>
         </form>
