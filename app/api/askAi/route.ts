@@ -14,12 +14,13 @@ export async function POST(request: NextRequest) {
 		const { text } = await generateText({
 			model: groq('llama-3.3-70b-versatile'),
 			prompt: `You are a science research archivist. Based on the following query,
-			analyze and return a keyword to summarize the request that could be used as an index to find papers, do not explain anything, only return the keyword:
+			analyze and return a keyword to summarize the request that could be used as an index to find papers,
+			do not explain anything, only return the keyword, without any accent, it's very important:
 			${data.query}`,
 		});
 		
 		const thinkBlockRegex = /<think>[\s\S]*?<\/think>/;
-		const finalMessage = text.replace(thinkBlockRegex, '').trim();
+		const finalMessage = text.replace(thinkBlockRegex, '').trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 		
 		return NextResponse.json({ content: finalMessage as string, status: 200 });
 	} catch (error) {

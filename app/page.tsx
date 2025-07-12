@@ -1,7 +1,9 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react';
-import { Document } from "@/types/documents";
+import { Document } from '@/types/documents';
+import DocumentCard from '@/components/cards/DocumentCard';
+import StarfieldBackground from '@/components/Starfield';
 
 export default function App() {
   const [query, setQuery] = useState<string>('');
@@ -37,25 +39,21 @@ export default function App() {
   }, [documents]);
   
   return (
-    <div className={'flex flex-col justify-center items-center gap-y-2 grow'}>
-      <form className={'space-x-2'} onSubmit={(event) => getDocument(event)}>
+    <div className={'flex flex-col justify-center items-center gap-y-2 grow p-4 lg:p-0 w-full max-w-screen-md place-self-center'}>
+      <StarfieldBackground></StarfieldBackground>
+      <form className={'flex gap-x-2 w-full'} onSubmit={(event) => getDocument(event)}>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className={'border rounded-md p-2'}
+          className={'border rounded-md py-1 px-2 text-sm w-full'}
         />
-        <button type={'submit'} className={'border rounded-md p-2'}>Submit</button>
       </form>
       
       {documents.length > 0 && (
-        <div className={'flex flex-col gap-y-2 text-center'}>
+        <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-center'}>
           {documents.map((document, index) => (
-            <article key={index}>
-              <p>{document.title}</p>
-              <p>{document.summary}</p>
-              <a href={document.pdfLink} className={'underline'} target={'_blank'}>Link to the PDF</a>
-            </article>
+            <DocumentCard key={index} document={document}></DocumentCard>
           ))}
         </div>
       )}

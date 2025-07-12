@@ -14,6 +14,7 @@
   "dependencies": {
     "@ai-sdk/groq": "^1.2.9",
     "ai": "^4.3.17",
+    "lucide-react": "^0.525.0",
     "next": "15.3.5",
     "prettier": "^3.6.2",
     "react": "^19.0.0",
