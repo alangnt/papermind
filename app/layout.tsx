@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AstroLib",
-  description: "Your cosmic AI research assistant for all things space and physics.",
+  title: "PaperMind",
+  description: "Your own AI research assistant for all things sciences. Data sourced from arXiv.",
 };
 
 export default function RootLayout({

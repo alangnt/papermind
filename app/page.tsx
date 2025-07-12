@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Document } from '@/types/documents';
 import DocumentCard from '@/components/cards/DocumentCard';
 import StarfieldBackground from '@/components/Starfield';
