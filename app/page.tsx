@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { Document } from '@/types/documents';
 import DocumentCard from '@/components/cards/DocumentCard';
 import StarfieldBackground from '@/components/Starfield';
+import Footer from '@/components/Footer';
 
 export default function App() {
   const [query, setQuery] = useState<string>('');
@@ -35,36 +36,40 @@ export default function App() {
   };
   
   return (
-    <div className={'flex flex-col justify-center items-center gap-y-2 grow py-4 px-4 lg:px-0 w-full max-w-screen-md place-self-center text-gray-300'}>
+    <div className={'flex flex-col gap-y-2 grow py-4 px-4 lg:px-0 w-full max-w-screen-md place-self-center text-gray-300 min-h-screen'}>
       <StarfieldBackground></StarfieldBackground>
       
-      <header className={'absolute top-2 left-2'}>
-        <h1 className={'text-lg'}>Papermind</h1>
+      <header className={'mb-6'}>
+        <h1 className={'text-center text-xl border rounded-md p-2 bg-foreground'}>Papermind</h1>
       </header>
       
-      <form
-        className={'flex flex-col gap-6 w-full bg-foreground p-4 border border-gray-400 rounded-xl'}
-        onSubmit={(event) => getDocument(event)}
-      >
-        <input
-          type="text"
-          value={query}
-          autoFocus={true}
-          placeholder={'I\'m looking for...'}
-          onChange={(e) => setQuery(e.target.value)}
-          className={'text-sm w-full focus:outline-none focus:ring-O focus:border-transparent'}
-        />
+      <main className={'flex flex-col gap-2 justify-center items-center grow'}>
+        <form
+          className={'flex flex-col gap-6 w-full bg-foreground p-4 border border-gray-400 rounded-xl'}
+          onSubmit={(event) => getDocument(event)}
+        >
+          <input
+            type="text"
+            value={query}
+            autoFocus={true}
+            placeholder={'I\'m looking for...'}
+            onChange={(e) => setQuery(e.target.value)}
+            className={'text-sm w-full focus:outline-none focus:ring-O focus:border-transparent'}
+          />
+          
+          <p className={'text-xs text-center'}>Enter any scientific question and get a sample of research papers to work on.</p>
+        </form>
         
-        <p className={'text-xs text-center'}>Enter any scientific question and get a sample of research papers to work on.</p>
-      </form>
+        {documents.length > 0 && (
+          <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
+            {documents.map((document, index) => (
+              <DocumentCard key={index} document={document}></DocumentCard>
+            ))}
+          </div>
+        )}
+      </main>
       
-      {documents.length > 0 && (
-        <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-center'}>
-          {documents.map((document, index) => (
-            <DocumentCard key={index} document={document}></DocumentCard>
-          ))}
-        </div>
-      )}
+      <Footer></Footer>
     </div>
   )
 }

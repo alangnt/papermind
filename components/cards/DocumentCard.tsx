@@ -19,7 +19,7 @@ export default function DocumentCard({ document }: { document: Document }) {
 			</div>
 			
 			<div className='space-y-4 pt-2'>
-				<div className={'flex flex-wrap gap-2'}>
+				<div className={'flex flex-wrap justify-center gap-2'}>
 					{document.pdfLink && (
 						<Link
 							href={document.pdfLink}
@@ -44,7 +44,7 @@ export default function DocumentCard({ document }: { document: Document }) {
 				</div>
 				
 				<footer className="text-[10px] text-gray-500 pt-2 border-t border-gray-700 mt-2">
-					Data sourced from <a href="https://arxiv.org" className="underline">arXiv.org</a>. Original work belongs to the respective authors.
+					Data sourced from <Link href="https://arxiv.org" target={'_blank'} className="underline">arXiv.org</Link>. Original work belongs to the respective authors.
 				</footer>
 			</div>
 		</article>
