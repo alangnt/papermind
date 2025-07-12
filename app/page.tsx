@@ -23,14 +23,14 @@ export default function App() {
     });
     
     const aiResponse = await askAi.json();
-    console.log(aiResponse);
     
     if (aiResponse.status !== 200) return setDocuments([]);
     
     const response = await fetch(`/api/getDocuments?query=${encodeURIComponent(aiResponse.content)}`);
     const results = await response.json();
     
-    console.log(results);
+    if (results.error) return setDocuments([]);
+    
     setDocuments(results);
   };
   
@@ -39,7 +39,7 @@ export default function App() {
   }, [documents]);
   
   return (
-    <div className={'flex flex-col justify-center items-center gap-y-2 grow p-4 lg:p-0 w-full max-w-screen-md place-self-center'}>
+    <div className={'flex flex-col justify-center items-center gap-y-2 grow py-4 px-4 lg:px-0 w-full max-w-screen-md place-self-center'}>
       <StarfieldBackground></StarfieldBackground>
       
       <form

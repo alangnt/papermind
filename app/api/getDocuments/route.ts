@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 		});
 	}
 	
-	const url = `http://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&start=0&max_results=5`;
+	const url = `http://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&start=0&max_results=10`;
 	
 	try {
 		const data = await fetch(url);

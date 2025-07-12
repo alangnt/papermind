@@ -13,10 +13,19 @@ export async function POST(request: NextRequest) {
 		
 		const { text } = await generateText({
 			model: groq('llama-3.3-70b-versatile'),
-			prompt: `You are a science research archivist. Based on the following query,
-			analyze and return a keyword to summarize the request that could be used as an index to find papers,
-			do not explain anything, only return the keyword, without any accent, it's very important:
-			${data.query}`,
+			prompt: `You are a scientific research archivist AI.
+
+Given the user's query below, return a concise and precise keyword or short keyphrase (maximum 3 words) suitable for indexing academic papers.
+
+Instructions:
+- Return only the keyword or keyphrase.
+- Do not add any explanation, formatting, or punctuation.
+- Use only lowercase letters with no accents or special characters.
+- Make it as specific as possible without being too long.
+
+User query:
+${data.query}
+`,
 		});
 		
 		const thinkBlockRegex = /<think>[\s\S]*?<\/think>/;

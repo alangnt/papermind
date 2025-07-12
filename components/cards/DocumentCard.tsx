@@ -1,40 +1,52 @@
-import { Document } from "@/types/documents";
-import { MouseEvent, useState } from 'react';
+import { Document } from '@/types/documents';
+import Link from 'next/link';
 
 export default function DocumentCard({ document }: { document: Document }) {
-	const [seeMore, setSeeMore] = useState<boolean>(false);
-	
-	const preventLinkRedirect = (e: MouseEvent<HTMLButtonElement>) => {
-		e.stopPropagation();
-		e.preventDefault();
-	}
-	
-	const navigateToPDF = () => {
-		window.open(document.pdfLink, '_blank');
-	}
-	
-	const buttonsList = [
-		{ name: seeMore ? 'See less' : 'See more', action: (e: MouseEvent<HTMLButtonElement>) => { preventLinkRedirect(e); setSeeMore(!seeMore); } },
-		{ name: 'See PDF', action: (e: MouseEvent<HTMLButtonElement>) => { preventLinkRedirect(e); navigateToPDF(); } },
-		{ name: 'Summarize PDF', action: (e: MouseEvent<HTMLButtonElement>) => { preventLinkRedirect(e); } }
-	];
+	const publishedDate = new Date(document.published).toLocaleDateString();
 	
 	return (
-		<article className={'flex flex-col justify-between gap-4 border p-4 bg-gray-300 rounded-lg hover:-translate-x-0.5 hover:-translate-y-0.5 duration-150 transition-transform grid-cols-1 shadow-lg'}>
-			<div className={'space-y-2'}>
-				<p className={'font-semibold'}>{document.title}</p>
-				<p className={`text-sm ${seeMore ? '' : 'line-clamp-2 md:line-clamp-4'}`}>{document.summary}</p>
+		<article className={'flex flex-col justify-between bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-5 shadow-lg hover:-translate-y-1 hover:shadow-xl transition duration-200 text-white space-y-3'}>
+			<div className={'flex flex-col gap-4'}>
+				<header>
+					<h2 className='text-lg font-semibold'>{document.title}</h2>
+					<p className='text-xs text-gray-400 mt-1'>By {document.authors.join(", ")}</p>
+					<p className='text-xs text-gray-400 mt-1'>Published on {publishedDate}</p>
+				</header>
+				
+				<p className={'text-sm text-gray-200 line-clamp-2 md:line-clamp-4'}>
+					{document.summary}
+				</p>
 			</div>
 			
-			<div className={'flex flex-wrap items-center justify-center gap-2 mt-2'}>
-				{buttonsList.map((buttonItem, index) => (
-					<button
-						key={index}
-						onClick={buttonItem.action}
-						className={'p-2 rounded-xl bg-foreground text-background cursor-pointer hover:bg-gray-700 duration-150 transition-all text-sm'}
-					>{buttonItem.name}</button>
-				))}
+			<div className='space-y-4 pt-2'>
+				<div className={'flex flex-wrap gap-2'}>
+					{document.pdfLink && (
+						<Link
+							href={document.pdfLink}
+							target='_blank'
+							rel='noopener noreferrer'
+							className="px-3 py-1 text-sm rounded-full bg-gray-600 hover:bg-gray-500 transition"
+						>
+							View PDF
+						</Link>
+					)}
+					
+					{document.id && (
+						<Link
+							href={document.id}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="px-3 py-1 text-sm rounded-full bg-gray-600 hover:bg-gray-500 transition"
+						>
+							View on arXiv
+						</Link>
+					)}
+				</div>
+				
+				<footer className="text-[10px] text-gray-500 pt-2 border-t border-gray-700 mt-2">
+					Data sourced from <a href="https://arxiv.org" className="underline">arXiv.org</a>. Original work belongs to the respective authors.
+				</footer>
 			</div>
 		</article>
-	)
+	);
 }

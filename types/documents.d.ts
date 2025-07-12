@@ -15,7 +15,7 @@ export type XMLFile = {
 export type Document = {
 	title: string;
 	summary: string;
-	authors: string | string[];
+	authors: string[];
 	published: string;
 	updated: string;
 	pdfLink: string;
