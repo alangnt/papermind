@@ -1,17 +1,18 @@
 'use client'
 
-import { KeyboardEvent, FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Document } from '@/types/documents';
 import DocumentCard from '@/components/cards/DocumentCard';
 import StarfieldBackground from '@/components/Starfield';
 import Footer from '@/components/Footer';
+import { ArrowUp } from 'lucide-react';
 
 export default function App() {
   const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
   
-  const getDocument = async (event?: FormEvent<HTMLFormElement> | KeyboardEvent<HTMLInputElement>) => {
-    event?.preventDefault();
+  const getDocument = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     
     if (!query.length) return;
     
@@ -39,14 +40,14 @@ export default function App() {
     <div className={'flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen'}>
       <StarfieldBackground></StarfieldBackground>
       
-      <header className={'mb-6 px-4 lg:px-0'}>
+      <header className={'mb-6 px-4 lg:px-0 py-4'}>
         <h1 className={'text-center text-xl border rounded-md p-2 bg-foreground'}>Papermind</h1>
       </header>
       
       <main className={'flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0'}>
         <form
           className={'flex flex-col gap-6 w-full bg-foreground p-4 border border-gray-400 rounded-xl'}
-          onSubmit={(event) => getDocument(event)}
+          onSubmit={getDocument}
         >
           <input
             type="text"
@@ -54,18 +55,21 @@ export default function App() {
             autoFocus={true}
             placeholder={'I\'m looking for...'}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={async(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                await getDocument(e);
-              }
-            }}
-            className={'text-sm w-full focus:outline-none focus:ring-O focus:border-transparent'}
+            className="text-sm w-full focus:outline-none focus:ring-O focus:border-transparent"
           />
           
-          <button type="submit" className="hidden"></button>
-          
-          <p className={'text-xs text-center'}>Enter any scientific question and get a sample of research papers to work on.</p>
+          <div className={'flex justify-between items-center gap-4'}>
+            <p className="text-xs text-center">
+              Enter any scientific question and get a sample of research papers to work on.
+            </p>
+            
+            <button
+              type="submit"
+              className="bg-gray-300 text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
+            >
+              <ArrowUp className={'w-4 h-4'} />
+            </button>
+          </div>
         </form>
         
         {documents.length > 0 && (
