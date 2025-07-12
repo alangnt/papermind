@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useState } from 'react';
+import { KeyboardEvent, FormEvent, useState } from 'react';
 import { Document } from '@/types/documents';
 import DocumentCard from '@/components/cards/DocumentCard';
 import StarfieldBackground from '@/components/Starfield';
@@ -10,8 +10,8 @@ export default function App() {
   const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
   
-  const getDocument = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const getDocument = async (event?: FormEvent<HTMLFormElement> | KeyboardEvent<HTMLInputElement>) => {
+    event?.preventDefault();
     
     if (!query.length) return;
     
@@ -54,6 +54,12 @@ export default function App() {
             autoFocus={true}
             placeholder={'I\'m looking for...'}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={async(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                await getDocument(e);
+              }
+            }}
             className={'text-sm w-full focus:outline-none focus:ring-O focus:border-transparent'}
           />
           
