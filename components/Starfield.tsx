@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect } from 'react';
 
 export default function StarfieldBackground() {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -13,17 +13,12 @@ export default function StarfieldBackground() {
 		const ctx = canvas.getContext("2d")
 		if (!ctx) return
 		
-		const resizeCanvas = () => {
-			canvas.width = window.innerWidth * window.devicePixelRatio
-			canvas.height = window.innerHeight * window.devicePixelRatio
-			ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-		}
-		
-		resizeCanvas()
-		window.addEventListener("resize", resizeCanvas)
+		let width = window.innerWidth
+		let height = window.innerHeight
+		let dpr = window.devicePixelRatio || 1
 		
 		const starCount = 250
-		const stars: Array<{
+		let stars: Array<{
 			x: number
 			y: number
 			size: number
@@ -33,35 +28,60 @@ export default function StarfieldBackground() {
 			alphaChange: number
 		}> = []
 		
-		for (let i = 0; i < starCount; i++) {
-			const size = Math.random() * 1.2 + 0.3
-			const speedFactor = 0.05
-			stars.push({
-				x: Math.random() * window.innerWidth,
-				y: Math.random() * window.innerHeight,
-				size,
-				speedX: (Math.random() - 0.5) * speedFactor,
-				speedY: (Math.random() - 0.5) * speedFactor,
-				alpha: Math.random() * 0.5 + 0.3,
-				alphaChange: (Math.random() - 0.5) * 0.003,
-			})
+		const initStars = () => {
+			stars = []
+			for (let i = 0; i < starCount; i++) {
+				const size = Math.random() * 1.2 + 0.3
+				const speedFactor = 0.05
+				stars.push({
+					x: Math.random() * width,
+					y: Math.random() * height,
+					size,
+					speedX: (Math.random() - 0.5) * speedFactor,
+					speedY: (Math.random() - 0.5) * speedFactor,
+					alpha: Math.random() * 0.5 + 0.3,
+					alphaChange: (Math.random() - 0.5) * 0.003,
+				})
+			}
 		}
 		
+		const resizeCanvas = () => {
+			width = window.innerWidth
+			height = window.innerHeight
+			dpr = window.devicePixelRatio || 1
+			
+			canvas.width = width * dpr
+			canvas.height = height * dpr
+			canvas.style.width = `${width}px`
+			canvas.style.height = `${height}px`
+			
+			ctx.setTransform(1, 0, 0, 1, 0, 0) // reset transform
+			ctx.scale(dpr, dpr)
+			
+			// Reinitialize stars for new size
+			initStars()
+		}
+		
+		resizeCanvas()
+		window.addEventListener("resize", resizeCanvas)
+		
 		const animate = () => {
-			ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+			// Clear full logical canvas
+			ctx.clearRect(0, 0, width, height)
+			
+			// Black background
 			ctx.fillStyle = "black"
-			ctx.fillRect(0, 0, window.innerWidth, window.innerHeight)
+			ctx.fillRect(0, 0, width, height)
 			
 			stars.forEach((star) => {
-				// Update position
 				star.x += star.speedX
 				star.y += star.speedY
 				
-				// Wrap around screen
-				if (star.x < 0) star.x = window.innerWidth
-				if (star.x > window.innerWidth) star.x = 0
-				if (star.y < 0) star.y = window.innerHeight
-				if (star.y > window.innerHeight) star.y = 0
+				// Wrap around
+				if (star.x < 0) star.x = width
+				if (star.x > width) star.x = 0
+				if (star.y < 0) star.y = height
+				if (star.y > height) star.y = 0
 				
 				// Twinkle
 				star.alpha += star.alphaChange
