@@ -34,10 +34,6 @@ export default function App() {
     setDocuments(results);
   };
   
-  useEffect(() => {
-    console.log(documents);
-  }, [documents]);
-  
   return (
     <div className={'flex flex-col justify-center items-center gap-y-2 grow py-4 px-4 lg:px-0 w-full max-w-screen-md place-self-center'}>
       <StarfieldBackground></StarfieldBackground>
