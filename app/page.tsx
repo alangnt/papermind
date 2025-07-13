@@ -48,7 +48,6 @@ export default function App() {
       body: JSON.stringify({ query, page: targetPage }),
     });
     const results = await response.json();
-    console.log(results);
     
     if (results.detail) setDocuments([]);
     else setDocuments(results.documents);
