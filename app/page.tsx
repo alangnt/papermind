@@ -40,7 +40,7 @@ export default function App() {
     
     if (aiResponse.status !== 200) return setDocuments([]);
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_documents`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_documents/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
