@@ -31,12 +31,19 @@ export default function App() {
     
     if (aiResponse.status !== 200) return setDocuments([]);
     
-    const response = await fetch(`/api/getDocuments?query=${encodeURIComponent(aiResponse.content)}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_documents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query }),
+    });
     const results = await response.json();
+    console.log(results);
     
     if (results.error) return setDocuments([]);
     
-    setDocuments(results);
+    setDocuments(results.documents);
     setIsLoading(false);
   };
   
