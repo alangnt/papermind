@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 from api import get_documents
 
@@ -20,3 +21,6 @@ async def root():
 
 # include all routes
 app.include_router(get_documents.router)
+
+if __name__ == "__main__":
+	uvicorn.run("main:app", host="0.0.0.0", port=8080)
