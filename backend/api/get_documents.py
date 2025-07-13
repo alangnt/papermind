@@ -1,33 +1,19 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
-from typing import Optional, List
+from models.document import Document, Query
 
 router = APIRouter(prefix="/get_documents", tags=["get_documents"])
-
-class Document(BaseModel):
-    id: str
-    title: str
-    summary: str
-    authors: List[str]
-    published: str
-    updated: Optional[str] = None
-    pdfLink: Optional[str] = None
-    comment: Optional[str] = None
-    doi: Optional[str] = None
-    category: Optional[str] = None
-
-class Query(BaseModel):
-    query: str
 
 @router.post("/")
 async def ask_query(body: Query):
     try:
+        limit = 5 * body.page
+
         # Step 1: Get XML
         query = urllib.parse.quote_plus(body.query)
-        url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results=10"
+        url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={limit}"
         data = urllib.request.urlopen(url)
         xml_data = data.read().decode('utf-8')
 

@@ -10,12 +10,21 @@ import { ArrowUp, LoaderCircle } from 'lucide-react';
 export default function App() {
   const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [areDocumentsLoading, setAreDocumentsLoading] = useState<boolean>(false);
+  const [isNewPageLoading, setIsNewPageLoading] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
   
-  const getDocument = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     
-    setIsLoading(true);
+    const targetPage = nextPage ? page + 1 : 1;
+    
+    if (nextPage) {
+      setIsNewPageLoading(true);
+    } else {
+      setAreDocumentsLoading(true);
+      setPage(1);
+    }
     
     if (!query.length) return;
     
@@ -36,15 +45,17 @@ export default function App() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, page: targetPage }),
     });
     const results = await response.json();
     console.log(results);
     
-    if (results.error) return setDocuments([]);
+    if (results.detail) setDocuments([]);
+    else setDocuments(results.documents);
     
-    setDocuments(results.documents);
-    setIsLoading(false);
+    setPage(targetPage);
+    setIsNewPageLoading(false);
+    setAreDocumentsLoading(false);
   };
   
   return (
@@ -58,7 +69,7 @@ export default function App() {
       <main className={'flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0'}>
         <form
           className={'flex flex-col gap-6 w-full bg-foreground p-4 border border-gray-400 rounded-xl'}
-          onSubmit={getDocument}
+          onSubmit={(e: FormEvent<HTMLFormElement>) => getDocument(false, e)}
         >
           <input
             type="text"
@@ -78,7 +89,7 @@ export default function App() {
               type="submit"
               className="bg-gray-300 text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
             >
-              {isLoading ? <LoaderCircle className={'w-4 h-4 animate-spin'} /> : <ArrowUp className={'w-4 h-4'} /> }
+              {areDocumentsLoading ? <LoaderCircle className={'w-4 h-4 animate-spin'} /> : <ArrowUp className={'w-4 h-4'} /> }
             </button>
           </div>
         </form>
@@ -89,6 +100,15 @@ export default function App() {
               <DocumentCard key={index} document={document}></DocumentCard>
             ))}
           </div>
+        )}
+        
+        {documents.length > 0 && (
+          <button
+            className={'text-sm mt-6 border border-gray-700 text-gray-300 rounded-2xl py-2 px-4 bg-foreground hover:bg-gray-800 transition cursor-pointer'}
+            onClick={async() => { await getDocument(true); }}
+          >
+            {isNewPageLoading ? <LoaderCircle className={'w-4 h-4 animate-spin'} /> : 'Load more'}
+          </button>
         )}
       </main>
       
