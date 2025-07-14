@@ -1,14 +1,21 @@
 'use client'
 
 import { FormEvent, useState } from 'react';
-import { Document } from '@/types/documents';
+import { Document, SearchType } from '@/types/documents';
 import DocumentCard from '@/components/cards/DocumentCard';
 import StarfieldBackground from '@/components/Starfield';
 import Footer from '@/components/Footer';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
 
+type SearchTypeButton = {
+  name: string;
+  value: SearchType;
+}
+
 export default function App() {
+  const [searchType, setSearchType] = useState<SearchType>('ai');
   const [query, setQuery] = useState<string>('');
+  const [aiQuery, setAiQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [areDocumentsLoading, setAreDocumentsLoading] = useState<boolean>(false);
   const [isNewPageLoading, setIsNewPageLoading] = useState<boolean>(false);
@@ -36,26 +43,62 @@ export default function App() {
       body: JSON.stringify({ query }),
     });
     
-    const aiResponse = await askAi.json();
+    let aiResponse;
+    if (!nextPage) aiResponse = await askAi.json();
     
-    if (aiResponse.status !== 200) return setDocuments([]);
+    if (aiResponse.status !== 200) {
+      setAreDocumentsLoading(false);
+      setIsNewPageLoading(false);
+      return setDocuments([]);
+    } else {
+      setAiQuery(aiResponse);
+    }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_documents/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, page: targetPage }),
-    });
-    const results = await response.json();
+    let vectorSearch;
+    let manualSearch;
     
-    if (results.detail) setDocuments([]);
+    if (searchType === 'ai' && !nextPage) {
+      vectorSearch = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/vector_search/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: aiQuery.length > 0 ? aiQuery : query }),
+      });
+    } else {
+      manualSearch = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_documents/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: aiQuery.length > 0 ? aiQuery : query, page: targetPage }),
+      });
+    }
+    
+    const results = searchType === "manual" ? await manualSearch!.json() : await vectorSearch!.json();
+    
+    if (!results.documents) setDocuments([]);
     else setDocuments(results.documents);
     
     setPage(targetPage);
     setIsNewPageLoading(false);
     setAreDocumentsLoading(false);
+    
+    if (!nextPage) {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/embed_documents/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: aiQuery.length > 0 ? aiQuery : query }),
+      });
+    }
   };
+  
+  const searchTypeButtons: SearchTypeButton[] = [
+    { name: "Manual search", value: "manual" },
+    { name: "AI search", value: "ai" },
+  ]
   
   return (
     <div className={'flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen'}>
@@ -80,7 +123,7 @@ export default function App() {
           />
           
           <div className={'flex justify-between items-center gap-4'}>
-            <p className="text-xs text-center">
+            <p className="text-xs place-self-end">
               Enter any scientific question and get a sample of research papers to work on.
             </p>
             
@@ -93,6 +136,16 @@ export default function App() {
           </div>
         </form>
         
+        <div className={'flex gap-2 p-2 bg-foreground w-full rounded-2xl'}>
+          {searchTypeButtons.map((typeButton: SearchTypeButton, index) => (
+            <button
+              key={index}
+              onClick={() => setSearchType(typeButton.value)}
+              className={`rounded-xl p-2 w-full cursor-pointer transition ${searchType === typeButton.value ? 'bg-gray-600' : 'bg-gray-800 hover:bg-gray-700'}`}
+            >{typeButton.name}</button>
+          ))}
+        </div>
+        
         {documents.length > 0 && (
           <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
             {documents.map((document, index) => (
@@ -101,7 +154,7 @@ export default function App() {
           </div>
         )}
         
-        {documents.length > 0 && (
+        {documents.length > 0 && searchType === "manual" && (
           <button
             className={'text-sm mt-6 border border-gray-700 text-gray-300 rounded-2xl py-2 px-4 bg-foreground hover:bg-gray-800 transition cursor-pointer'}
             onClick={async() => { await getDocument(true); }}

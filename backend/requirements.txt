@@ -1,3 +1,6 @@
 fastapi
 pydantic
 uvicorn
+pymongo
+sentence_transformers
+python-dotenv

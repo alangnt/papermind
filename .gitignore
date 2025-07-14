@@ -42,3 +42,4 @@ next-env.d.ts
 
 # webstorm
 /.idea/
+/backend/.idea/
