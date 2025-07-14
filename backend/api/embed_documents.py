@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException
 import urllib.request, urllib.parse
 import xml.etree.ElementTree as ET
-
-from pygments.styles.dracula import comment
 from sentence_transformers import SentenceTransformer
 
 from models.document import Query
