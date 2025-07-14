@@ -40,15 +40,6 @@ export default function App() {
     
     if (aiResponse.status !== 200) return setDocuments([]);
     
-    const embedding = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/embedding`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query }),
-    });
-    console.log(await embedding.json());
-    
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_documents/`, {
       method: 'POST',
       headers: {
@@ -64,6 +55,16 @@ export default function App() {
     setPage(targetPage);
     setIsNewPageLoading(false);
     setAreDocumentsLoading(false);
+    
+    if (!nextPage) {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/embed_documents/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+    }
   };
   
   return (
