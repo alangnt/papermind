@@ -1,6 +1,6 @@
-fastapi~=0.116.1
-pydantic~=2.11.7
-uvicorn~=0.35.0
-pymongo~=4.13.2
-sentence_transformers~=5.0.0
-python-dotenv~=1.1.1
+fastapi
+pydantic
+uvicorn
+pymongo
+sentence_transformers
+python-dotenv

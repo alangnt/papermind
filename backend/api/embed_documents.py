@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 import urllib.request, urllib.parse
 import xml.etree.ElementTree as ET
+
+from pygments.styles.dracula import comment
 from sentence_transformers import SentenceTransformer
 
 from models.document import Query
@@ -34,14 +36,23 @@ async def embed_documents(body: Query):
 
     for entry in entries:
         id_ = entry.find("atom:id", ns).text.strip()
+        published = entry.find("atom:published", ns).text.strip()
+        updated = entry.find("atom:updated", ns)
+        updated = updated.text.strip() if updated is not None else None
 
         # Skip if already in DB
-        if collection.find_one({"url": id_}):
+        if collection.find_one({"id": id_}):
             continue
 
         title = entry.find("atom:title", ns).text.strip()
         summary = entry.find("atom:summary", ns).text.strip()
         published = entry.find("atom:published", ns).text.strip()
+
+        # DOI
+        doi_elem = entry.find("arxiv:doi", ns)
+        doi = doi_elem.text.strip() if doi_elem is not None else None
+
+        # Category
         primary_cat = entry.find("arxiv:primary_category", ns)
         category = primary_cat.attrib.get("term") if primary_cat is not None else None
 
@@ -65,12 +76,17 @@ Published: {published}"""
         embedding = model.encode(text_to_embed).tolist()
 
         docs_to_insert.append({
-            "url": id_,
-            "pdf_link": pdf_link,
+            "id": id_,
+            "pdfLink": pdf_link,
             "text": text_to_embed.strip(),
             "embedding": embedding,
             "category": category,
-            "published": published
+            "doi": doi,
+            "published": published,
+            "updated": updated,
+            "authors": authors,
+            "summary": summary,
+            "title": title,
         })
 
     if docs_to_insert:
