@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "back": "cd backend && fastapi dev main.py",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
