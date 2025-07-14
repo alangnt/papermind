@@ -8,8 +8,7 @@ router = APIRouter(prefix="/embedding", tags=["embedding"])
 @router.post("/")
 async def embed_query(body: Query):
     query = [body.query]
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
     embeddings = model.encode(query)[0]
-    print(embeddings)
 
     return {"embedded_message": embeddings.tolist()}
