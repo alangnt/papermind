@@ -26,3 +26,7 @@ async def root():
 app.include_router(get_documents.router)
 app.include_router(embed_documents.router)
 app.include_router(vector_search.router)
+
+if __name__ == "__main__":
+	import uvicorn
+	uvicorn.run(app, host="0.0.0.0", port=8000)
