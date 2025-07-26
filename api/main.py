@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import get_documents, embed_documents, vector_search
+from utils import get_documents, embed_documents, vector_search
 
 app = FastAPI()
 

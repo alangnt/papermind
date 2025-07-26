@@ -3,8 +3,8 @@ import urllib.request, urllib.parse
 import xml.etree.ElementTree as ET
 from sentence_transformers import SentenceTransformer
 
-from models.document import Query
-from services.mongodb import get_collection
+from document import Query
+from mongodb import get_collection
 
 router = APIRouter(prefix="/embed_documents", tags=["embed_documents"])
 

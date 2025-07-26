@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 import urllib.request, urllib.parse
 import xml.etree.ElementTree as ET
 
-from models.document import Document, Query
+from document import Document, Query
 
 router = APIRouter(prefix="/get_documents", tags=["get_documents"])
 

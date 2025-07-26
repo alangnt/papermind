@@ -1,9 +1,8 @@
 from fastapi import HTTPException, APIRouter
-from networkx.algorithms.bipartite.projection import projected_graph
 from sentence_transformers import SentenceTransformer
 
-from models.document import Query
-from services.mongodb import get_collection
+from document import Query
+from mongodb import get_collection
 
 router = APIRouter(prefix="/vector_search", tags=["vector_search"])
 
