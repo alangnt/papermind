@@ -13,7 +13,7 @@ type SearchTypeButton = {
 }
 
 export default function App() {
-  const [searchType, setSearchType] = useState<SearchType>('ai');
+  const [searchType, setSearchType] = useState<SearchType>('manual');
   const [query, setQuery] = useState<string>('');
   const [aiQuery, setAiQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -46,11 +46,11 @@ export default function App() {
     let aiResponse;
     if (!nextPage) aiResponse = await askAi.json();
     
-    if (aiResponse.status !== 200) {
+    if (aiResponse && aiResponse.status && aiResponse.status !== 200) {
       setAreDocumentsLoading(false);
       setIsNewPageLoading(false);
       return setDocuments([]);
-    } else {
+    } else if (aiResponse) {
       setAiQuery(aiResponse);
     }
     

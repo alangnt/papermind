@@ -31,7 +31,7 @@ ${data.query}
 		const thinkBlockRegex = /<think>[\s\S]*?<\/think>/;
 		const finalMessage = text.replace(thinkBlockRegex, '').trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 		
-		return NextResponse.json({ content: finalMessage as string, status: 200 });
+		return NextResponse.json({ content: finalMessage as string }, { status: 200 });
 	} catch (error) {
 		return NextResponse.json(JSON.stringify({ error: error }), { status: 500 });
 	}
