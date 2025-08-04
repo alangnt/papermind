@@ -40,3 +40,19 @@
 | **Infra**    | Vercel (Frontend) + Railway (Backend)    |
 | **AI SDK**   | Groq x Vercel SDK                        |
 
+## 📚 Resources
+- [arXiv](https://arxiv.org/)
+- [arXiv API](https://info.arxiv.org/help/api/index.html)
+- [MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-vector-search)
+- [Hugging Face Transformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
+
+## 👨‍💻 Author
+Alan Geirnaert
+- 🌐 [LinkedIn](https://www.linkedin.com/in/alan-geirnaert/)
+- 🚀 [Live App](https://papermind-sigma.vercel.app/)
+
+## 🏷 License
+MIT License. Use it, fork it, launch your own scientific tools.
+
+## ⭐️ Show Some Love
+If you like the project, star ⭐ it on GitHub, share it, or contribute!
