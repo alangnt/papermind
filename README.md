@@ -4,7 +4,7 @@
 
 ## 🔗 Live Demo
 
-👉 https://papermind-sigma.vercel.app/
+👉 https://www.papermind.ch/
 
 ---
 
