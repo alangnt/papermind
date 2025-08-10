@@ -105,7 +105,7 @@ export default function App() {
   
   return (
     <div className='relative w-full'>
-      <div className="absolute inset-0 w-full">
+      <div className="absolute inset-0 w-full pointer-events-none">
         <Waves
           lineColor={theme === "dark" ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.3)"}
           backgroundColor="transparent"
@@ -121,7 +121,7 @@ export default function App() {
         />
       </div>
 
-      <div className={'flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen'}>
+      <div className={'flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40'}>
         <header className={'mb-6 px-4 lg:px-0 py-4'}>
           <h1 className={'text-center text-xl border border-gray-400 rounded-md p-2 bg-foreground'}>Papermind</h1>
         </header>
