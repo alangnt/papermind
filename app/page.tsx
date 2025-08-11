@@ -4,15 +4,12 @@ import { FormEvent, useState } from 'react';
 import { Document, SearchType } from '@/types/documents';
 import { ArrowUp, LoaderCircle, ArrowLeftRight } from 'lucide-react';
 import { Waves } from '@/components/ui/WavesBackground';
-import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
 import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
 
 export default function App() {
-  const { theme } = useTheme();
-
   const [searchType, setSearchType] = useState<SearchType>('manual');
   const [query, setQuery] = useState('');
   const [documents, setDocuments] = useState<Document[]>([]);
