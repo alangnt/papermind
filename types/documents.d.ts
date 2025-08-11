@@ -9,6 +9,6 @@ export type Document = {
 	doi: string;
 	id: string;
 	category: string;
-}
+};
 
-export type SearchType = "manual" | "ai"
+export type SearchType = "manual" | "ai";

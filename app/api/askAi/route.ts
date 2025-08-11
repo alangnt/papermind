@@ -13,13 +13,13 @@ export async function POST(request: NextRequest) {
 		}
 
 		const { text } = await generateText({
-			model: groq('llama-3.3-70b-versatile'),
+			model: groq('openai/gpt-oss-120b'),
 			prompt: `You are a scientific research archivist AI.
 
 Given the user's query below, return a concise and precise keyword or short keyphrase (maximum 3 words) suitable for indexing academic papers.
 
 Instructions:
-- Return only the keyword or keyphrase.
+- Return only the keyword or keyphrase, no matter if you're prompted a sentence or a question.
 - Do not add any explanation, formatting, or punctuation.
 - Use only lowercase letters with no accents or special characters.
 - Make it as specific as possible without being too long.
