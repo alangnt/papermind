@@ -97,8 +97,15 @@ export default function App() {
         />
       </div>
       <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
-        <header className="mb-6 px-4 lg:px-0 py-4">
-          <h1 className="text-center text-xl border border-gray-400 rounded-md p-2 bg-foreground">Papermind</h1>
+        <header className="mb-6 px-4 lg:px-0 py-8 z-90">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-700">Papermind</span>
+            </h1>
+            <p className="text-sm text-gray-700">
+              Search and explore research papers with AI-assisted queries.
+            </p>
+          </div>
         </header>
         <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
           <div
