@@ -86,7 +86,7 @@ export default function App() {
     <div className="relative w-full">
       <div className="absolute inset-0 w-full pointer-events-none">
         <Waves
-          lineColor={theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}
+          lineColor={'rgba(0, 0, 0, 0.3)'}
           backgroundColor="transparent"
           waveSpeedX={0.02}
           waveSpeedY={0.01}
@@ -144,7 +144,7 @@ export default function App() {
               className="text-sm w-full focus:outline-none focus:ring-O focus:border-transparent"
             />
             <div className="flex justify-between items-center gap-4">
-              <div className='flex items-end gap-2 p-1 text-xs place-self-end'>
+              <div className='flex flex-col md:flex-row md:items-end gap-2 p-1 text-xs md:place-self-end'>
                 <button 
                   className='flex gap-1 items-center hover:underline transition cursor-pointer'
                   onClick={() => setSearchType(searchType === "manual" ? "ai" : "manual")}
@@ -152,7 +152,7 @@ export default function App() {
                   {searchType === 'manual' ? 'Non-AI' : 'AI'} <ArrowLeftRight className='w-3 h-3'></ArrowLeftRight>
                 </button>
 
-                <span className='text-xs text-gray-400'>|</span>
+                <span className='text-xs text-gray-400 max-md:hidden'>|</span>
 
                 <p className="place-self-end">
                 Enter any scientific question and get a sample of research papers to work on.
