@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
+import Link from 'next/link';
 
 export default function App() {
   const [searchType, setSearchType] = useState<SearchType>('manual');
@@ -176,6 +177,11 @@ export default function App() {
               </button>
             </div>
           </form>
+
+          {/* Link to the new matching game */}
+          <Link className='underline z-90 text-foreground' href='/match'>
+            <p>Do you want to try something fun ?</p>
+          </Link>
 
           {documents.length > 0 && (
             <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
