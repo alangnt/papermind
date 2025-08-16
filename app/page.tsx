@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo, useAnimationControls } from 'motion/react';
 import { ArrowUp, LoaderCircle, ArrowLeftRight } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 
@@ -25,6 +25,7 @@ export default function App() {
   // Swipe the card animation
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-5, 5]);
+  const controls = useAnimationControls();
   
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -90,21 +91,55 @@ export default function App() {
   ];
 
   const swipeDocument = async (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (cardIndex + 1 >= documents.length) await getDocument(true);
-    else {
-      if (info.offset.x > 100) {
-        // Handle Right Swipe Logic
+    const threshold = 100;
+    const duration = 0.25;
+
+    // Not enough swipe: snap back smoothly
+    if (info.offset.x <= threshold && info.offset.x >= -threshold) {
+      await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 500, damping: 30 } });
+      x.set(0);
+      return;
+    }
+
+    // Swipe Right
+    if (info.offset.x > threshold) {
+      // Animate card off-screen to the right
+      await controls.start({ x: typeof window !== 'undefined' ? window.innerWidth : 500, opacity: 0, transition: { duration, ease: 'easeInOut' } });
+
+      if (cardIndex + 1 >= documents.length) {
+        await getDocument(true);
+        // Prepare and animate new content in
+        controls.set({ x: 40, opacity: 0 });
+        x.set(0);
+        await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 28 } });
+      } else {
         setCardIndex((prev) => prev + 1);
-      } else if (info.offset.x < -100) {
-        // Handle Left Swipe Logic
-        if (cardIndex === 0) return;
-        setCardIndex((prev) => prev - 1);
+        controls.set({ x: 40, opacity: 0 });
+        x.set(0);
+        await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 28 } });
       }
+      return;
+    }
+
+    // Swipe Left
+    if (info.offset.x < -threshold) {
+      if (cardIndex === 0) {
+        // Can't go left from the first card: bounce back
+        await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 500, damping: 30 } });
+        return;
+      }
+  // Animate card off-screen to the left
+  await controls.start({ x: typeof window !== 'undefined' ? -window.innerWidth : -500, opacity: 0, transition: { duration, ease: 'easeInOut' } });
+      setCardIndex((prev) => prev - 1);
+  controls.set({ x: -40, opacity: 0 });
+  x.set(0);
+  await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 28 } });
+      return;
     }
   }
   
   return (
-    <div className="relative w-full">
+    <div className="relative w-full overflow-hidden">
       <div className="absolute inset-0 w-full pointer-events-none">
         <Waves
           lineColor={'rgba(0, 0, 0, 0.3)'}
@@ -132,33 +167,36 @@ export default function App() {
           </div>
         </header>
         <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
-          <div
-            data-testid="suggested-actions"
-            className="grid pb-2 sm:grid-cols-2 gap-2 w-full"
-          >
-            <AnimatePresence>
-              {demoQueries.map((query, index) => (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: 0.05 * index }}
-                  key={`suggested-action-${index}`}
-                  className={index > 1 ? 'hidden sm:block' : 'block'}
-                >
-                  <button
-                    onClick={() => setQuery(query.fullQuery)}
-                    className="flex flex-col bg-foreground p-4 rounded-xl w-full text-left hover:bg-black/90 cursor-pointer transition"
+          {documents.length === 0 && (
+            <div
+              data-testid="suggested-actions"
+              className="grid pb-2 sm:grid-cols-2 gap-2 w-full"
+            >
+              <AnimatePresence>
+                {demoQueries.map((query, index) => (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ delay: 0.05 * index }}
+                    key={`suggested-action-${index}`}
+                    className={index > 1 ? 'hidden sm:block' : 'block'}
                   >
-                    <span className="font-medium">{query.name}</span>
-                    <span className="text-gray-500">
-                      {query.subName}
-                    </span>
-                  </button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                    <button
+                      onClick={() => setQuery(query.fullQuery)}
+                      className="flex flex-col bg-foreground p-4 rounded-xl w-full text-left hover:bg-black/90 cursor-pointer transition"
+                    >
+                      <span className="font-medium">{query.name}</span>
+                      <span className="text-gray-500">
+                        {query.subName}
+                      </span>
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+
           <form
             className="flex flex-col gap-6 w-full bg-foreground p-4 border border-gray-400 rounded-xl"
             onSubmit={(e: FormEvent<HTMLFormElement>) => getDocument(false, e)}
@@ -228,16 +266,20 @@ export default function App() {
 
           {/* Swipe System */}
           {documents.length > 0 && system === "swipe" && (
-            <motion.div
-              style={{ x, rotate }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.95 }}
-              onDragEnd={async (event, info) => swipeDocument(event, info)}
-            >
-              <DocumentCard document={documents[cardIndex]}></DocumentCard>
-            </motion.div>
+            <div className='relative w-full min-h-[360px] sm:min-h-[420px] md:min-h-[460px]'>
+              <motion.div
+                style={{ rotate }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                whileHover={{ scale: 1.01 }}
+                onDrag={(e, info) => x.set(info.offset.x)}
+                onDragEnd={async (event, info) => swipeDocument(event, info)}
+                animate={controls}
+                className='absolute inset-0 flex items-center justify-center cursor-pointer'
+              >
+                <DocumentCard document={documents[cardIndex]}></DocumentCard>
+              </motion.div>
+            </div>
           )}
 
           {(system === "swipe" ? (documents.length > 0 && cardIndex === documents.length) : documents.length > 0) && (
