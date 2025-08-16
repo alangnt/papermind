@@ -296,7 +296,7 @@ export default function App() {
             >
               <p>
                 {system === 'classic'
-                  ? 'Do you want to try our new system ?'
+                  ? 'Do you want to try our new Swiping system ?'
                   : 'Do you want to go back to the classic system ?'}
               </p>
             </div>
