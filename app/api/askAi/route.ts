@@ -3,18 +3,18 @@ import { generateText } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-	const apiKey = process.env.GROQ_API_KEY || '';
-	if (!apiKey.length) return NextResponse.json({ message: 'No API key found.' }, { status: 404 });
+  const apiKey = process.env.GROQ_API_KEY || '';
+  if (!apiKey.length) return NextResponse.json({ message: 'No API key found.' }, { status: 404 });
 
-	try {
-		const data = await request.json();
-		if (!data.query || typeof data.query !== 'string' || data.query.trim().length < 2) {
-			return NextResponse.json({ error: 'Invalid or empty query' }, { status: 400 });
-		}
+  try {
+    const data = await request.json();
+    if (!data.query || typeof data.query !== 'string' || data.query.trim().length < 2) {
+      return NextResponse.json({ error: 'Invalid or empty query' }, { status: 400 });
+    }
 
-		const { text } = await generateText({
-			model: groq('openai/gpt-oss-120b'),
-			prompt: `You are a scientific research archivist AI.
+    const { text } = await generateText({
+      model: groq('openai/gpt-oss-120b'),
+      prompt: `You are a scientific research archivist AI.
 
 Given the user's query below, return a concise and precise keyword or short keyphrase (maximum 3 words) suitable for indexing academic papers.
 
@@ -26,19 +26,13 @@ Instructions:
 
 User query:
 ${data.query}`,
-		});
+    });
 
-		const thinkBlockRegex = /<think>[\s\S]*?<\/think>/;
-		const finalMessage = text.replace(thinkBlockRegex, '').trim().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
-
-		const cleaned = finalMessage
-			.toLowerCase()
-			.replace(/[^a-z\s]/g, '')
-			.split(/\s+/)
-			.join(' ');
-
-		return NextResponse.json({ content: cleaned }, { status: 200 });
-	} catch (error) {
-		return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
-	}
+    return NextResponse.json({ content: text }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
 }
