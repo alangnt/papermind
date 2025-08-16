@@ -28,16 +28,7 @@ User query:
 ${data.query}`,
 		});
 
-		const thinkBlockRegex = /<think>[\s\S]*?<\/think>/;
-		const finalMessage = text.replace(thinkBlockRegex, '').trim().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
-
-		const cleaned = finalMessage
-			.toLowerCase()
-			.replace(/[^a-z\s]/g, '')
-			.split(/\s+/)
-			.join(' ');
-
-		return NextResponse.json({ content: cleaned }, { status: 200 });
+		return NextResponse.json({ content: text }, { status: 200 });
 	} catch (error) {
 		return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
 	}
