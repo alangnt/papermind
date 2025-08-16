@@ -1,22 +1,30 @@
 'use client'
 
-import { FormEvent, useState } from 'react';
-import { Document, SearchType } from '@/types/documents';
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'motion/react';
 import { ArrowUp, LoaderCircle, ArrowLeftRight } from 'lucide-react';
+import { FormEvent, useState } from 'react';
+
+import { InteractiveButton } from '@/components/buttons/InteractiveButton';
 import { Waves } from '@/components/ui/WavesBackground';
-import { AnimatePresence, motion } from 'motion/react';
 import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
-import { InteractiveButton } from '@/components/buttons/InteractiveButton';
-import Link from 'next/link';
+
+import { Document, SearchType, SystemType } from '@/types/documents';
 
 export default function App() {
   const [searchType, setSearchType] = useState<SearchType>('manual');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [areDocumentsLoading, setAreDocumentsLoading] = useState(false);
-  const [isNewPageLoading, setIsNewPageLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [areDocumentsLoading, setAreDocumentsLoading] = useState<boolean>(false);
+  const [isNewPageLoading, setIsNewPageLoading] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
+  const [cardIndex, setCardIndex] = useState<number>(0);
+
+  const [system, setSystem] = useState<SystemType>("classic");
+
+  // Swipe the card animation
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-5, 5]);
   
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -71,6 +79,7 @@ export default function App() {
         body: JSON.stringify({ query: aiResponse }),
       });
     }
+    if (system === 'swipe') setCardIndex(cardIndex + 1);
   };
 
   const demoQueries: { name: string; subName: string; fullQuery: string }[] = [
@@ -79,6 +88,20 @@ export default function App() {
     { name: "What's new in the fight", subName: "against climate change using AI?", fullQuery: "What's new in the fight against climate change using AI?" },
     { name: "What are the current challenges", subName: "in nuclear fusion energy?", fullQuery: "What are the current challenges in nuclear fusion energy?" },
   ];
+
+  const swipeDocument = async (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (cardIndex + 1 >= documents.length) await getDocument(true);
+    else {
+      if (info.offset.x > 100) {
+        // Handle Right Swipe Logic
+        setCardIndex((prev) => prev + 1);
+      } else if (info.offset.x < -100) {
+        // Handle Left Swipe Logic
+        if (cardIndex === 0) return;
+        setCardIndex((prev) => prev - 1);
+      }
+    }
+  }
   
   return (
     <div className="relative w-full">
@@ -179,11 +202,23 @@ export default function App() {
           </form>
 
           {/* Link to the new matching game */}
-          <Link className='underline z-90 text-foreground' href='/match'>
-            <p>Do you want to try something fun ?</p>
-          </Link>
-
           {documents.length > 0 && (
+            <div 
+              className='underline z-90 text-foreground cursor-pointer' 
+              onClick={() => setSystem(system === "classic" ? "swipe" : "classic")}
+            >
+              <p>
+                {system === "classic" 
+                  ? "Do you want to try our new system ?" 
+                  : "Do you want to go back to the classic system ?"
+                }
+                </p>
+            </div>
+          )}
+          
+
+          {/* Classic System */}
+          {documents.length > 0 && system === "classic" && (
             <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
               {documents.map((document, index) => (
                 <DocumentCard key={index} document={document}></DocumentCard>
@@ -191,13 +226,28 @@ export default function App() {
             </div>
           )}
 
-          {documents.length > 0 && (
+          {/* Swipe System */}
+          {documents.length > 0 && system === "swipe" && (
+            <motion.div
+              style={{ x, rotate }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.95 }}
+              onDragEnd={async (event, info) => swipeDocument(event, info)}
+            >
+              <DocumentCard document={documents[cardIndex]}></DocumentCard>
+            </motion.div>
+          )}
+
+          {(system === "swipe" ? (documents.length > 0 && cardIndex === documents.length) : documents.length > 0) && (
             <InteractiveButton>
               <button
                 onClick={async () => {
                   await getDocument(true);
                 }}
                 className='mt-4 inline-flex items-center rounded-md border border-zinc-100 bg-foreground px-6 py-2 text-md text-background transition-all duration-300 hover:bg-gray-800 cursor-pointer'
+                disabled={isNewPageLoading}
               >
                 {isNewPageLoading ? <LoaderCircle className="w-6 h-6 animate-spin" /> : 'More'}
               </button>

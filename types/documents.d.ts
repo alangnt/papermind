@@ -12,3 +12,4 @@ export type Document = {
 };
 
 export type SearchType = "manual" | "ai";
+export type SystemType = "classic" | "swipe"
