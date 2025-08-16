@@ -87,7 +87,7 @@ export default function App() {
         body: JSON.stringify({ query: aiResponse }),
       });
     }
-    if (system === 'swipe' && cardIndex + 1 < results.documents?.length) setCardIndex(cardIndex + 1);
+    if (system === 'swipe' && cardIndex + 1 < results?.documents?.length) setCardIndex(cardIndex + 1);
   };
 
   const demoQueries: { name: string; subName: string; fullQuery: string }[] = [
