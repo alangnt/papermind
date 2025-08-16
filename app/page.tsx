@@ -1,6 +1,13 @@
-'use client'
+'use client';
 
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo, useAnimationControls } from 'motion/react';
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  PanInfo,
+  useAnimationControls,
+} from 'motion/react';
 import { ArrowUp, LoaderCircle, ArrowLeftRight } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 
@@ -20,13 +27,13 @@ export default function App() {
   const [page, setPage] = useState<number>(1);
   const [cardIndex, setCardIndex] = useState<number>(0);
 
-  const [system, setSystem] = useState<SystemType>("classic");
+  const [system, setSystem] = useState<SystemType>('classic');
 
   // Swipe the card animation
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-5, 5]);
   const controls = useAnimationControls();
-  
+
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     const targetPage = nextPage ? page + 1 : 1;
@@ -84,10 +91,26 @@ export default function App() {
   };
 
   const demoQueries: { name: string; subName: string; fullQuery: string }[] = [
-    { name: "What are the latest breakthroughs", subName: "in quantum computing?", fullQuery: "What are the latest breakthroughs in quantum computing?" },
-    { name: "How are scientists studying", subName: "the possibility of life on exoplanets?", fullQuery: "How are scientists studying the possibility of life on exoplanets?" },
-    { name: "What's new in the fight", subName: "against climate change using AI?", fullQuery: "What's new in the fight against climate change using AI?" },
-    { name: "What are the current challenges", subName: "in nuclear fusion energy?", fullQuery: "What are the current challenges in nuclear fusion energy?" },
+    {
+      name: 'What are the latest breakthroughs',
+      subName: 'in quantum computing?',
+      fullQuery: 'What are the latest breakthroughs in quantum computing?',
+    },
+    {
+      name: 'How are scientists studying',
+      subName: 'the possibility of life on exoplanets?',
+      fullQuery: 'How are scientists studying the possibility of life on exoplanets?',
+    },
+    {
+      name: "What's new in the fight",
+      subName: 'against climate change using AI?',
+      fullQuery: "What's new in the fight against climate change using AI?",
+    },
+    {
+      name: 'What are the current challenges',
+      subName: 'in nuclear fusion energy?',
+      fullQuery: 'What are the current challenges in nuclear fusion energy?',
+    },
   ];
 
   const swipeDocument = async (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -96,7 +119,11 @@ export default function App() {
 
     // Not enough swipe: snap back smoothly
     if (info.offset.x <= threshold && info.offset.x >= -threshold) {
-      await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 500, damping: 30 } });
+      await controls.start({
+        x: 0,
+        opacity: 1,
+        transition: { type: 'spring', stiffness: 500, damping: 30 },
+      });
       x.set(0);
       return;
     }
@@ -104,19 +131,31 @@ export default function App() {
     // Swipe Right
     if (info.offset.x > threshold) {
       // Animate card off-screen to the right
-      await controls.start({ x: typeof window !== 'undefined' ? window.innerWidth : 500, opacity: 0, transition: { duration, ease: 'easeInOut' } });
+      await controls.start({
+        x: typeof window !== 'undefined' ? window.innerWidth : 500,
+        opacity: 0,
+        transition: { duration, ease: 'easeInOut' },
+      });
 
       if (cardIndex + 1 >= documents.length) {
         await getDocument(true);
         // Prepare and animate new content in
         controls.set({ x: 40, opacity: 0 });
         x.set(0);
-        await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 28 } });
+        await controls.start({
+          x: 0,
+          opacity: 1,
+          transition: { type: 'spring', stiffness: 400, damping: 28 },
+        });
       } else {
         setCardIndex((prev) => prev + 1);
         controls.set({ x: 40, opacity: 0 });
         x.set(0);
-        await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 28 } });
+        await controls.start({
+          x: 0,
+          opacity: 1,
+          transition: { type: 'spring', stiffness: 400, damping: 28 },
+        });
       }
       return;
     }
@@ -125,19 +164,31 @@ export default function App() {
     if (info.offset.x < -threshold) {
       if (cardIndex === 0) {
         // Can't go left from the first card: bounce back
-        await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 500, damping: 30 } });
+        await controls.start({
+          x: 0,
+          opacity: 1,
+          transition: { type: 'spring', stiffness: 500, damping: 30 },
+        });
         return;
       }
-  // Animate card off-screen to the left
-  await controls.start({ x: typeof window !== 'undefined' ? -window.innerWidth : -500, opacity: 0, transition: { duration, ease: 'easeInOut' } });
+      // Animate card off-screen to the left
+      await controls.start({
+        x: typeof window !== 'undefined' ? -window.innerWidth : -500,
+        opacity: 0,
+        transition: { duration, ease: 'easeInOut' },
+      });
       setCardIndex((prev) => prev - 1);
-  controls.set({ x: -40, opacity: 0 });
-  x.set(0);
-  await controls.start({ x: 0, opacity: 1, transition: { type: 'spring', stiffness: 400, damping: 28 } });
+      controls.set({ x: -40, opacity: 0 });
+      x.set(0);
+      await controls.start({
+        x: 0,
+        opacity: 1,
+        transition: { type: 'spring', stiffness: 400, damping: 28 },
+      });
       return;
     }
-  }
-  
+  };
+
   return (
     <div className="relative w-full overflow-hidden">
       <div className="absolute inset-0 w-full pointer-events-none">
@@ -159,7 +210,9 @@ export default function App() {
         <header className="mb-6 px-4 lg:px-0 py-8 z-90">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-700">Papermind</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-700">
+                Papermind
+              </span>
             </h1>
             <p className="text-sm text-gray-700">
               Search and explore research papers with AI-assisted queries.
@@ -168,10 +221,7 @@ export default function App() {
         </header>
         <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
           {documents.length === 0 && (
-            <div
-              data-testid="suggested-actions"
-              className="grid pb-2 sm:grid-cols-2 gap-2 w-full"
-            >
+            <div data-testid="suggested-actions" className="grid pb-2 sm:grid-cols-2 gap-2 w-full">
               <AnimatePresence>
                 {demoQueries.map((query, index) => (
                   <motion.div
@@ -187,9 +237,7 @@ export default function App() {
                       className="flex flex-col bg-foreground p-4 rounded-xl w-full text-left hover:bg-black/90 cursor-pointer transition"
                     >
                       <span className="font-medium">{query.name}</span>
-                      <span className="text-gray-500">
-                        {query.subName}
-                      </span>
+                      <span className="text-gray-500">{query.subName}</span>
                     </button>
                   </motion.div>
                 ))}
@@ -206,25 +254,26 @@ export default function App() {
               value={query}
               autoFocus
               placeholder="I'm looking for..."
-              onChange={e => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               className="text-sm w-full focus:outline-none focus:ring-O focus:border-transparent"
             />
             <div className="flex justify-between items-center gap-4">
-              <div className='flex flex-col md:flex-row md:items-end gap-2 p-1 text-xs md:place-self-end'>
-                <button 
-                  className='flex gap-1 items-center hover:underline transition cursor-pointer'
-                  onClick={() => setSearchType(searchType === "manual" ? "ai" : "manual")}
+              <div className="flex flex-col md:flex-row md:items-end gap-2 p-1 text-xs md:place-self-end">
+                <button
+                  className="flex gap-1 items-center hover:underline transition cursor-pointer"
+                  onClick={() => setSearchType(searchType === 'manual' ? 'ai' : 'manual')}
                 >
-                  {searchType === 'manual' ? 'Non-AI' : 'AI'} <ArrowLeftRight className='w-3 h-3'></ArrowLeftRight>
+                  {searchType === 'manual' ? 'Non-AI' : 'AI'}{' '}
+                  <ArrowLeftRight className="w-3 h-3"></ArrowLeftRight>
                 </button>
 
-                <span className='text-xs text-gray-400 max-md:hidden'>|</span>
+                <span className="text-xs text-gray-400 max-md:hidden">|</span>
 
                 <p className="place-self-end">
-                Enter any scientific question and get a sample of research papers to work on.
+                  Enter any scientific question and get a sample of research papers to work on.
                 </p>
               </div>
-              
+
               <button
                 type="submit"
                 className="z-90 bg-white text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
@@ -241,22 +290,20 @@ export default function App() {
 
           {/* Link to the new matching game */}
           {documents.length > 0 && (
-            <div 
-              className='underline z-90 text-foreground cursor-pointer' 
-              onClick={() => setSystem(system === "classic" ? "swipe" : "classic")}
+            <div
+              className="underline z-90 text-foreground cursor-pointer"
+              onClick={() => setSystem(system === 'classic' ? 'swipe' : 'classic')}
             >
               <p>
-                {system === "classic" 
-                  ? "Do you want to try our new system ?" 
-                  : "Do you want to go back to the classic system ?"
-                }
-                </p>
+                {system === 'classic'
+                  ? 'Do you want to try our new system ?'
+                  : 'Do you want to go back to the classic system ?'}
+              </p>
             </div>
           )}
-          
 
           {/* Classic System */}
-          {documents.length > 0 && system === "classic" && (
+          {documents.length > 0 && system === 'classic' && (
             <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
               {documents.map((document, index) => (
                 <DocumentCard key={index} document={document}></DocumentCard>
@@ -265,8 +312,8 @@ export default function App() {
           )}
 
           {/* Swipe System */}
-          {documents.length > 0 && system === "swipe" && (
-            <div className='relative w-full min-h-[360px] sm:min-h-[420px] md:min-h-[460px]'>
+          {documents.length > 0 && system === 'swipe' && (
+            <div className="relative w-full min-h-[360px] sm:min-h-[420px] md:min-h-[460px]">
               <motion.div
                 style={{ rotate }}
                 drag="x"
@@ -275,20 +322,22 @@ export default function App() {
                 onDrag={(e, info) => x.set(info.offset.x)}
                 onDragEnd={async (event, info) => swipeDocument(event, info)}
                 animate={controls}
-                className='absolute inset-0 flex items-center justify-center cursor-pointer'
+                className="absolute inset-0 flex items-center justify-center cursor-pointer"
               >
                 <DocumentCard document={documents[cardIndex]}></DocumentCard>
               </motion.div>
             </div>
           )}
 
-          {(system === "swipe" ? (documents.length > 0 && cardIndex === documents.length) : documents.length > 0) && (
+          {(system === 'swipe'
+            ? documents.length > 0 && cardIndex === documents.length
+            : documents.length > 0) && (
             <InteractiveButton>
               <button
                 onClick={async () => {
                   await getDocument(true);
                 }}
-                className='mt-4 inline-flex items-center rounded-md border border-zinc-100 bg-foreground px-6 py-2 text-md text-background transition-all duration-300 hover:bg-gray-800 cursor-pointer'
+                className="mt-4 inline-flex items-center rounded-md border border-zinc-100 bg-foreground px-6 py-2 text-md text-background transition-all duration-300 hover:bg-gray-800 cursor-pointer"
                 disabled={isNewPageLoading}
               >
                 {isNewPageLoading ? <LoaderCircle className="w-6 h-6 animate-spin" /> : 'More'}
