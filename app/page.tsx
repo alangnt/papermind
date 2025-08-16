@@ -87,7 +87,7 @@ export default function App() {
         body: JSON.stringify({ query: aiResponse }),
       });
     }
-    if (system === 'swipe') setCardIndex(cardIndex + 1);
+    if (system === 'swipe' && cardIndex + 1 < results.documents?.length) setCardIndex(cardIndex + 1);
   };
 
   const demoQueries: { name: string; subName: string; fullQuery: string }[] = [
@@ -312,7 +312,7 @@ export default function App() {
           )}
 
           {/* Swipe System */}
-          {documents.length > 0 && system === 'swipe' && (
+          {documents.length > 0 && system === 'swipe' && cardIndex >= 0 && cardIndex < documents.length && (
             <div className="relative w-full min-h-[360px] sm:min-h-[420px] md:min-h-[460px]">
               <motion.div
                 style={{ rotate }}
