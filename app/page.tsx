@@ -9,16 +9,19 @@ import {
   useAnimationControls,
 } from 'motion/react';
 import { ArrowUp, LoaderCircle, ArrowLeftRight } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
 import { Waves } from '@/components/ui/WavesBackground';
 import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
+import LoginComponent from '@/components/ui/Login';
 
 import { Document, SearchType, SystemType } from '@/types/documents';
 
 export default function App() {
+  const [user, setUser] = useState<any>(null);
+
   const [searchType, setSearchType] = useState<SearchType>('manual');
   const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -33,6 +36,39 @@ export default function App() {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-5, 5]);
   const controls = useAnimationControls();
+
+  const getUserAccess = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (!token) {
+      setUser(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem('access_token');
+        setUser(null);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      setUser(data);
+    } catch (error) {
+      console.error(error);
+      setUser(null);
+    }
+  }
 
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -189,6 +225,10 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    getUserAccess();
+  }, []);
+
   return (
     <div className="relative w-full overflow-hidden">
       <div className="absolute inset-0 w-full pointer-events-none">
@@ -219,6 +259,11 @@ export default function App() {
             </p>
           </div>
         </header>
+
+        <div>
+          {!user ? <LoginComponent onLoggedIn={getUserAccess} /> : <p>Welcome, {user.username}</p>}
+        </div>
+
         <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
           {documents.length === 0 && (
             <div data-testid="suggested-actions" className="grid pb-2 sm:grid-cols-2 gap-2 w-full">
