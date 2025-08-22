@@ -15,6 +15,14 @@ export default function Footer() {
           target={'_blank'}
         >
           LinkedIn
+        </Link> -{' '}
+        Powered by{' '}
+        <Link 
+          href={'https://arxiv.org/'}
+          className={'underline'}
+          target={'_blank'}
+        >
+          arXiv&apos;s API
         </Link>
       </p>
     </footer>
