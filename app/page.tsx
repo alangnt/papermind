@@ -8,7 +8,7 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, ArrowLeftRight, User, KeyRound, LogOut, Loader2 } from 'lucide-react';
+import { ArrowUp, LoaderCircle, ArrowLeftRight, KeyRound, LogOut, Loader2 } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
@@ -19,9 +19,10 @@ import AuthComponent from '@/components/ui/Auth';
 import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
 import { Document, SearchType, SystemType } from '@/types/documents';
+import { BaseUser } from '@/types/users';
 
 export default function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<BaseUser | null>(null);
   const [isAuthVisible, setIsAuthVisible] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
