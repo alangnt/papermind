@@ -265,9 +265,7 @@ export default function App() {
 
       {/* Authentication */}
       {!user && isLoginVisible && (
-        <div className="fixed inset-0 z-90 bg-foreground/90 text-background">
-          <LoginComponent onLoggedIn={getUserAccess} setIsLoginVisible={setIsLoginVisible} />
-        </div>
+        <LoginComponent onLoggedIn={getUserAccess} setIsLoginVisible={setIsLoginVisible} />
       )}
 
       <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
