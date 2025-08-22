@@ -85,15 +85,15 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         body 
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Invalid credentials');
+        setError('Either your username or password is wrong');
       }
       const data = await res.json();
       localStorage.setItem('access_token', data.access_token);
       onLoggedIn?.();
       setIsAuthVisible(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } catch (error) {
+      console.error(error);
+      setError('Sign in failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,15 +117,15 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'User already exists');
+        setError('Username is already taken');
       }
       const data = await res.json();
       localStorage.setItem('access_token', data.access_token);
       onLoggedIn?.();
       setIsAuthVisible(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed');
+    } catch (error) {
+      console.error(error);
+      setError('Sign up failed');
     } finally {
       setIsSubmitting(false);
     }
