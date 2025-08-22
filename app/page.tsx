@@ -8,7 +8,7 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, ArrowLeftRight } from 'lucide-react';
+import { ArrowUp, LoaderCircle, ArrowLeftRight, User } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
@@ -16,11 +16,13 @@ import { Waves } from '@/components/ui/WavesBackground';
 import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
 import LoginComponent from '@/components/ui/Login';
+import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
 import { Document, SearchType, SystemType } from '@/types/documents';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
+  const [isLoginVisible, setIsLoginVisible] = useState<boolean>(false);
 
   const [searchType, setSearchType] = useState<SearchType>('manual');
   const [query, setQuery] = useState<string>('');
@@ -225,12 +227,26 @@ export default function App() {
     }
   };
 
+  const logout = async () => {
+    if (!user) return;
+
+    // Clear token from localStorage
+    localStorage.removeItem('access_token');
+    
+    // Clear user state
+    setUser(null);
+    
+    console.log('User logged out');
+  }
+
   useEffect(() => {
     getUserAccess();
   }, []);
 
   return (
     <div className="relative w-full overflow-hidden">
+      <GooeyEffect />
+
       <div className="absolute inset-0 w-full pointer-events-none">
         <Waves
           lineColor={'rgba(0, 0, 0, 0.3)'}
@@ -246,8 +262,16 @@ export default function App() {
           yGap={36}
         />
       </div>
+
+      {/* Authentication */}
+      {!user && isLoginVisible && (
+        <div className="fixed inset-0 z-90 bg-foreground/90 text-background">
+          <LoginComponent onLoggedIn={getUserAccess} setIsLoginVisible={setIsLoginVisible} />
+        </div>
+      )}
+
       <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
-        <header className="mb-6 px-4 lg:px-0 py-8 z-90">
+        <header className="mb-6 px-4 lg:px-0 py-8 z-80">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-700">
@@ -259,10 +283,6 @@ export default function App() {
             </p>
           </div>
         </header>
-
-        <div>
-          {!user ? <LoginComponent onLoggedIn={getUserAccess} /> : <p>Welcome, {user.username}</p>}
-        </div>
 
         <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
           {documents.length === 0 && (
@@ -304,13 +324,13 @@ export default function App() {
             />
             <div className="flex justify-between items-center gap-4">
               <div className="flex flex-col md:flex-row md:items-end gap-2 p-1 text-xs md:place-self-end">
-                <button
+                <div
                   className="flex gap-1 items-center hover:underline transition cursor-pointer"
                   onClick={() => setSearchType(searchType === 'manual' ? 'ai' : 'manual')}
                 >
                   {searchType === 'manual' ? 'Non-AI' : 'AI'}{' '}
                   <ArrowLeftRight className="w-3 h-3"></ArrowLeftRight>
-                </button>
+                </div>
 
                 <span className="text-xs text-gray-400 max-md:hidden">|</span>
 
@@ -319,24 +339,47 @@ export default function App() {
                 </p>
               </div>
 
-              <button
-                type="submit"
-                className="z-90 bg-white text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
-                disabled={areDocumentsLoading}
-              >
-                {areDocumentsLoading ? (
-                  <LoaderCircle className="w-4 h-4 animate-spin" />
+              <div className='flex items-center gap-4'>
+                {!user ? (
+                  <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }} onClick={() => setIsLoginVisible(true)}>
+                    <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-20 z-0">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+                      </svg>
+                    </div>
+
+                    {/* Desktop View */}
+                    <div className="max-lg:hidden px-6 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      Sign in
+                    </div>
+                    {/* Mobile/Tablet View */}
+                    <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      <User className='w-4 h-4' />
+                    </div>
+                  </div>
                 ) : (
-                  <ArrowUp className="w-4 h-4" />
+                  <div onClick={() => logout()}>logout</div>
                 )}
-              </button>
+
+                <button
+                  type="submit"
+                  className="z-80 bg-white text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
+                  disabled={areDocumentsLoading}
+                >
+                  {areDocumentsLoading ? (
+                    <LoaderCircle className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ArrowUp className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
           </form>
 
           {/* Link to the new matching game */}
           {documents.length > 0 && (
             <div
-              className="underline z-90 text-foreground cursor-pointer"
+              className="underline z-80 text-foreground cursor-pointer"
               onClick={() => setSystem(system === 'classic' ? 'swipe' : 'classic')}
             >
               <p>
