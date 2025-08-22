@@ -8,21 +8,22 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, ArrowLeftRight, User } from 'lucide-react';
+import { ArrowUp, LoaderCircle, ArrowLeftRight, User, KeyRound, LogOut, Loader2 } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
 import { Waves } from '@/components/ui/WavesBackground';
 import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
-import LoginComponent from '@/components/ui/Login';
+import AuthComponent from '@/components/ui/Auth';
 import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
 import { Document, SearchType, SystemType } from '@/types/documents';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
-  const [isLoginVisible, setIsLoginVisible] = useState<boolean>(false);
+  const [isAuthVisible, setIsAuthVisible] = useState<boolean>(false);
+  const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
   const [searchType, setSearchType] = useState<SearchType>('manual');
   const [query, setQuery] = useState<string>('');
@@ -228,15 +229,18 @@ export default function App() {
   };
 
   const logout = async () => {
-    if (!user) return;
-
-    // Clear token from localStorage
-    localStorage.removeItem('access_token');
-    
-    // Clear user state
-    setUser(null);
-    
-    console.log('User logged out');
+    if (!user || isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      // Optional delay to show spinner / animate
+      await new Promise<void>(res => setTimeout(res, 1000));
+      localStorage.removeItem('access_token');
+      setUser(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSigningOut(false);
+    }
   }
 
   useEffect(() => {
@@ -264,8 +268,8 @@ export default function App() {
       </div>
 
       {/* Authentication */}
-      {!user && isLoginVisible && (
-        <LoginComponent onLoggedIn={getUserAccess} setIsLoginVisible={setIsLoginVisible} />
+      {!user && isAuthVisible && (
+        <AuthComponent onLoggedIn={getUserAccess} setIsAuthVisible={setIsAuthVisible} />
       )}
 
       <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
@@ -337,9 +341,9 @@ export default function App() {
                 </p>
               </div>
 
-              <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2'>
                 {!user ? (
-                  <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }} onClick={() => setIsLoginVisible(true)}>
+                  <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }} onClick={() => setIsAuthVisible(true)}>
                     <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-20 z-0">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
@@ -352,17 +356,35 @@ export default function App() {
                     </div>
                     {/* Mobile/Tablet View */}
                     <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
-                      <User className='w-4 h-4' />
+                      <KeyRound className='w-4 h-4' />
                     </div>
                   </div>
                 ) : (
-                  <div onClick={() => logout()}>logout</div>
+                  <div id="gooey-btn" className="relative flex items-center group z-80" style={{ filter: "url(#gooey-filter)" }} onClick={() => logout()}>
+                    {!isSigningOut && (
+                      <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-23 z-0">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+                        </svg>
+                      </div>
+                    )}
+                    
+
+                    <div className="max-lg:hidden px-6 py-2 space-x-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      {isSigningOut && <Loader2 className='w-4 h-4 animate-spin' />}
+                      <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
+                    </div>
+                    <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      {isSigningOut ? <Loader2 className='w-4 h-4 animate-spin' /> : <LogOut className='w-4 h-4' />}
+                    </div>
+                  </div>
+                  
                 )}
 
                 <button
                   type="submit"
-                  className="z-80 bg-white text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
-                  disabled={areDocumentsLoading}
+                  className="z-80 bg-white text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 disabled:bg-gray-400 transition cursor-pointer disabled:cursor-default"
+                  disabled={areDocumentsLoading || query.length <= 0}
                 >
                   {areDocumentsLoading ? (
                     <LoaderCircle className="w-4 h-4 animate-spin" />
