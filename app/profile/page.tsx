@@ -7,7 +7,9 @@ import { motion } from "motion/react";
 
 import { GooeyEffect } from "@/components/effects/GooeyEffect";
 import { Waves } from "@/components/ui/WavesBackground";
+
 import { BaseUser } from "@/types/users";
+import { Document } from "@/types/documents";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<BaseUser | null>(null);
@@ -134,12 +136,12 @@ export default function ProfilePage() {
 
         <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
           <header />
-          <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
+          <main className="flex gap-2 justify-center grow py-4 px-4 lg:px-0">
             {!user ? <p className="text-sm text-gray-400">Checking access…</p> : (
               <>
                 {/* Profile Info */}
-                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6">
-                  <p>Welcome, {(user.first_name && user.last_name) ? `${user.first_name} ${user.last_name}` : user.username}</p>
+                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                  <h1>Welcome, {(user.first_name && user.last_name) ? `${user.first_name} ${user.last_name}` : user.username}</h1>
 
                   <form className='flex flex-col gap-5 text-background' onSubmit={editProfile}>
                     {error && (
@@ -186,7 +188,7 @@ export default function ProfilePage() {
 
                     <button
                       type='submit'
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || (!formData.first_name && !formData.last_name) || (formData.first_name === user.first_name && formData.last_name === user.last_name)}
                       className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer'
                     >
                       {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
@@ -207,8 +209,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Saved Articles */}
-                <div>
+                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                  <h2>Saved Articles</h2>
 
+                  {user.saved_articles && user.saved_articles.map((article: Document, index: number) => (
+                    <article key={index}>
+                      <p>article.title</p>
+                    </article>
+                  ))}
                 </div>
               </>
             )}
