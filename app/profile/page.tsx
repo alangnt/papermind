@@ -56,6 +56,7 @@ export default function ProfilePage() {
       setError("Failed to update the user");
     } finally {
       setIsSubmitting(false);
+      window.location.reload();
     }
   }
 
