@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, ChevronRight } from "lucide-react";
+import { useRouter } from 'next/navigation';
+import { Loader2, ChevronRight, Home, ArrowRight } from 'lucide-react';
 import { motion } from "motion/react";
+import Link from 'next/link';
 
 import { GooeyEffect } from "@/components/effects/GooeyEffect";
 import { Waves } from "@/components/ui/WavesBackground";
@@ -109,6 +110,11 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    console.log(formData.first_name, user?.first_name);
+    console.log(formData.last_name, user?.last_name);
+  }, [formData.first_name, user?.first_name, formData.last_name, user?.last_name]);
+
   const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
 
   return (
@@ -132,10 +138,34 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
-          <header />
           <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
             {!user ? <p className="text-sm text-gray-400">Checking access…</p> : (
               <>
+                <motion.button
+                  className='relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2'
+                  aria-label='User profile'
+                  initial='rest'
+                  animate='rest'
+                  whileHover='hover'
+                  variants={{
+                    rest: { paddingRight: '0.5rem' },
+                    hover: { paddingRight: '1.75rem', transition: { type: 'spring', stiffness: 260, damping: 20 } }
+                  }}
+                >
+                  <Link href={"/"}>
+                    <Home className='w-4 h-4' />
+                    <motion.span
+                      className='absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2'
+                      variants={{
+                        rest: { opacity: 0, x: 6, scale: 0.6 },
+                        hover: { opacity: 1, x: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 18 } }
+                      }}
+                    >
+                      <ArrowRight className='w-3 h-3' />
+                    </motion.span>
+                  </Link>
+                </motion.button>
+
                 {/* Profile Info */}
                 <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6">
                   <p>Welcome, {(user.first_name && user.last_name) ? `${user.first_name} ${user.last_name}` : user.username}</p>
@@ -185,8 +215,8 @@ export default function ProfilePage() {
 
                     <button
                       type='submit'
-                      disabled={isSubmitting}
-                      className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer'
+                      disabled={isSubmitting || (formData.first_name === user.first_name && formData.last_name === user.last_name)}
+                      className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition disabled:bg-gray-50 cursor-pointer disabled:cursor-default'
                     >
                       {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
                       <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
@@ -196,7 +226,7 @@ export default function ProfilePage() {
                     </div>
                     <button
                       type='button'
-                      className='group relative flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default'
+                      className='group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default'
                       disabled={isSubmitting}
                     >
                       Change my password
