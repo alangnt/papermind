@@ -83,7 +83,7 @@ export default function ProfilePage() {
       }
 
       if (!res.ok) {
-        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
+        console.error(`Failed to fetch user: ${res.status} ${res.statusText}`);
       }
 
       const data = await res.json();
