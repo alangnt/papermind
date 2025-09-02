@@ -137,112 +137,145 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
-          <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
-            {!user ? <p className="text-sm text-gray-400">Checking access…</p> : (
+          <main className="flex flex-col gap-2 items-center grow py-4 px-4 lg:px-0">
+            {!user ? (
+              <p className="text-sm text-gray-400">Checking access…</p>
+            ) : (
               <>
                 <motion.button
-                  className='relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2'
-                  aria-label='User profile'
-                  initial='rest'
-                  animate='rest'
-                  whileHover='hover'
+                  className="relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2 w-fit place-self-center"
+                  aria-label="User profile"
+                  initial="rest"
+                  animate="rest"
+                  whileHover="hover"
                   variants={{
                     rest: { paddingRight: '0.5rem' },
-                    hover: { paddingRight: '1.75rem', transition: { type: 'spring', stiffness: 260, damping: 20 } }
+                    hover: {
+                      paddingRight: '1.75rem',
+                      transition: { type: 'spring', stiffness: 260, damping: 20 },
+                    },
                   }}
                 >
-                  <Link href={"/"}>
-                    <Home className='w-4 h-4' />
+                  <Link href={'/'}>
+                    <Home className="w-4 h-4" />
                     <motion.span
-                      className='absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2'
+                      className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
                       variants={{
                         rest: { opacity: 0, x: 6, scale: 0.6 },
-                        hover: { opacity: 1, x: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 18 } }
+                        hover: {
+                          opacity: 1,
+                          x: 0,
+                          scale: 1,
+                          transition: { type: 'spring', stiffness: 300, damping: 18 },
+                        },
                       }}
                     >
-                      <ArrowRight className='w-3 h-3' />
+                      <ArrowRight className="w-3 h-3" />
                     </motion.span>
                   </Link>
                 </motion.button>
 
-                {/* Profile Info */}
-                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
-                  <h1>Welcome, {(user.first_name && user.last_name) ? `${user.first_name} ${user.last_name}` : user.username}</h1>
+                <div className={'flex justify-center gap-2'}>
+                  {/* Profile Info */}
+                  <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                    <h1>
+                      Welcome,{' '}
+                      {user.first_name && user.last_name
+                        ? `${user.first_name} ${user.last_name}`
+                        : user.username}
+                    </h1>
 
-                  <form className='flex flex-col gap-5 text-background' onSubmit={editProfile}>
-                    {error && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className='text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md'
-                        role='alert'
+                    <form className="flex flex-col gap-5 text-background" onSubmit={editProfile}>
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
+                          role="alert"
+                        >
+                          {error}
+                        </motion.div>
+                      )}
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium" htmlFor="first_name">
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          id="first_name"
+                          value={formData.first_name}
+                          onChange={(e) =>
+                            setFormData((p) => ({ ...p, first_name: e.target.value }))
+                          }
+                          placeholder="John"
+                          autoComplete="first_name"
+                          className={inputBase}
+                          disabled={isSubmitting}
+                          aria-required="true"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium" htmlFor="last_name">
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          id="last_name"
+                          value={formData.last_name}
+                          onChange={(e) =>
+                            setFormData((p) => ({ ...p, last_name: e.target.value }))
+                          }
+                          placeholder="Doe"
+                          autoComplete="last_name"
+                          className={inputBase}
+                          disabled={isSubmitting}
+                          aria-required="true"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={
+                          isSubmitting ||
+                          (!formData.first_name && !formData.last_name) ||
+                          (formData.first_name === user.first_name &&
+                            formData.last_name === user.last_name)
+                        }
+                        className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
                       >
-                        {error}
-                      </motion.div>
-                    )}
-
-                    <div className='flex flex-col gap-1'>
-                      <label className='text-xs font-medium' htmlFor='first_name'>First Name</label>
-                      <input
-                        type='text'
-                        id='first_name'
-                        value={formData.first_name}
-                        onChange={(e) => setFormData(p => ({ ...p, first_name: e.target.value }))}
-                        placeholder='John'
-                        autoComplete='first_name'
-                        className={inputBase}
+                        {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                        <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+                      </button>
+                      <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
+                        <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
                         disabled={isSubmitting}
-                        aria-required='true'
-                      />
-                    </div>
+                      >
+                        Change my password
+                        <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
+                          <ChevronRight className="w-4 h-4" />
+                        </span>
+                      </button>
+                    </form>
+                  </div>
 
-                    <div className='flex flex-col gap-1'>
-                      <label className='text-xs font-medium' htmlFor='last_name'>Last Name</label>
-                      <input
-                        type='text'
-                        id='last_name'
-                        value={formData.last_name}
-                        onChange={(e) => setFormData(p => ({ ...p, last_name: e.target.value }))}
-                        placeholder='Doe'
-                        autoComplete='last_name'
-                        className={inputBase}
-                        disabled={isSubmitting}
-                        aria-required='true'
-                      />
-                    </div>
+                  {/* Saved Articles */}
+                  <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                    <h2>Saved Articles</h2>
 
-                    <button
-                      type='submit'
-                      disabled={isSubmitting || (!formData.first_name && !formData.last_name) || (formData.first_name === user.first_name && formData.last_name === user.last_name)}
-                      className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer'
-                    >
-                      {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
-                      <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
-                    </button>
-                    <div className='flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70'>
-                      <span className='text-[10px] tracking-wide text-muted-foreground'>OR</span>
-                    </div>
-                    <button
-                      type='button'
-                      className='group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default'
-                      disabled={isSubmitting}
-                    >
-                      Change my password
-                      <span className='absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5'><ChevronRight className='w-4 h-4' /></span>
-                    </button>
-                  </form>
-                </div>
-
-                {/* Saved Articles */}
-                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
-                  <h2>Saved Articles</h2>
-
-                  {user.saved_articles && user.saved_articles.map((article: Document, index: number) => (
-                    <article key={index}>
-                      <p>article.title</p>
-                    </article>
-                  ))}
+                    {user.saved_articles &&
+                      user.saved_articles.map((article: Document, index: number) => (
+                        <article key={index}>
+                          <p>{article.title}</p>
+                        </article>
+                      ))}
+                  </div>
                 </div>
               </>
             )}
