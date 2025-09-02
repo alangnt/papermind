@@ -67,9 +67,7 @@ export default function ProfilePage() {
     const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
     if (!token) {
-      setUser(null);
-      router.replace("/");
-      return;
+      return 1;
     }
 
     try {
@@ -80,27 +78,30 @@ export default function ProfilePage() {
 
       if (res.status === 401) {
         localStorage.removeItem("access_token");
-        setUser(null);
-        router.replace("/");
-        return;
+        return 1;
       }
 
       if (!res.ok) {
-        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
+        return 1;
       }
 
-      const data = await res.json();
-      setUser(data);
+      return await res.json() as BaseUser;
     } catch (err) {
       console.error(err);
-      setUser(null);
-      router.replace("/");
+      return 1;
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
-    getUserAccess();
-  }, [getUserAccess]);
+    getUserAccess().then((res) => {
+      if (res === 1) {
+        setUser(null);
+        router.replace("/");
+      } else {
+        setUser(res);
+      }
+    });
+  }, [getUserAccess, router]);
 
   useEffect(() => {
     if (user) {

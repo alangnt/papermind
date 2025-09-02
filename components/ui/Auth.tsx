@@ -84,8 +84,9 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
         body 
       });
+      console.log(res);
       if (!res.ok) {
-        setError('Either your username or password is wrong');
+        return setError('Either your username or password is wrong');
       }
       const data = await res.json();
       localStorage.setItem('access_token', data.access_token);
