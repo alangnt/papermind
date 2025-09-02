@@ -249,6 +249,10 @@ export default function App() {
     getUserAccess();
   }, []);
 
+  useEffect(() => {
+    console.log(documents);
+  }, [documents])
+
   return (
     <div className="relative w-full overflow-hidden">
       <GooeyEffect />
@@ -443,7 +447,12 @@ export default function App() {
           {documents.length > 0 && system === 'classic' && (
             <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
               {documents.map((document, index) => (
-                <DocumentCard key={index} document={document}></DocumentCard>
+                <DocumentCard 
+                  key={index} 
+                  username={user?.username ?? undefined} 
+                  document={document} 
+                  isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
+                ></DocumentCard>
               ))}
             </div>
           )}
@@ -461,7 +470,7 @@ export default function App() {
                 animate={controls}
                 className="absolute inset-0 flex items-center justify-center cursor-pointer"
               >
-                <DocumentCard document={documents[cardIndex]}></DocumentCard>
+                <DocumentCard username={user?.username ?? undefined} document={documents[cardIndex]} isSaved={!!user?.saved_articles?.find(article => article.id === documents[cardIndex].id)}></DocumentCard>
               </motion.div>
             </div>
           )}

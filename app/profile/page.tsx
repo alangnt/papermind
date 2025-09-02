@@ -8,7 +8,9 @@ import Link from 'next/link';
 
 import { GooeyEffect } from "@/components/effects/GooeyEffect";
 import { Waves } from "@/components/ui/WavesBackground";
+
 import { BaseUser } from "@/types/users";
+import { Document } from "@/types/documents";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<BaseUser | null>(null);
@@ -57,6 +59,7 @@ export default function ProfilePage() {
       setError("Failed to update the user");
     } finally {
       setIsSubmitting(false);
+      window.location.reload();
     }
   }
 
@@ -83,7 +86,7 @@ export default function ProfilePage() {
       }
 
       if (!res.ok) {
-        console.error(`Failed to fetch user: ${res.status} ${res.statusText}`);
+        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
       }
 
       const data = await res.json();
@@ -109,11 +112,6 @@ export default function ProfilePage() {
       });
     }
   }, [user]);
-
-  useEffect(() => {
-    console.log(formData.first_name, user?.first_name);
-    console.log(formData.last_name, user?.last_name);
-  }, [formData.first_name, user?.first_name, formData.last_name, user?.last_name]);
 
   const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
 
@@ -167,8 +165,8 @@ export default function ProfilePage() {
                 </motion.button>
 
                 {/* Profile Info */}
-                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6">
-                  <p>Welcome, {(user.first_name && user.last_name) ? `${user.first_name} ${user.last_name}` : user.username}</p>
+                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                  <h1>Welcome, {(user.first_name && user.last_name) ? `${user.first_name} ${user.last_name}` : user.username}</h1>
 
                   <form className='flex flex-col gap-5 text-background' onSubmit={editProfile}>
                     {error && (
@@ -215,8 +213,8 @@ export default function ProfilePage() {
 
                     <button
                       type='submit'
-                      disabled={isSubmitting || (formData.first_name === user.first_name && formData.last_name === user.last_name)}
-                      className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition disabled:bg-gray-50 cursor-pointer disabled:cursor-default'
+                      disabled={isSubmitting || (!formData.first_name && !formData.last_name) || (formData.first_name === user.first_name && formData.last_name === user.last_name)}
+                      className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer'
                     >
                       {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
                       <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
@@ -236,8 +234,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Saved Articles */}
-                <div>
+                <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                  <h2>Saved Articles</h2>
 
+                  {user.saved_articles && user.saved_articles.map((article: Document, index: number) => (
+                    <article key={index}>
+                      <p>article.title</p>
+                    </article>
+                  ))}
                 </div>
               </>
             )}
