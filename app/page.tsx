@@ -8,7 +8,7 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, ArrowLeftRight, KeyRound, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
+import { ArrowUp, LoaderCircle, ArrowLeftRight, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -389,7 +389,7 @@ export default function App() {
                     </div>
                     {/* Mobile/Tablet View */}
                     <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
-                      <KeyRound className='w-4 h-4' />
+                      <User className='w-4 h-4' />
                     </div>
                   </div>
                 ) : (

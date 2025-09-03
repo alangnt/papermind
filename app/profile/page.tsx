@@ -6,6 +6,7 @@ import { Loader2, ChevronRight, Home, ArrowRight } from 'lucide-react';
 import { motion } from "motion/react";
 import Link from 'next/link';
 
+import DocumentCard from '@/components/cards/DocumentCard';
 import { GooeyEffect } from "@/components/effects/GooeyEffect";
 import { Waves } from "@/components/ui/WavesBackground";
 
@@ -137,13 +138,13 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
-          <main className="flex flex-col gap-2 items-center grow py-4 px-4 lg:px-0">
+          <main className="flex flex-col gap-2 items-center grow py-4 px-4 lg:px-0 overflow-hidden">
             {!user ? (
               <p className="text-sm text-gray-400">Checking access…</p>
             ) : (
               <>
                 <motion.button
-                  className="relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2 w-fit place-self-center"
+                  className="relative text-background bg-foreground z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2 w-fit place-self-center"
                   aria-label="User profile"
                   initial="rest"
                   animate="rest"
@@ -175,7 +176,7 @@ export default function ProfilePage() {
                   </Link>
                 </motion.button>
 
-                <div className={'flex justify-center gap-2'}>
+                <div className={'flex flex-col md:flex-row justify-center gap-2'}>
                   {/* Profile Info */}
                   <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
                     <h1>
@@ -266,14 +267,17 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Saved Articles */}
-                  <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                  <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] overflow-y-auto">
                     <h2>Saved Articles</h2>
 
                     {user.saved_articles &&
-                      user.saved_articles.map((article: Document, index: number) => (
-                        <article key={index}>
-                          <p>{article.title}</p>
-                        </article>
+                      user.saved_articles.map((document: Document) => (
+                        <DocumentCard
+                          key={document.id}
+                          document={document}
+                          username={user.username ?? undefined}
+                          isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
+                        />
                       ))}
                   </div>
                 </div>
