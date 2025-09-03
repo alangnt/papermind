@@ -9,7 +9,7 @@ import {
   useAnimationControls,
 } from 'motion/react';
 import { ArrowUp, LoaderCircle, ArrowLeftRight, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
@@ -42,11 +42,11 @@ export default function App() {
   const rotate = useTransform(x, [-200, 200], [-5, 5]);
   const controls = useAnimationControls();
 
-  const getUserAccess = async () => {
+  const getUserAccess = useCallback(async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
     if (!token) {
-      setUser(null);
-      return;
+      return 1;
     }
 
     try {
@@ -59,21 +59,19 @@ export default function App() {
 
       if (res.status === 401) {
         localStorage.removeItem('access_token');
-        setUser(null);
-        return;
+        return 1;
       }
 
       if (!res.ok) {
-        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
+        return 1;
       }
 
-      const data = await res.json();
-      setUser(data);
+      return await res.json() as BaseUser;
     } catch (error) {
       console.error(error);
-      setUser(null);
+      return 1;
     }
-  }
+  }, []);
 
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -246,8 +244,14 @@ export default function App() {
   }
 
   useEffect(() => {
-    getUserAccess();
-  }, []);
+    getUserAccess().then((res) => {
+      if (res === 1) {
+        setUser(null);
+      } else {
+        setUser(res);
+      }
+    });
+  }, [getUserAccess]);
 
   useEffect(() => {
     console.log(documents);
