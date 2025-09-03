@@ -66,7 +66,9 @@ export default function App() {
         return 1;
       }
 
-      return await res.json() as BaseUser;
+      const data = await res.json() as BaseUser;
+      setUser(data as BaseUser);
+      return 0;
     } catch (error) {
       console.error(error);
       return 1;
@@ -247,8 +249,6 @@ export default function App() {
     getUserAccess().then((res) => {
       if (res === 1) {
         setUser(null);
-      } else {
-        setUser(res);
       }
     });
   }, [getUserAccess]);
