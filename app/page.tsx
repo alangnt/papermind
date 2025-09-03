@@ -253,10 +253,6 @@ export default function App() {
     });
   }, [getUserAccess]);
 
-  useEffect(() => {
-    console.log(documents);
-  }, [documents])
-
   return (
     <div className="relative w-full overflow-hidden">
       <GooeyEffect />
