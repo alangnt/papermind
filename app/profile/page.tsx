@@ -12,6 +12,7 @@ import { Waves } from "@/components/ui/WavesBackground";
 
 import { BaseUser } from "@/types/users";
 import { Document } from "@/types/documents";
+import { clearTokens, apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<BaseUser | null>(null);
@@ -65,41 +66,32 @@ export default function ProfilePage() {
   }
 
   const getUserAccess = useCallback(async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
-    if (!token) {
-      return 1;
-    }
+    if (!token) return 1;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.status === 401) {
-        localStorage.removeItem("access_token");
-        return 1;
-      }
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, { method: 'GET' });
 
       if (!res.ok) {
+        if (res.status === 401) clearTokens();
         return 1;
       }
 
-      return await res.json() as BaseUser;
-    } catch (err) {
-      console.error(err);
+      const data = await res.json() as BaseUser;
+      setUser(data as BaseUser);
+      return 0;
+    } catch (error) {
+      console.error(error);
       return 1;
     }
-  }, []);
+  }, [setUser]);
 
   useEffect(() => {
     getUserAccess().then((res) => {
       if (res === 1) {
         setUser(null);
         router.replace("/");
-      } else {
-        setUser(res);
       }
     });
   }, [getUserAccess, router]);

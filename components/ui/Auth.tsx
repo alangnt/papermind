@@ -79,7 +79,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       body.set('username', signInFormData.username.trim());
       body.set('password', signInFormData.password);
       body.set('grant_type', 'password');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/sign_in/`, { 
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/sign_in`, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
         body 
@@ -90,6 +90,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       }
       const data = await res.json();
       localStorage.setItem('access_token', data.access_token);
+      if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
       onLoggedIn?.();
       setIsAuthVisible(false);
     } catch (error) {
@@ -122,6 +123,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       }
       const data = await res.json();
       localStorage.setItem('access_token', data.access_token);
+      if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
       onLoggedIn?.();
       setIsAuthVisible(false);
     } catch (error) {

@@ -19,6 +19,8 @@ import Footer from '@/components/ui/Footer';
 import AuthComponent from '@/components/ui/Auth';
 import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
+import { apiFetch, clearTokens } from '@/lib/api';
+
 import { Document, SearchType, SystemType } from '@/types/documents';
 import { BaseUser } from '@/types/users';
 
@@ -45,24 +47,13 @@ export default function App() {
   const getUserAccess = useCallback(async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
-    if (!token) {
-      return 1;
-    }
+    if (!token) return 1;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.status === 401) {
-        localStorage.removeItem('access_token');
-        return 1;
-      }
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, { method: 'GET' });
 
       if (!res.ok) {
+        if (res.status === 401) clearTokens();
         return 1;
       }
 
@@ -73,7 +64,7 @@ export default function App() {
       console.error(error);
       return 1;
     }
-  }, []);
+  }, [setUser]);
 
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
