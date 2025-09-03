@@ -469,7 +469,7 @@ export default function App() {
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 whileHover={{ scale: 1.01 }}
-                onDrag={(e, info) => x.set(info.offset.x)}
+                onDrag={(_e, info) => x.set(info.offset.x)}
                 onDragEnd={async (event, info) => swipeDocument(event, info)}
                 animate={controls}
                 className="absolute inset-0 flex items-center justify-center cursor-pointer"
