@@ -47,7 +47,7 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
             : { username, article_id: document.id }
         ),
       });
-      if (!res.ok) throw new Error(`Failed ${optimistic ? 'save' : 'unsave'}: ${res.status}`);
+      if (!res.ok) console.error(`Failed ${optimistic ? 'save' : 'unsave'}: ${res.status}`);
     } catch (e) {
       // revert on failure
       console.error(e);
@@ -166,7 +166,7 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
             onClick={saveArticle}
             aria-pressed={saved}
             aria-label={isConnected ? (saved ? 'Unsave article' : 'Save article') : 'Sign in to save'}
-            className={`flex items-center px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border backdrop-blur-sm inline-flex items-center gap-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border backdrop-blur-sm inline-flex items-center gap-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 disabled:opacity-40 disabled:cursor-not-allowed ${
               saved
                 ? 'bg-background text-foreground hover:bg-background/80'
                 : 'bg-white/10 border-white/10 hover:bg-white/15'
