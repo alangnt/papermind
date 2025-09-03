@@ -152,7 +152,7 @@ export default function App() {
     },
   ];
 
-  const swipeDocument = async (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const swipeDocument = async (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 100;
     const duration = 0.25;
 
