@@ -113,15 +113,19 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         email: signUpFormData.email.trim(),
         password: signUpFormData.password,
       };
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/sign_up`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        setError('Username is already taken');
-      }
+
       const data = await res.json();
+
+      if (data.detail.code === 2001) return setError('Username is already taken');
+      if (data.detail.code === 2002) return setError('Email is already taken');
+      if (data.detail.code === 2003) return setError('Passwords don\'t correspond');
+
       localStorage.setItem('access_token', data.access_token);
       if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
       onLoggedIn?.();
