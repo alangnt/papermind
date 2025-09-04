@@ -5,13 +5,15 @@ import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
 
 export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLoggedIn?: () => void, setIsAuthVisible: (arg0: boolean) => void }) {
+  const [resetPasswordFormData, setResetPasswordFormData] = useState({ email: '' });
   const [signInFormData, setSignInFormData] = useState({ username: '', password: '' });
   const [signUpFormData, setSignUpFormData] = useState({ username: '', email: '', password: '', confirm_password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validation, setValidation] = useState<string | null>(null);
 
-  const [currentTab, setCurrentTab] = useState<"signin" | "signup">("signin");
+  const [currentTab, setCurrentTab] = useState<"signin" | "signup" | "reset_password">("signin");
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const usernameRef = useRef<HTMLInputElement | null>(null);
@@ -84,7 +86,6 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
         body 
       });
-      console.log(res);
       if (!res.ok) {
         return setError('Either your username or password is wrong');
       }
@@ -138,7 +139,30 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
     }
   };
 
-  const switchTab = () => {
+  const resetPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setError(null);
+    setValidation(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/send_reset_password_link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resetPasswordFormData),
+      });
+
+      return await res.json();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setValidation("Email sent. Don't forget to also check your spams");
+      setIsSubmitting(false);
+    }
+  }
+
+  const switchTab = (tab: "signin" | "signup" | "reset_password") => {
     // Reset Forms
     setSignInFormData({
       username: "",
@@ -150,9 +174,13 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       password: "",
       confirm_password: ""
     });
+    setResetPasswordFormData({
+      email: "",
+    });
 
     setError(null);
-    setCurrentTab(currentTab === "signin" ? "signup" : "signin");
+    setValidation(null);
+    setCurrentTab(tab);
   }
 
   const inputBase = 'p-2 border rounded-lg text-sm bg-background/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
@@ -187,8 +215,8 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
             <div className='flex items-center justify-center rounded-full border border-border size-12 bg-background/40 backdrop-blur-sm shadow-inner overflow-hidden'>
               <Image src={"/papermind-light.png"} alt="Papermind Logo Light" height={200} width={200}></Image>
             </div>
-            <h2 id='login-title' className='text-lg font-medium'>Welcome back</h2>
-            <p className='text-xs text-gray-500'>Authenticate to continue.</p>
+            <h2 id='login-title' className='text-lg font-medium'>{currentTab === 'reset_password' ? 'Enter your email' : 'Welcome back'}</h2>
+            <p className='text-xs text-gray-500'>{currentTab === 'reset_password' ? 'If your account is found, you\'ll receive an email' : 'Authenticate to continue.'}</p>
           </div>
 
           {/* Sign In Section */}
@@ -259,7 +287,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
                 <button
                   type='button'
                   className='text-xs text-gray-500 hover:text-foreground transition underline-offset-2 hover:underline'
-                  onClick={() => {/* placeholder for forgot password */}}
+                  onClick={() => setCurrentTab("reset_password")}
                 >
                   Forgot password?
                 </button>
@@ -270,7 +298,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
               <button
                 type='button'
                 className='group relative flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-border/70 bg-background/40 hover:bg-background/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-foreground/30 disabled:bg-gray-200 cursor-pointer disabled:cursor-default'
-                onClick={() => switchTab()}
+                onClick={() => switchTab("signup")}
                 disabled={isSubmitting}
               >
                 Create an account
@@ -392,7 +420,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
               <button
                 type='button'
                 className='group relative flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-border/70 bg-background/40 hover:bg-background/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-foreground/30 disabled:bg-gray-200 cursor-pointer disabled:cursor-default'
-                onClick={() => switchTab()}
+                onClick={() => switchTab("signin")}
                 disabled={isSubmitting}
               >
                 Log into account
@@ -400,7 +428,75 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
               </button>
             </form>
           )}
-          
+
+          {/* Reset Password Section */}
+          {currentTab === "reset_password" && (
+            <form onSubmit={resetPassword} className='flex flex-col gap-5 text-foreground'>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className='text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md'
+                  role='alert'
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              {validation && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
+                  role='alert'
+                >
+                  {validation}
+                </motion.div>
+              )}
+
+              <div className='flex flex-col gap-1'>
+                <label className='text-xs font-medium' htmlFor='email'>Email</label>
+                <input
+                  ref={emailRef}
+                  type='email'
+                  id='email'
+                  value={resetPasswordFormData.email}
+                  onChange={(e) => setResetPasswordFormData(p => ({ ...p, email: e.target.value }))}
+                  placeholder='john@doe.com'
+                  autoComplete='email'
+                  className={inputBase}
+                  disabled={isSubmitting}
+                  aria-required='true'
+                />
+              </div>
+              <div className='flex items-center justify-between -mt-2'>
+                <button
+                  ref={submitBtnRef}
+                  type='submit'
+                  disabled={isSubmitting}
+                  className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-foreground text-background text-sm font-medium hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-foreground/40 transition cursor-pointer'
+                >
+                  {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
+                  <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+                </button>
+              </div>
+              <div className='flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70'>
+                <span className='text-[10px] tracking-wide text-muted-foreground'>OR</span>
+              </div>
+              <button
+                type='button'
+                className='group relative flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-border/70 bg-background/40 hover:bg-background/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-foreground/30 disabled:bg-gray-200 cursor-pointer disabled:cursor-default'
+                onClick={() => switchTab("signin")}
+                disabled={isSubmitting}
+              >
+                Log into account
+                <span className='absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5'><ChevronRight className='w-4 h-4' /></span>
+              </button>
+            </form>
+          )}
+
         </motion.div>
         <motion.div className='fixed inset-0 bg-black/55 backdrop-blur-sm z-0' aria-hidden='true' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }} onClick={() => !isSubmitting && setIsAuthVisible(false)} />
       </motion.div>
