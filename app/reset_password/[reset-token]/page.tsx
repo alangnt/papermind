@@ -207,7 +207,7 @@ export default function ResetPasswordPage() {
                       value={formData.password}
                       onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
                       placeholder={showPassword ? "password" : "********"}
-                      autoComplete='current-password'
+                      autoComplete='password'
                       className={inputBase + ' w-full pr-8'}
                       disabled={isSubmitting}
                       aria-required='true'
@@ -233,7 +233,7 @@ export default function ResetPasswordPage() {
                       value={formData.confirm_password}
                       onChange={(e) => setFormData(p => ({ ...p, confirm_password: e.target.value }))}
                       placeholder={showPassword ? "password" : "********"}
-                      autoComplete='current-password'
+                      autoComplete='confirm_password'
                       className={inputBase + ' w-full pr-8'}
                       disabled={isSubmitting}
                       aria-required='true'
