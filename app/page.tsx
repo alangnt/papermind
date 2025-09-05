@@ -8,17 +8,27 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, ArrowLeftRight } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { ArrowUp, LoaderCircle, ArrowLeftRight, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
 import { Waves } from '@/components/ui/WavesBackground';
 import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
+import AuthComponent from '@/components/ui/Auth';
+import { GooeyEffect } from '@/components/effects/GooeyEffect';
+
+import { apiFetch, clearTokens } from '@/lib/api';
 
 import { Document, SearchType, SystemType } from '@/types/documents';
+import { BaseUser } from '@/types/users';
 
 export default function App() {
+  const [user, setUser] = useState<BaseUser | null>(null);
+  const [isAuthVisible, setIsAuthVisible] = useState<boolean>(false);
+  const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
+
   const [searchType, setSearchType] = useState<SearchType>('manual');
   const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -33,6 +43,28 @@ export default function App() {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-5, 5]);
   const controls = useAnimationControls();
+
+  const getUserAccess = useCallback(async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+    if (!token) return 1;
+
+    try {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, { method: 'GET' });
+
+      if (!res.ok) {
+        if (res.status === 401) clearTokens();
+        return 1;
+      }
+
+      const data = await res.json() as BaseUser;
+      setUser(data as BaseUser);
+      return 0;
+    } catch (error) {
+      console.error(error);
+      return 1;
+    }
+  }, [setUser]);
 
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -113,7 +145,7 @@ export default function App() {
     },
   ];
 
-  const swipeDocument = async (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const swipeDocument = async (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 100;
     const duration = 0.25;
 
@@ -189,8 +221,33 @@ export default function App() {
     }
   };
 
+  const logout = async () => {
+    if (!user || isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      // Optional delay to show spinner / animate
+      await new Promise<void>(res => setTimeout(res, 1000));
+      localStorage.removeItem('access_token');
+      setUser(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
+
+  useEffect(() => {
+    getUserAccess().then((res) => {
+      if (res === 1) {
+        setUser(null);
+      }
+    });
+  }, [getUserAccess]);
+
   return (
     <div className="relative w-full overflow-hidden">
+      <GooeyEffect />
+
       <div className="absolute inset-0 w-full pointer-events-none">
         <Waves
           lineColor={'rgba(0, 0, 0, 0.3)'}
@@ -206,19 +263,53 @@ export default function App() {
           yGap={36}
         />
       </div>
+
+      {/* Authentication */}
+      {!user && isAuthVisible && (
+        <AuthComponent onLoggedIn={getUserAccess} setIsAuthVisible={setIsAuthVisible} />
+      )}
+
       <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
-        <header className="mb-6 px-4 lg:px-0 py-8 z-90">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+        <header className="mb-6 px-4 lg:px-0 py-8 z-80">
+          <div className="flex flex-col justify-center items-center text-center space-y-2">
+            <h1 className="flex items-center gap-2 text-3xl md:text-4xl font-bold tracking-tight">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-700">
                 Papermind
               </span>
+
+              {user && (
+                <motion.button
+                  className='relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2'
+                  aria-label='User profile'
+                  initial='rest'
+                  animate='rest'
+                  whileHover='hover'
+                  variants={{
+                    rest: { paddingRight: '0.5rem' },
+                    hover: { paddingRight: '1.75rem', transition: { type: 'spring', stiffness: 260, damping: 20 } }
+                  }}
+                >
+                  <Link href={"/profile"}>
+                    <User className='w-4 h-4' />
+                    <motion.span
+                      className='absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2'
+                      variants={{
+                        rest: { opacity: 0, x: 6, scale: 0.6 },
+                        hover: { opacity: 1, x: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 18 } }
+                      }}
+                    >
+                      <ArrowRight className='w-3 h-3' />
+                    </motion.span>
+                  </Link>
+                </motion.button>
+              )}
             </h1>
             <p className="text-sm text-gray-700">
               Search and explore research papers with AI-assisted queries.
             </p>
           </div>
         </header>
+
         <main className="flex flex-col gap-2 justify-center items-center grow py-4 px-4 lg:px-0">
           {documents.length === 0 && (
             <div data-testid="suggested-actions" className="grid pb-2 sm:grid-cols-2 gap-2 w-full">
@@ -260,6 +351,7 @@ export default function App() {
             <div className="flex justify-between items-center gap-4">
               <div className="flex flex-col md:flex-row md:items-end gap-2 p-1 text-xs md:place-self-end">
                 <button
+                  type={'button'}
                   className="flex gap-1 items-center hover:underline transition cursor-pointer"
                   onClick={() => setSearchType(searchType === 'manual' ? 'ai' : 'manual')}
                 >
@@ -274,24 +366,65 @@ export default function App() {
                 </p>
               </div>
 
-              <button
-                type="submit"
-                className="z-90 bg-white text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 transition cursor-pointer"
-                disabled={areDocumentsLoading}
-              >
-                {areDocumentsLoading ? (
-                  <LoaderCircle className="w-4 h-4 animate-spin" />
+              <div className='flex items-center gap-2'>
+                {!user ? (
+                  <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }} onClick={() => setIsAuthVisible(true)}>
+                    <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-20 z-0">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+                      </svg>
+                    </div>
+
+                    {/* Desktop View */}
+                    <div className="max-lg:hidden px-6 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      Sign in
+                    </div>
+                    {/* Mobile/Tablet View */}
+                    <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      <User className='w-4 h-4' />
+                    </div>
+                  </div>
                 ) : (
-                  <ArrowUp className="w-4 h-4" />
+                  <div id="gooey-btn" className="relative flex items-center group z-80" style={{ filter: "url(#gooey-filter)" }} onClick={() => logout()}>
+                    {!isSigningOut && (
+                      <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-23 z-0">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+                        </svg>
+                      </div>
+                    )}
+                    
+
+                    <div className="max-lg:hidden px-6 py-2 space-x-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      {isSigningOut && <Loader2 className='w-4 h-4 animate-spin' />}
+                      <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
+                    </div>
+                    <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
+                      {isSigningOut ? <Loader2 className='w-4 h-4 animate-spin' /> : <LogOut className='w-4 h-4' />}
+                    </div>
+                  </div>
+                  
                 )}
-              </button>
+
+                <button
+                  type="submit"
+                  className="z-80 bg-white text-foreground p-2 rounded-full text-sm font-medium hover:bg-gray-200 disabled:bg-gray-400 transition cursor-pointer disabled:cursor-default"
+                  disabled={areDocumentsLoading || query.length <= 0}
+                >
+                  {areDocumentsLoading ? (
+                    <LoaderCircle className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ArrowUp className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
           </form>
 
           {/* Link to the new matching game */}
           {documents.length > 0 && (
             <div
-              className="underline z-90 text-foreground cursor-pointer"
+              className="underline z-80 text-foreground cursor-pointer"
               onClick={() => setSystem(system === 'classic' ? 'swipe' : 'classic')}
             >
               <p>
@@ -306,7 +439,12 @@ export default function App() {
           {documents.length > 0 && system === 'classic' && (
             <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
               {documents.map((document, index) => (
-                <DocumentCard key={index} document={document}></DocumentCard>
+                <DocumentCard 
+                  key={index} 
+                  username={user?.username ?? undefined} 
+                  document={document} 
+                  isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
+                ></DocumentCard>
               ))}
             </div>
           )}
@@ -319,12 +457,12 @@ export default function App() {
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 whileHover={{ scale: 1.01 }}
-                onDrag={(e, info) => x.set(info.offset.x)}
+                onDrag={(_e, info) => x.set(info.offset.x)}
                 onDragEnd={async (event, info) => swipeDocument(event, info)}
                 animate={controls}
                 className="absolute inset-0 flex items-center justify-center cursor-pointer"
               >
-                <DocumentCard document={documents[cardIndex]}></DocumentCard>
+                <DocumentCard username={user?.username ?? undefined} document={documents[cardIndex]} isSaved={!!user?.saved_articles?.find(article => article.id === documents[cardIndex].id)}></DocumentCard>
               </motion.div>
             </div>
           )}
