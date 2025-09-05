@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, FormEvent } from "react";
+import { useState, useEffect, useCallback, FormEvent, useRef, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ChevronRight, Home, ArrowRight } from 'lucide-react';
-import { motion } from "motion/react";
+import { Loader2, ChevronRight, Home, ArrowRight, EyeOff, Eye } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 
 import DocumentCard from '@/components/cards/DocumentCard';
@@ -15,18 +15,37 @@ import { Document } from "@/types/documents";
 import { clearTokens, apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
+  const router = useRouter();
+
   const [user, setUser] = useState<BaseUser | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [validation, setValidation] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({ first_name: "", last_name: "" });
+  const [currentTab, setCurrentTab] = useState<"fullname" | "password">("fullname");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [fullNameFormData, setFullNameFormData] = useState({ first_name: "", last_name: "" });
+  const [passwordFormData, setPasswordFormData] = useState({ old_password: "", new_password: "", confirm_new_password: "" });
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const firstNameRef = useRef<HTMLInputElement | null>(null);
+  const lastNameRef = useRef<HTMLInputElement | null>(null);
+  const oldPasswordRef = useRef<HTMLInputElement | null>(null);
+  const newPasswordRef = useRef<HTMLInputElement | null>(null);
+  const confirmNewPasswordRef = useRef<HTMLInputElement | null>(null);
+  const submitBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const validateNewPassword = () => {
+    if (passwordFormData.new_password !== passwordFormData.confirm_new_password) return "Both passwords must match"
+    return null;
+  };
 
   const editProfile = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    if (!formData.first_name.trim() && !formData.last_name.trim()) {
+    if (!fullNameFormData.first_name.trim() && !fullNameFormData.last_name.trim()) {
       setIsSubmitting(false);
       return;
     }
@@ -34,8 +53,8 @@ export default function ProfilePage() {
     try {
       const body = {
         username: user?.username,
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim()
+        first_name: fullNameFormData.first_name.trim(),
+        last_name: fullNameFormData.last_name.trim()
       }
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/edit/`, {
@@ -44,17 +63,18 @@ export default function ProfilePage() {
         body: JSON.stringify(body)
       });
       
-      if (!res.ok) {
-        setError("Failed to update the user");
-      }
+      if (!res.ok) return setError("Failed to update the user");
 
       const data = await res.json();
 
       if (data) {
-        setFormData({
+        setFullNameFormData({
           first_name: data.data.first_name,
           last_name: data.data.last_name
         });
+
+        setError(null);
+        return setValidation("Name changed successfully");
       }
     } catch (error) {
       console.error(error);
@@ -62,6 +82,57 @@ export default function ProfilePage() {
     } finally {
       setIsSubmitting(false);
       window.location.reload();
+    }
+  }
+
+  const submitNewPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setError(null);
+    setValidation(null);
+    setIsSubmitting(true);
+
+    const validate = validateNewPassword();
+    if (validate) return setError(validate);
+
+    try {
+      console.log(passwordFormData);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      if (!token) {
+        setIsSubmitting(false);
+        return setError("You need to be logged in.");
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/edit_password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(passwordFormData)
+      });
+
+      if (!res.ok) {
+        if (res.status === 400) return setError("Your old password is incorrect");
+        if (res.status === 401) return setError("Some data are missing");
+        if (res.status === 409) return setError("Both passwords must match");
+        if (res.status === 500) return setError("Failed to update the password");
+      }
+
+      const data = await res.json();
+
+      if (data.status === 400) return setError("Your old password is incorrect");
+
+      setError(null);
+      setPasswordFormData({
+        old_password: "",
+        new_password: "",
+        confirm_new_password: "",
+      })
+      setShowPassword(false);
+      return setValidation("Password changed successfully");
+    } catch (error) {
+      console.error(error);
+      return setError("Failed to update the password");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -87,6 +158,39 @@ export default function ProfilePage() {
     }
   }, [setUser]);
 
+  const switchTab = (tab: "fullname" | "password") => {
+    // Reset Forms
+    setFullNameFormData({
+      first_name: user?.first_name ?? "",
+      last_name: user?.last_name ?? "",
+    });
+    setPasswordFormData({
+      old_password: "",
+      new_password: "",
+      confirm_new_password: ""
+    });
+
+    setError(null);
+    setValidation(null);
+    setCurrentTab(tab);
+  }
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const focusableRefs = currentTab === "fullname" ? [firstNameRef, lastNameRef, submitBtnRef] : [oldPasswordRef, newPasswordRef, confirmNewPasswordRef, submitBtnRef];
+    const elements = focusableRefs.map(r => r.current).filter(Boolean) as HTMLElement[];
+    if (!elements.length) return;
+    const first = elements[0];
+    const last = elements[elements.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, [firstNameRef, lastNameRef, oldPasswordRef, newPasswordRef, confirmNewPasswordRef, submitBtnRef, currentTab]);
+
   useEffect(() => {
     getUserAccess().then((res) => {
       if (res === 1) {
@@ -98,7 +202,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      setFormData(prev => {
+      setFullNameFormData(prev => {
         const userFirst = user.first_name || "";
         const userLast = user.last_name || "";
         if (prev.first_name !== "" || prev.last_name !== "") return prev;
@@ -107,7 +211,7 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
+  const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
 
   return (
     <>
@@ -168,111 +272,298 @@ export default function ProfilePage() {
                   </Link>
                 </motion.button>
 
-                <div className={'flex flex-col md:flex-row justify-center gap-2'}>
-                  {/* Profile Info */}
-                  <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
-                    <h1>
-                      Welcome,{' '}
-                      {user.first_name && user.last_name
-                        ? `${user.first_name} ${user.last_name}`
-                        : user.username}
-                    </h1>
+                <AnimatePresence>
+                  <motion.div className='z-110 flex items-center justify-center' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18, ease: 'easeOut' }}>
+                    <motion.div
+                      ref={containerRef}
+                      role='dialog'
+                      aria-modal='true'
+                      aria-labelledby='login-title'
+                      onKeyDown={handleKeyDown}
+                      className={' z-10'}
+                      initial={{ y: 28, opacity: 0, scale: 0.94 }}
+                      animate={{ y: 0, opacity: 1, scale: 1 }}
+                      exit={{ y: 16, opacity: 0, scale: 0.97 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
+                      layout
+                    >
+                      <div className={'grid grid-cols-1 md:grid-cols-5 justify-center gap-2'}>
+                        {/* Profile Info */}
+                        <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit col-span-1 md:col-span-2">
+                          <h1>
+                            Welcome,{' '}
+                            {user.first_name && user.last_name
+                              ? `${user.first_name} ${user.last_name}`
+                              : user.username}
+                          </h1>
 
-                    <form className="flex flex-col gap-5 text-background" onSubmit={editProfile}>
-                      {error && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
-                          role="alert"
-                        >
-                          {error}
-                        </motion.div>
-                      )}
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={currentTab}
+                              initial={{ opacity: 0, y: 8, scale: 0.995 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -8, scale: 0.995 }}
+                              transition={{ duration: 0.18, ease: 'easeOut' }}
+                              className="flex flex-col gap-5 text-background"
+                            >
+                              {/* Edit full name */}
+                              {currentTab === "fullname" && (
+                                <form className="flex flex-col gap-5 text-background" onSubmit={editProfile}>
+                                  {error && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -6 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -4 }}
+                                      className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
+                                      role="alert"
+                                    >
+                                      {error}
+                                    </motion.div>
+                                  )}
 
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium" htmlFor="first_name">
-                          First Name
-                        </label>
-                        <input
-                          type="text"
-                          id="first_name"
-                          value={formData.first_name}
-                          onChange={(e) =>
-                            setFormData((p) => ({ ...p, first_name: e.target.value }))
-                          }
-                          placeholder="John"
-                          autoComplete="first_name"
-                          className={inputBase}
-                          disabled={isSubmitting}
-                          aria-required="true"
-                        />
-                      </div>
+                                  {validation && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -6 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -4 }}
+                                      className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
+                                      role='alert'
+                                    >
+                                      {validation}
+                                    </motion.div>
+                                  )}
 
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium" htmlFor="last_name">
-                          Last Name
-                        </label>
-                        <input
-                          type="text"
-                          id="last_name"
-                          value={formData.last_name}
-                          onChange={(e) =>
-                            setFormData((p) => ({ ...p, last_name: e.target.value }))
-                          }
-                          placeholder="Doe"
-                          autoComplete="last_name"
-                          className={inputBase}
-                          disabled={isSubmitting}
-                          aria-required="true"
-                        />
-                      </div>
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium" htmlFor="first_name">
+                                      First Name
+                                    </label>
+                                    <input
+                                      ref={firstNameRef}
+                                      type="text"
+                                      id="first_name"
+                                      value={fullNameFormData.first_name}
+                                      onChange={(e) =>
+                                        setFullNameFormData((p) => ({ ...p, first_name: e.target.value }))
+                                      }
+                                      placeholder="John"
+                                      autoComplete="first_name"
+                                      className={inputBase}
+                                      disabled={isSubmitting}
+                                      aria-required="true"
+                                    />
+                                  </div>
 
-                      <button
-                        type="submit"
-                        disabled={
-                          isSubmitting ||
-                          (!formData.first_name && !formData.last_name) ||
-                          (formData.first_name === user.first_name &&
-                            formData.last_name === user.last_name)
-                        }
-                        className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
-                      >
-                        {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                        <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
-                      </button>
-                      <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
-                        <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
-                        disabled={isSubmitting}
-                      >
-                        Change my password
-                        <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium" htmlFor="last_name">
+                                      Last Name
+                                    </label>
+                                    <input
+                                      ref={lastNameRef}
+                                      type="text"
+                                      id="last_name"
+                                      value={fullNameFormData.last_name}
+                                      onChange={(e) =>
+                                        setFullNameFormData((p) => ({ ...p, last_name: e.target.value }))
+                                      }
+                                      placeholder="Doe"
+                                      autoComplete="last_name"
+                                      className={inputBase}
+                                      disabled={isSubmitting}
+                                      aria-required="true"
+                                    />
+                                  </div>
+
+                                  <button
+                                    ref={submitBtnRef}
+                                    type="submit"
+                                    disabled={
+                                      isSubmitting ||
+                                      (!fullNameFormData.first_name && !fullNameFormData.last_name) ||
+                                      (fullNameFormData.first_name === user.first_name &&
+                                        fullNameFormData.last_name === user.last_name)
+                                    }
+                                    className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
+                                  >
+                                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+                                  </button>
+                                  <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
+                                    <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
+                                    disabled={isSubmitting}
+                                    onClick={() => switchTab("password")}
+                                  >
+                                    Change my password
+                                    <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
                           <ChevronRight className="w-4 h-4" />
                         </span>
-                      </button>
-                    </form>
-                  </div>
+                                  </button>
+                                </form>
+                              )}
 
-                  {/* Saved Articles */}
-                  <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] overflow-y-auto">
-                    <h2>Saved Articles</h2>
+                              {/* Edit password */}
+                              {currentTab === "password" && (
+                                <form className="flex flex-col gap-5 text-background" onSubmit={submitNewPassword}>
+                                  {error && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -6 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -4 }}
+                                      className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
+                                      role="alert"
+                                    >
+                                      {error}
+                                    </motion.div>
+                                  )}
 
-                    {user.saved_articles &&
-                      user.saved_articles.map((document: Document) => (
-                        <DocumentCard
-                          key={document.id}
-                          document={document}
-                          username={user.username ?? undefined}
-                          isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
-                        />
-                      ))}
-                  </div>
-                </div>
+                                  {validation && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -6 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -4 }}
+                                      className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
+                                      role='alert'
+                                    >
+                                      {validation}
+                                    </motion.div>
+                                  )}
+
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium" htmlFor="old_password">
+                                      Old Password
+                                    </label>
+                                    <div className='relative'>
+                                      <input
+                                        ref={oldPasswordRef}
+                                        type={showPassword ? 'text' : 'password'}
+                                        id='old_password'
+                                        value={passwordFormData.old_password}
+                                        onChange={(e) => setPasswordFormData(p => ({ ...p, old_password: e.target.value }))}
+                                        placeholder={showPassword ? "password" : "********"}
+                                        autoComplete='old_password'
+                                        className={inputBase + ' w-full pr-8'}
+                                        disabled={isSubmitting}
+                                        aria-required='true'
+                                      />
+                                      <button
+                                        type='button'
+                                        onClick={() => setShowPassword(s => !s)}
+                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        tabIndex={-1}
+                                      >
+                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium" htmlFor="new_password">
+                                      New Password
+                                    </label>
+                                    <div className='relative'>
+                                      <input
+                                        ref={newPasswordRef}
+                                        type={showPassword ? 'text' : 'password'}
+                                        id='new_password'
+                                        value={passwordFormData.new_password}
+                                        onChange={(e) => setPasswordFormData(p => ({ ...p, new_password: e.target.value }))}
+                                        placeholder={showPassword ? "password" : "********"}
+                                        autoComplete='new_password'
+                                        className={inputBase + ' w-full pr-8'}
+                                        disabled={isSubmitting}
+                                        aria-required='true'
+                                      />
+                                      <button
+                                        type='button'
+                                        onClick={() => setShowPassword(s => !s)}
+                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        tabIndex={-1}
+                                      >
+                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium" htmlFor="confirm_new_password">
+                                      Confirm New Password
+                                    </label>
+                                    <div className='relative'>
+                                      <input
+                                        ref={confirmNewPasswordRef}
+                                        type={showPassword ? 'text' : 'password'}
+                                        id='confirm_new_password'
+                                        value={passwordFormData.confirm_new_password}
+                                        onChange={(e) => setPasswordFormData(p => ({ ...p, confirm_new_password: e.target.value }))}
+                                        placeholder={showPassword ? "password" : "********"}
+                                        autoComplete='confirm_new_password'
+                                        className={inputBase + ' w-full pr-8'}
+                                        disabled={isSubmitting}
+                                        aria-required='true'
+                                      />
+                                      <button
+                                        type='button'
+                                        onClick={() => setShowPassword(s => !s)}
+                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        tabIndex={-1}
+                                      >
+                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    type="submit"
+                                    disabled={isSubmitting || !passwordFormData.old_password || !passwordFormData.new_password || !passwordFormData.confirm_new_password}
+                                    className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
+                                  >
+                                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+                                  </button>
+                                  <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
+                                    <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
+                                    disabled={isSubmitting}
+                                    onClick={() => switchTab("fullname")}
+                                  >
+                                    Edit my full name
+                                    <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
+                                  <ChevronRight className="w-4 h-4" />
+                                </span>
+                                  </button>
+                                </form>
+                              )}
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Saved Articles */}
+                        <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] overflow-y-auto col-span-1 md:col-span-3">
+                          <h2>Saved Articles</h2>
+
+                          {user.saved_articles &&
+                            user.saved_articles.map((document: Document) => (
+                              <DocumentCard
+                                key={document.id}
+                                document={document}
+                                username={user.username ?? undefined}
+                                isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                </AnimatePresence>
               </>
             )}
           </main>

@@ -1,4 +1,4 @@
-import { useState, FormEvent, useRef, useEffect, useCallback } from 'react';
+import React, { useState, FormEvent, useRef, useEffect, useCallback } from 'react';
 import { X, ChevronRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { motion, AnimatePresence } from 'motion/react';
