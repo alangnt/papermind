@@ -116,7 +116,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     checkToken().then((data) => {
-      if (data == 1) {
+      if (data === 1) {
         router.replace('/');
       } else {
         setUserEmail(data as string);

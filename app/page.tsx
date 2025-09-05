@@ -350,13 +350,14 @@ export default function App() {
             />
             <div className="flex justify-between items-center gap-4">
               <div className="flex flex-col md:flex-row md:items-end gap-2 p-1 text-xs md:place-self-end">
-                <div
+                <button
+                  type={'button'}
                   className="flex gap-1 items-center hover:underline transition cursor-pointer"
                   onClick={() => setSearchType(searchType === 'manual' ? 'ai' : 'manual')}
                 >
                   {searchType === 'manual' ? 'Non-AI' : 'AI'}{' '}
                   <ArrowLeftRight className="w-3 h-3"></ArrowLeftRight>
-                </div>
+                </button>
 
                 <span className="text-xs text-gray-400 max-md:hidden">|</span>
 

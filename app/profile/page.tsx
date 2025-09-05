@@ -81,7 +81,7 @@ export default function ProfilePage() {
       setError("Failed to update the user");
     } finally {
       setIsSubmitting(false);
-      window.location.reload();
+      router.refresh();
     }
   }
 
@@ -96,7 +96,6 @@ export default function ProfilePage() {
     if (validate) return setError(validate);
 
     try {
-      console.log(passwordFormData);
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (!token) {
         setIsSubmitting(false);

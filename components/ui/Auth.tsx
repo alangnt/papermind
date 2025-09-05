@@ -127,6 +127,11 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       if (data.detail.code === 2002) return setError('Email is already taken');
       if (data.detail.code === 2003) return setError('Passwords don\'t correspond');
 
+      if (!res.ok) {
+        // Fallback error message if structure is not as expected
+        return setError(data?.detail?.message || 'Sign up failed');
+      }
+
       localStorage.setItem('access_token', data.access_token);
       if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
       onLoggedIn?.();
@@ -361,7 +366,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
                     value={signUpFormData.password}
                     onChange={(e) => setSignUpFormData(p => ({ ...p, password: e.target.value }))}
                     placeholder={showPassword ? "password" : "********"}
-                    autoComplete='current-password'
+                    autoComplete='new-password'
                     className={inputBase + ' w-full pr-8'}
                     disabled={isSubmitting}
                     aria-required='true'
@@ -387,7 +392,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
                     value={signUpFormData.confirm_password}
                     onChange={(e) => setSignUpFormData(p => ({ ...p, confirm_password: e.target.value }))}
                     placeholder={showPassword ? "password" : "********"}
-                    autoComplete='current-password'
+                    autoComplete='new-password'
                     className={inputBase + ' w-full pr-8'}
                     disabled={isSubmitting}
                     aria-required='true'
