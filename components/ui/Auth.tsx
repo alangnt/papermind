@@ -413,7 +413,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
                   ref={submitBtnRef}
                   type='submit'
                   disabled={isSubmitting}
-                  className='inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-foreground text-background text-sm font-medium hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-foreground/40 transition cursor-pointer'
+                  className='inli  ne-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-foreground text-background text-sm font-medium hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-foreground/40 transition cursor-pointer'
                 >
                   {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
                   <span>{isSubmitting ? 'Signing up...' : 'Sign up'}</span>

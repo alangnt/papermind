@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, FormEvent, useRef, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ChevronRight, Home, ArrowRight, EyeOff, Eye } from 'lucide-react';
+import { Loader2, ChevronRight, Home, ArrowRight, EyeOff, Eye, Plus, EllipsisVertical } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 import DocumentCard from '@/components/cards/DocumentCard';
 import { GooeyEffect } from "@/components/effects/GooeyEffect";
@@ -210,6 +211,16 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // TODO: Remove when fetched from the back
+  const [communities, setCommunities] = useState<{ name: string; description: string; members: number }[]>([
+    { name: "Name of the community", description: "This is a small description of a community", members: 10 }
+  ]);
+
+  // TODO: Refacto when fetched from the back
+  const handleAddCommunity = () => {
+    setCommunities([...communities, { name: "Name of the community", description: "This is a small description of a community", members: 10 }]);
+  }
+
   const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
 
   return (
@@ -287,263 +298,311 @@ export default function ProfilePage() {
                       layout
                     >
                       <div className={'grid grid-cols-1 md:grid-cols-5 justify-center gap-2'}>
-                        {/* Profile Info */}
-                        <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit col-span-1 md:col-span-2">
-                          <h1>
-                            Welcome,{' '}
-                            {user.first_name && user.last_name
-                              ? `${user.first_name} ${user.last_name}`
-                              : user.username}
-                          </h1>
+                        <div className={'col-span-1 md:col-span-2 space-y-2'}>
+                          {/* Profile Info */}
+                          <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit">
+                            <h1>
+                              Welcome,{' '}
+                              {user.first_name && user.last_name
+                                ? `${user.first_name} ${user.last_name}`
+                                : user.username}
+                            </h1>
 
-                          <AnimatePresence mode="wait">
-                            <motion.div
-                              key={currentTab}
-                              initial={{ opacity: 0, y: 8, scale: 0.995 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: -8, scale: 0.995 }}
-                              transition={{ duration: 0.18, ease: 'easeOut' }}
-                              className="flex flex-col gap-5 text-background"
-                            >
-                              {/* Edit full name */}
-                              {currentTab === "fullname" && (
-                                <form className="flex flex-col gap-5 text-background" onSubmit={editProfile}>
-                                  {error && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: -6 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      exit={{ opacity: 0, y: -4 }}
-                                      className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
-                                      role="alert"
-                                    >
-                                      {error}
-                                    </motion.div>
-                                  )}
+                            <AnimatePresence mode="wait">
+                              <motion.div
+                                key={currentTab}
+                                initial={{ opacity: 0, y: 8, scale: 0.995 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -8, scale: 0.995 }}
+                                transition={{ duration: 0.18, ease: 'easeOut' }}
+                                className="flex flex-col gap-5 text-background"
+                              >
+                                {/* Edit full name */}
+                                {currentTab === "fullname" && (
+                                  <form className="flex flex-col gap-5 text-background" onSubmit={editProfile}>
+                                    {error && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -4 }}
+                                        className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
+                                        role="alert"
+                                      >
+                                        {error}
+                                      </motion.div>
+                                    )}
 
-                                  {validation && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: -6 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      exit={{ opacity: 0, y: -4 }}
-                                      className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
-                                      role='alert'
-                                    >
-                                      {validation}
-                                    </motion.div>
-                                  )}
+                                    {validation && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -4 }}
+                                        className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
+                                        role='alert'
+                                      >
+                                        {validation}
+                                      </motion.div>
+                                    )}
 
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="first_name">
-                                      First Name
-                                    </label>
-                                    <input
-                                      ref={firstNameRef}
-                                      type="text"
-                                      id="first_name"
-                                      value={fullNameFormData.first_name}
-                                      onChange={(e) =>
-                                        setFullNameFormData((p) => ({ ...p, first_name: e.target.value }))
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-xs font-medium" htmlFor="first_name">
+                                        First Name
+                                      </label>
+                                      <input
+                                        ref={firstNameRef}
+                                        type="text"
+                                        id="first_name"
+                                        value={fullNameFormData.first_name}
+                                        onChange={(e) =>
+                                          setFullNameFormData((p) => ({ ...p, first_name: e.target.value }))
+                                        }
+                                        placeholder="John"
+                                        autoComplete="first_name"
+                                        className={inputBase}
+                                        disabled={isSubmitting}
+                                        aria-required="true"
+                                      />
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-xs font-medium" htmlFor="last_name">
+                                        Last Name
+                                      </label>
+                                      <input
+                                        ref={lastNameRef}
+                                        type="text"
+                                        id="last_name"
+                                        value={fullNameFormData.last_name}
+                                        onChange={(e) =>
+                                          setFullNameFormData((p) => ({ ...p, last_name: e.target.value }))
+                                        }
+                                        placeholder="Doe"
+                                        autoComplete="last_name"
+                                        className={inputBase}
+                                        disabled={isSubmitting}
+                                        aria-required="true"
+                                      />
+                                    </div>
+
+                                    <button
+                                      ref={submitBtnRef}
+                                      type="submit"
+                                      disabled={
+                                        isSubmitting ||
+                                        (!fullNameFormData.first_name && !fullNameFormData.last_name) ||
+                                        (fullNameFormData.first_name === user.first_name &&
+                                          fullNameFormData.last_name === user.last_name)
                                       }
-                                      placeholder="John"
-                                      autoComplete="first_name"
-                                      className={inputBase}
+                                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
+                                    >
+                                      {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                      <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+                                    </button>
+                                    <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
+                                      <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
                                       disabled={isSubmitting}
-                                      aria-required="true"
-                                    />
-                                  </div>
-
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="last_name">
-                                      Last Name
-                                    </label>
-                                    <input
-                                      ref={lastNameRef}
-                                      type="text"
-                                      id="last_name"
-                                      value={fullNameFormData.last_name}
-                                      onChange={(e) =>
-                                        setFullNameFormData((p) => ({ ...p, last_name: e.target.value }))
-                                      }
-                                      placeholder="Doe"
-                                      autoComplete="last_name"
-                                      className={inputBase}
-                                      disabled={isSubmitting}
-                                      aria-required="true"
-                                    />
-                                  </div>
-
-                                  <button
-                                    ref={submitBtnRef}
-                                    type="submit"
-                                    disabled={
-                                      isSubmitting ||
-                                      (!fullNameFormData.first_name && !fullNameFormData.last_name) ||
-                                      (fullNameFormData.first_name === user.first_name &&
-                                        fullNameFormData.last_name === user.last_name)
-                                    }
-                                    className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
-                                  >
-                                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
-                                  </button>
-                                  <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
-                                    <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
-                                    disabled={isSubmitting}
-                                    onClick={() => switchTab("password")}
-                                  >
-                                    Change my password
-                                    <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
+                                      onClick={() => switchTab("password")}
+                                    >
+                                      Change my password
+                                      <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
                           <ChevronRight className="w-4 h-4" />
                         </span>
-                                  </button>
-                                </form>
-                              )}
+                                    </button>
+                                  </form>
+                                )}
 
-                              {/* Edit password */}
-                              {currentTab === "password" && (
-                                <form className="flex flex-col gap-5 text-background" onSubmit={submitNewPassword}>
-                                  {error && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: -6 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      exit={{ opacity: 0, y: -4 }}
-                                      className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
-                                      role="alert"
+                                {/* Edit password */}
+                                {currentTab === "password" && (
+                                  <form className="flex flex-col gap-5 text-background" onSubmit={submitNewPassword}>
+                                    {error && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -4 }}
+                                        className="text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
+                                        role="alert"
+                                      >
+                                        {error}
+                                      </motion.div>
+                                    )}
+
+                                    {validation && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -4 }}
+                                        className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
+                                        role='alert'
+                                      >
+                                        {validation}
+                                      </motion.div>
+                                    )}
+
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-xs font-medium" htmlFor="old_password">
+                                        Old Password
+                                      </label>
+                                      <div className='relative'>
+                                        <input
+                                          ref={oldPasswordRef}
+                                          type={showPassword ? 'text' : 'password'}
+                                          id='old_password'
+                                          value={passwordFormData.old_password}
+                                          onChange={(e) => setPasswordFormData(p => ({ ...p, old_password: e.target.value }))}
+                                          placeholder={showPassword ? "password" : "********"}
+                                          autoComplete='old_password'
+                                          className={inputBase + ' w-full pr-8'}
+                                          disabled={isSubmitting}
+                                          aria-required='true'
+                                        />
+                                        <button
+                                          type='button'
+                                          onClick={() => setShowPassword(s => !s)}
+                                          className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
+                                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                          tabIndex={-1}
+                                        >
+                                          {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-xs font-medium" htmlFor="new_password">
+                                        New Password
+                                      </label>
+                                      <div className='relative'>
+                                        <input
+                                          ref={newPasswordRef}
+                                          type={showPassword ? 'text' : 'password'}
+                                          id='new_password'
+                                          value={passwordFormData.new_password}
+                                          onChange={(e) => setPasswordFormData(p => ({ ...p, new_password: e.target.value }))}
+                                          placeholder={showPassword ? "password" : "********"}
+                                          autoComplete='new_password'
+                                          className={inputBase + ' w-full pr-8'}
+                                          disabled={isSubmitting}
+                                          aria-required='true'
+                                        />
+                                        <button
+                                          type='button'
+                                          onClick={() => setShowPassword(s => !s)}
+                                          className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
+                                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                          tabIndex={-1}
+                                        >
+                                          {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                      <label className="text-xs font-medium" htmlFor="confirm_new_password">
+                                        Confirm New Password
+                                      </label>
+                                      <div className='relative'>
+                                        <input
+                                          ref={confirmNewPasswordRef}
+                                          type={showPassword ? 'text' : 'password'}
+                                          id='confirm_new_password'
+                                          value={passwordFormData.confirm_new_password}
+                                          onChange={(e) => setPasswordFormData(p => ({ ...p, confirm_new_password: e.target.value }))}
+                                          placeholder={showPassword ? "password" : "********"}
+                                          autoComplete='confirm_new_password'
+                                          className={inputBase + ' w-full pr-8'}
+                                          disabled={isSubmitting}
+                                          aria-required='true'
+                                        />
+                                        <button
+                                          type='button'
+                                          onClick={() => setShowPassword(s => !s)}
+                                          className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
+                                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                          tabIndex={-1}
+                                        >
+                                          {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="submit"
+                                      disabled={isSubmitting || !passwordFormData.old_password || !passwordFormData.new_password || !passwordFormData.confirm_new_password}
+                                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
                                     >
-                                      {error}
-                                    </motion.div>
-                                  )}
-
-                                  {validation && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: -6 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      exit={{ opacity: 0, y: -4 }}
-                                      className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
-                                      role='alert'
+                                      {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                      <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+                                    </button>
+                                    <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
+                                      <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
+                                      disabled={isSubmitting}
+                                      onClick={() => switchTab("fullname")}
                                     >
-                                      {validation}
-                                    </motion.div>
-                                  )}
-
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="old_password">
-                                      Old Password
-                                    </label>
-                                    <div className='relative'>
-                                      <input
-                                        ref={oldPasswordRef}
-                                        type={showPassword ? 'text' : 'password'}
-                                        id='old_password'
-                                        value={passwordFormData.old_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, old_password: e.target.value }))}
-                                        placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='old_password'
-                                        className={inputBase + ' w-full pr-8'}
-                                        disabled={isSubmitting}
-                                        aria-required='true'
-                                      />
-                                      <button
-                                        type='button'
-                                        onClick={() => setShowPassword(s => !s)}
-                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                        tabIndex={-1}
-                                      >
-                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="new_password">
-                                      New Password
-                                    </label>
-                                    <div className='relative'>
-                                      <input
-                                        ref={newPasswordRef}
-                                        type={showPassword ? 'text' : 'password'}
-                                        id='new_password'
-                                        value={passwordFormData.new_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, new_password: e.target.value }))}
-                                        placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='new_password'
-                                        className={inputBase + ' w-full pr-8'}
-                                        disabled={isSubmitting}
-                                        aria-required='true'
-                                      />
-                                      <button
-                                        type='button'
-                                        onClick={() => setShowPassword(s => !s)}
-                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                        tabIndex={-1}
-                                      >
-                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="confirm_new_password">
-                                      Confirm New Password
-                                    </label>
-                                    <div className='relative'>
-                                      <input
-                                        ref={confirmNewPasswordRef}
-                                        type={showPassword ? 'text' : 'password'}
-                                        id='confirm_new_password'
-                                        value={passwordFormData.confirm_new_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, confirm_new_password: e.target.value }))}
-                                        placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='confirm_new_password'
-                                        className={inputBase + ' w-full pr-8'}
-                                        disabled={isSubmitting}
-                                        aria-required='true'
-                                      />
-                                      <button
-                                        type='button'
-                                        onClick={() => setShowPassword(s => !s)}
-                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                        tabIndex={-1}
-                                      >
-                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  <button
-                                    type="submit"
-                                    disabled={isSubmitting || !passwordFormData.old_password || !passwordFormData.new_password || !passwordFormData.confirm_new_password}
-                                    className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
-                                  >
-                                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
-                                  </button>
-                                  <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
-                                    <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
-                                    disabled={isSubmitting}
-                                    onClick={() => switchTab("fullname")}
-                                  >
-                                    Edit my full name
-                                    <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
+                                      Edit my full name
+                                      <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
                                   <ChevronRight className="w-4 h-4" />
                                 </span>
-                                  </button>
-                                </form>
-                              )}
-                            </motion.div>
-                          </AnimatePresence>
+                                    </button>
+                                  </form>
+                                )}
+                              </motion.div>
+                            </AnimatePresence>
+
+                            <AnimatePresence>
+
+                            </AnimatePresence>
+                          </div>
+
+                          {/* Communities */}
+                          <div className={"flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit max-h-[50vh]"}>
+                            <div className="flex items-center justify-between">
+                              <h2>Communities</h2>
+
+                              <button
+                                onClick={() => handleAddCommunity()}
+                                className={"bg-background text-foreground p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition"}
+                              >
+                                <Plus className={"w-4 h-4"} />
+                              </button>
+                            </div>
+
+                            <div className={"flex flex-col gap-2 overflow-y-auto pt-1"}>
+                              {communities.map((community, index) => (
+                                <motion.article
+                                  key={index}
+                                  layout
+                                  initial={{ opacity: 0, y: 16 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  whileHover={{ y: -4 }}
+                                  transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                                  className="group relative flex flex-col justify-between bg-foreground border border-gray-700 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-colors duration-200 text-white space-y-4"
+                                  aria-label={`Community card`}
+                                >
+                                  <div className={"flex items-center justify-between gap-2"}>
+                                    <div className={"grow"}>
+                                      <h3 className={"text-sm"}>{community.name}</h3>
+                                      <h4 className={"text-xs text-gray-300"}>{community.description}</h4>
+                                      <h5 className={"text-xs text-gray-400"}>{community.members + ' member' + (community.members > 1 ? 's' : '')}</h5>
+                                    </div>
+
+                                    <button className={"p-2 rounded-lg cursor-pointer hover:bg-gray-800 transition"}>
+                                      <EllipsisVertical className={"w-4 h-4"} />
+                                    </button>
+                                  </div>
+                                </motion.article>
+                              ))}
+                            </div>
+                          </div>
                         </div>
+
 
                         {/* Saved Articles */}
                         <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] overflow-y-auto col-span-1 md:col-span-3">
