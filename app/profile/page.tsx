@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Loader2, ChevronRight, Home, ArrowRight, EyeOff, Eye, Plus, EllipsisVertical } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import DocumentCard from '@/components/cards/DocumentCard';
 import { GooeyEffect } from "@/components/effects/GooeyEffect";
