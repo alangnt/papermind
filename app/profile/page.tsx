@@ -604,18 +604,20 @@ export default function ProfilePage() {
 
 
                         {/* Saved Articles */}
-                        <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] overflow-y-auto col-span-1 md:col-span-3">
+                        <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] col-span-1 md:col-span-3">
                           <h2>Saved Articles</h2>
 
-                          {user.saved_articles &&
-                            user.saved_articles.map((document: Document) => (
-                              <DocumentCard
-                                key={document.id}
-                                document={document}
-                                username={user.username ?? undefined}
-                                isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
-                              />
-                            ))}
+                          <div className={"flex flex-col gap-2 overflow-y-auto pt-1"}>
+                            {user.saved_articles &&
+                              user.saved_articles.map((document: Document) => (
+                                <DocumentCard
+                                  key={document.id}
+                                  document={document}
+                                  username={user.username ?? undefined}
+                                  isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
+                                />
+                              ))}
+                          </div>
                         </div>
                       </div>
                     </motion.div>
