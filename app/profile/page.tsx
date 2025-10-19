@@ -220,6 +220,14 @@ export default function ProfilePage() {
     setCommunities([...communities, { name: "Name of the community", description: "This is a small description of a community", members: 10 }]);
   }
 
+  // TODO: Refacto when fetched from the back
+  const [folders, setFolders] = useState<{ name: string; description: string; articles: number }[]>([]);
+
+  // TODO: Refacto when fetched from the back
+  const handleAddFolder = () => {
+    setFolders([...folders, { name: "Name of the folder", description: "This is a small description of a folder", articles: 10 }]);
+  }
+
   const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
 
   return (
@@ -605,9 +613,44 @@ export default function ProfilePage() {
 
                         {/* Saved Articles */}
                         <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] col-span-1 md:col-span-3">
-                          <h2>Saved Articles</h2>
+                          <div className="flex items-center justify-between">
+                            <h2>Saved articles</h2>
 
+                            <button
+                              onClick={() => handleAddFolder()}
+                              className={"bg-background text-foreground p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition"}
+                            >
+                              <Plus className={"w-4 h-4"} />
+                            </button>
+                          </div>
+
+                          {/* Articles and folders */}
                           <div className={"flex flex-col gap-2 overflow-y-auto pt-1"}>
+                            {folders.map((folder, index) => (
+                              <motion.article
+                                key={index}
+                                layout
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                whileHover={{ y: -4 }}
+                                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                                className="group relative flex flex-col justify-between bg-foreground border border-gray-700 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-colors duration-200 text-white space-y-4"
+                                aria-label={`Folder card`}
+                              >
+                                <div className={"flex items-center justify-between gap-2"}>
+                                  <div className={"grow"}>
+                                    <h3 className={"text-sm"}>{folder.name}</h3>
+                                    <h4 className={"text-xs text-gray-300"}>{folder.description}</h4>
+                                    <h5 className={"text-xs text-gray-400"}>{folder.articles + ' member' + (folder.articles > 1 ? 's' : '')}</h5>
+                                  </div>
+
+                                  <button className={"p-2 rounded-lg cursor-pointer hover:bg-gray-800 transition"}>
+                                    <EllipsisVertical className={"w-4 h-4"} />
+                                  </button>
+                                </div>
+                              </motion.article>
+                            ))}
+
                             {user.saved_articles &&
                               user.saved_articles.map((document: Document) => (
                                 <DocumentCard
