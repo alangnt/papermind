@@ -3,17 +3,14 @@ import { clearAuthCookies } from '@/lib/cookies';
 
 export async function POST(req: NextRequest) {
   try {
-    // Clear authentication cookies
-    const [clearAccess, clearRefresh] = clearAuthCookies();
-
     const response = NextResponse.json(
       { message: 'Logged out successfully' },
       { status: 200 }
     );
 
-    // Clear cookies in response
-    response.headers.append('Set-Cookie', clearAccess);
-    response.headers.append('Set-Cookie', clearRefresh);
+    // Clear cookies using Next.js cookies API
+    response.cookies.delete('access_token');
+    response.cookies.delete('refresh_token');
 
     return response;
   } catch (error) {

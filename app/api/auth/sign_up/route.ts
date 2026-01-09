@@ -100,9 +100,6 @@ export async function POST(req: NextRequest) {
     const access_token = createAccessToken({ sub: username });
     const refresh_token = createRefreshToken({ sub: username });
 
-    // Create secure cookies
-    const [accessCookie, refreshCookie] = createAuthCookies(access_token, refresh_token);
-
     // Return success without tokens in body
     const response = NextResponse.json(
       { 
@@ -115,9 +112,24 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
 
-    // Set cookies in response
-    response.headers.append('Set-Cookie', accessCookie);
-    response.headers.append('Set-Cookie', refreshCookie);
+    // Set cookies using Next.js cookies API
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    response.cookies.set('access_token', access_token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 30 * 60,
+      path: '/',
+    });
+
+    response.cookies.set('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60,
+      path: '/',
+    });
 
     return response;
   } catch (error) {
