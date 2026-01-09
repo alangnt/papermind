@@ -3,9 +3,31 @@ import { withAuth } from '@/lib/middleware';
 import { getCollection } from '@/lib/mongodb';
 import { verifyPassword, hashPassword } from '@/lib/auth';
 import { EditPassword, UserInDB } from '@/types/models';
+import { validatePasswordStrength } from '@/lib/password';
+import { checkPasswordChangeRateLimit, getClientIp } from '@/lib/ratelimit';
 
 export const POST = withAuth(async (req: NextRequest, { user }) => {
   try {
+    // Rate limiting for password changes
+    const clientIp = getClientIp(req.headers);
+    const rateLimit = checkPasswordChangeRateLimit(user._id.toString());
+
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        { 
+          error: 'Too many password change attempts. Please try again later.',
+          retryAfter 
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': retryAfter.toString(),
+          }
+        }
+      );
+    }
+
     const body: EditPassword = await req.json();
     const { old_password, new_password, confirm_new_password } = body;
 
@@ -20,6 +42,18 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       return NextResponse.json(
         { error: 'The new passwords do not match' },
         { status: 409 }
+      );
+    }
+
+    // Validate new password strength
+    const passwordValidation = validatePasswordStrength(new_password);
+    if (!passwordValidation.isValid) {
+      return NextResponse.json(
+        { 
+          error: 'Password does not meet requirements',
+          details: passwordValidation.errors 
+        },
+        { status: 400 }
       );
     }
 
@@ -47,7 +81,12 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     const hashedPassword = await hashPassword(new_password);
     const result = await usersCollection.updateOne(
       { email: user.email },
-      { $set: { password: hashedPassword } }
+      { 
+        $set: { 
+          password: hashedPassword,
+          tokenVersion: (userWithPassword.tokenVersion || 0) + 1, // Invalidate all tokens
+        } 
+      }
     );
 
     if (result.modifiedCount === 0) {
@@ -58,7 +97,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     }
 
     return NextResponse.json({
-      message: 'Changed password',
+      message: 'Password changed successfully. Please sign in again.',
       status: 200,
     });
   } catch (error) {

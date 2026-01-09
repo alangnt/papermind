@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from './auth';
 import { getCollection } from './mongodb';
 import { User } from '@/types/models';
+import { getCookie } from './cookies';
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: User;
@@ -9,23 +10,30 @@ export interface AuthenticatedRequest extends NextRequest {
 
 /**
  * Higher-order function to protect API routes with authentication
- * Extracts JWT from Authorization header and verifies it
+ * Extracts JWT from cookies (primary) or Authorization header (fallback)
  */
 export function withAuth<T = any>(
   handler: (req: NextRequest, context: { user: User; params?: T }) => Promise<Response>
 ) {
   return async (req: NextRequest, context?: { params: T }): Promise<Response> => {
     try {
+      const cookieHeader = req.headers.get('cookie');
       const authHeader = req.headers.get('authorization');
       
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // Try to get token from cookies first (primary)
+      let token = getCookie(cookieHeader, 'access_token');
+      
+      // Fallback to Authorization header for API compatibility
+      if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      }
+
+      if (!token) {
         return NextResponse.json(
-          { error: 'Missing or invalid authorization header' },
+          { error: 'Missing or invalid authorization' },
           { status: 401 }
         );
       }
-
-      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
       
       let payload;
       try {

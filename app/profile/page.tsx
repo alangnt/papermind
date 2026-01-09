@@ -12,7 +12,7 @@ import { Waves } from "@/components/ui/WavesBackground";
 
 import { BaseUser } from "@/types/users";
 import { Document } from "@/types/documents";
-import { clearTokens, apiFetch } from '@/lib/api';
+import { logout, apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -144,7 +144,7 @@ export default function ProfilePage() {
       const res = await apiFetch('/api/users/me', { method: 'GET' });
 
       if (!res.ok) {
-        if (res.status === 401) clearTokens();
+        if (res.status === 401) logout();
         return 1;
       }
 

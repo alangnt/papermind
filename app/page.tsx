@@ -19,7 +19,7 @@ import Footer from '@/components/ui/Footer';
 import AuthComponent from '@/components/ui/Auth';
 import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
-import { apiFetch, clearTokens } from '@/lib/api';
+import { apiFetch, logout } from '@/lib/api';
 
 import { Document, SearchType, SystemType } from '@/types/documents';
 import { BaseUser } from '@/types/users';
@@ -53,7 +53,7 @@ export default function App() {
       const res = await apiFetch('/api/users/me', { method: 'GET' });
 
       if (!res.ok) {
-        if (res.status === 401) clearTokens();
+        if (res.status === 401) logout();
         return 1;
       }
 

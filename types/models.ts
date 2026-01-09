@@ -30,10 +30,18 @@ export interface User {
   updated_at: Date;
   disabled?: boolean;
   saved_articles?: Document[];
+  tokenVersion?: number;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | null;
+  emailVerified?: boolean;
 }
 
 export interface UserInDB extends User {
   password: string;
+  tokenVersion: number;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+  emailVerified: boolean;
 }
 
 // Auth models

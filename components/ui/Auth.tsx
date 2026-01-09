@@ -83,15 +83,20 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       body.set('grant_type', 'password');
       const res = await fetch('/api/auth/sign_in', {
         method: 'POST', 
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        credentials: 'include', // Important: Send/receive cookies
         body 
       });
+      
       if (!res.ok) {
-        return setError('Either your username or password is wrong');
+        const data = await res.json();
+        if (res.status === 429) {
+          return setError(data.error || 'Too many attempts. Please try again later.');
+        }
+        return setError(data.error || 'Sign in failed');
       }
-      const data = await res.json();
-      localStorage.setItem('access_token', data.access_token);
-      if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+      
+      // Success - tokens are now in HttpOnly cookies
       onLoggedIn?.();
       setIsAuthVisible(false);
     } catch (error) {
@@ -118,6 +123,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       const res = await fetch('/api/auth/sign_up', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Important: Send/receive cookies
         body: JSON.stringify(payload),
       });
 
@@ -128,12 +134,22 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         if (data.code === 2001) return setError('Username is already taken');
         if (data.code === 2002) return setError('Email is already taken');
         if (data.code === 2003) return setError('Passwords don\'t correspond');
+        
+        // Handle password validation errors
+        if (data.details && Array.isArray(data.details)) {
+          return setError(data.details.join('. '));
+        }
+        
+        // Rate limiting
+        if (res.status === 429) {
+          return setError(data.error || 'Too many attempts. Please try again later.');
+        }
+        
         // Fallback error message
-        return setError(data?.message || 'Sign up failed');
+        return setError(data?.message || data?.error || 'Sign up failed');
       }
 
-      localStorage.setItem('access_token', data.access_token);
-      if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+      // Success - tokens are now in HttpOnly cookies
       onLoggedIn?.();
       setIsAuthVisible(false);
     } catch (error) {
