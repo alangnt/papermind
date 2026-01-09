@@ -45,15 +45,10 @@ export default function App() {
   const controls = useAnimationControls();
 
   const getUserAccess = useCallback(async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-
-    if (!token) return 1;
-
     try {
       const res = await apiFetch('/api/users/me', { method: 'GET' });
 
       if (!res.ok) {
-        if (res.status === 401) logout();
         return 1;
       }
 
@@ -221,13 +216,11 @@ export default function App() {
     }
   };
 
-  const logout = async () => {
+  const handleLogout = async () => {
     if (!user || isSigningOut) return;
     setIsSigningOut(true);
     try {
-      // Optional delay to show spinner / animate
-      await new Promise<void>(res => setTimeout(res, 1000));
-      localStorage.removeItem('access_token');
+      await logout();
       setUser(null);
     } catch (error) {
       console.error(error);
@@ -385,7 +378,7 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-                  <div id="gooey-btn" className="relative flex items-center group z-80" style={{ filter: "url(#gooey-filter)" }} onClick={() => logout()}>
+                  <div id="gooey-btn" className="relative flex items-center group z-80" style={{ filter: "url(#gooey-filter)" }} onClick={() => handleLogout()}>
                     {!isSigningOut && (
                       <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-23 z-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

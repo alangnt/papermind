@@ -30,7 +30,6 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
     if (!isConnected || !username) return; // guard
     if (isSaving) return;
     setIsSaving(true);
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     const optimistic = !saved; // target state after action
     setSaved(optimistic);
     try {
@@ -39,8 +38,8 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
         method: optimistic ? 'POST' : 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: 'include', // Send cookies automatically
         body: JSON.stringify(
           optimistic
             ? { username, article: document }

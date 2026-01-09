@@ -96,15 +96,10 @@ export default function ProfilePage() {
     if (validate) return setError(validate);
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      if (!token) {
-        setIsSubmitting(false);
-        return setError("You need to be logged in.");
-      }
-
       const res = await fetch('/api/auth/edit_password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(passwordFormData)
       });
 
@@ -136,15 +131,10 @@ export default function ProfilePage() {
   }
 
   const getUserAccess = useCallback(async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-
-    if (!token) return 1;
-
     try {
       const res = await apiFetch('/api/users/me', { method: 'GET' });
 
       if (!res.ok) {
-        if (res.status === 401) logout();
         return 1;
       }
 
