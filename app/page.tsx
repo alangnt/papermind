@@ -50,7 +50,7 @@ export default function App() {
     if (!token) return 1;
 
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, { method: 'GET' });
+      const res = await apiFetch('/api/users/me', { method: 'GET' });
 
       if (!res.ok) {
         if (res.status === 401) clearTokens();
@@ -94,14 +94,14 @@ export default function App() {
     }
     let results;
     if (searchType === 'ai' && !nextPage) {
-      const vectorSearch = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/vector_search/`, {
+      const vectorSearch = await fetch('/api/vector_search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: aiResponse }),
       });
       results = await vectorSearch.json();
     } else {
-      const manualSearch = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_documents/`, {
+      const manualSearch = await fetch('/api/get_documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: aiResponse, page: targetPage }),
@@ -113,7 +113,7 @@ export default function App() {
     setIsNewPageLoading(false);
     setAreDocumentsLoading(false);
     if (!nextPage) {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/embed_documents/`, {
+      await fetch('/api/embed_documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: aiResponse }),

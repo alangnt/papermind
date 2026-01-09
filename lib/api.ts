@@ -1,7 +1,7 @@
 // lib/api.ts
 type FetchArgs = Parameters<typeof fetch>;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+const API_URL = ''; // Use relative paths for Next.js API routes
 let refreshInFlight: Promise<string | null> | null = null;
 
 export function getAccessToken() {

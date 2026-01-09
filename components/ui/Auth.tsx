@@ -81,7 +81,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
       body.set('username', signInFormData.username.trim());
       body.set('password', signInFormData.password);
       body.set('grant_type', 'password');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/sign_in`, {
+      const res = await fetch('/api/auth/sign_in', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
         body 
@@ -115,7 +115,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         password: signUpFormData.password,
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/sign_up`, {
+      const res = await fetch('/api/auth/sign_up', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -123,13 +123,13 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
 
       const data = await res.json();
 
-      if (data.detail.code === 2001) return setError('Username is already taken');
-      if (data.detail.code === 2002) return setError('Email is already taken');
-      if (data.detail.code === 2003) return setError('Passwords don\'t correspond');
-
       if (!res.ok) {
-        // Fallback error message if structure is not as expected
-        return setError(data?.detail?.message || 'Sign up failed');
+        // Check for specific error codes
+        if (data.code === 2001) return setError('Username is already taken');
+        if (data.code === 2002) return setError('Email is already taken');
+        if (data.code === 2003) return setError('Passwords don\'t correspond');
+        // Fallback error message
+        return setError(data?.message || 'Sign up failed');
       }
 
       localStorage.setItem('access_token', data.access_token);
@@ -152,7 +152,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/send_reset_password_link`, {
+      const res = await fetch('/api/auth/send_reset_password_link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(resetPasswordFormData),
