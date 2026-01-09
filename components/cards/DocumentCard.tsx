@@ -34,7 +34,7 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
     const optimistic = !saved; // target state after action
     setSaved(optimistic);
     try {
-      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/users/article`;
+      const endpoint = '/api/users/article';
       const res = await fetch(endpoint, {
         method: optimistic ? 'POST' : 'DELETE',
         headers: {

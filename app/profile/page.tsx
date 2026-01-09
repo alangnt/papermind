@@ -12,7 +12,7 @@ import { Waves } from "@/components/ui/WavesBackground";
 
 import { BaseUser } from "@/types/users";
 import { Document } from "@/types/documents";
-import { clearTokens, apiFetch } from '@/lib/api';
+import { logout, apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -57,7 +57,7 @@ export default function ProfilePage() {
         last_name: fullNameFormData.last_name.trim()
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/edit/`, {
+      const res = await fetch('/api/users/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -102,7 +102,7 @@ export default function ProfilePage() {
         return setError("You need to be logged in.");
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/edit_password`, {
+      const res = await fetch('/api/auth/edit_password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(passwordFormData)
@@ -141,10 +141,10 @@ export default function ProfilePage() {
     if (!token) return 1;
 
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me/`, { method: 'GET' });
+      const res = await apiFetch('/api/users/me', { method: 'GET' });
 
       if (!res.ok) {
-        if (res.status === 401) clearTokens();
+        if (res.status === 401) logout();
         return 1;
       }
 

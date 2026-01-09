@@ -1,63 +1,68 @@
 // lib/api.ts
 type FetchArgs = Parameters<typeof fetch>;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-let refreshInFlight: Promise<string | null> | null = null;
-
-export function getAccessToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
-}
-export function getRefreshToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('refresh_token');
-}
-export function setTokens(access: string, refresh?: string | null) {
-  localStorage.setItem('access_token', access);
-  if (refresh) localStorage.setItem('refresh_token', refresh);
-}
-export function clearTokens() {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-}
+const API_URL = ''; // Use relative paths for Next.js API routes
+let refreshInFlight: Promise<boolean> | null = null;
 
 /**
- * Calls /auth/refresh with the current refresh_token and returns the new access token.
- * Returns null if refresh fails.
+ * Check if user is authenticated by making a test request
+ * (cookies are automatically sent)
  */
-async function refreshAccessToken(): Promise<string | null> {
-  const rt = getRefreshToken();
-  if (!rt) return null;
-
+export async function isAuthenticated(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: rt }),
+    const res = await fetch('/api/users/me', {
+      credentials: 'include',
     });
-
-    if (!res.ok) return null;
-    const data = await res.json();
-    // backend returns { access_token, token_type, refresh_token }
-    setTokens(data.access_token, data.refresh_token ?? rt); // stateless flow keeps old RT
-    return data.access_token as string;
+    return res.ok;
   } catch {
-    return null;
+    return false;
   }
 }
 
 /**
- * Fetch that automatically attaches Authorization header,
+ * Clear authentication (logout)
+ */
+export async function logout(): Promise<void> {
+  // Call logout endpoint which will clear cookies
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+}
+
+/**
+ * Refresh access token using refresh token from cookies
+ * Returns true if successful, false otherwise
+ */
+async function refreshAccessToken(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/api/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include', // Send cookies
+    });
+
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch that automatically includes credentials (cookies),
  * and on 401 tries once to refresh & retry the original request.
  */
 export async function apiFetch(input: FetchArgs[0], init: FetchArgs[1] = {}): Promise<Response> {
-  const token = getAccessToken();
+  // Ensure credentials are included to send cookies
+  const requestInit = {
+    ...init,
+    credentials: 'include' as RequestCredentials,
+  };
 
-  // prepare headers without mutating caller's init
-  const headers = new Headers(init.headers || {});
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-
-  const firstTry = await fetch(input, { ...init, headers });
+  const firstTry = await fetch(input, requestInit);
 
   if (firstTry.status !== 401) return firstTry;
 
@@ -67,14 +72,11 @@ export async function apiFetch(input: FetchArgs[0], init: FetchArgs[1] = {}): Pr
       refreshInFlight = null;
     });
   }
-  const newAccess = await refreshInFlight;
-  if (!newAccess) {
-    clearTokens();
+  const refreshed = await refreshInFlight;
+  if (!refreshed) {
     return firstTry; // let caller handle as unauthenticated
   }
 
-  // retry original request with the new access token
-  const retryHeaders = new Headers(init.headers || {});
-  retryHeaders.set('Authorization', `Bearer ${newAccess}`);
-  return fetch(input, { ...init, headers: retryHeaders });
+  // retry original request (new access token is now in cookies)
+  return fetch(input, requestInit);
 }

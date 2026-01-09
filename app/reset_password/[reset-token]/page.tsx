@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
         confirm_password: formData.confirm_password
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/reset_password_service`, {
+      const res = await fetch('/api/auth/reset_password_service', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export default function ResetPasswordPage() {
 
   const checkToken = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth${pathname}`, {
+      const res = await fetch(`/api/auth${pathname}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       })
