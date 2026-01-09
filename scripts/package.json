@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "migrate:users": "tsx scripts/migrate-users.ts"
+  }
+}
