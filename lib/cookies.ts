@@ -84,7 +84,7 @@ export function createAuthCookies(accessToken: string, refreshToken: string): st
   const accessCookie = serializeCookie('access_token', accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 30 * 60, // 30 minutes
     path: '/',
   });
@@ -93,7 +93,7 @@ export function createAuthCookies(accessToken: string, refreshToken: string): st
   const refreshCookie = serializeCookie('refresh_token', refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 30 * 24 * 60 * 60, // 30 days
     path: '/',
   });
