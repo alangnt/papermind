@@ -262,11 +262,11 @@ export default function App() {
         <AuthComponent onLoggedIn={getUserAccess} setIsAuthVisible={setIsAuthVisible} />
       )}
 
-      <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
+      <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">
         <header className="mb-6 px-4 lg:px-0 py-8 z-80">
           <div className="flex flex-col justify-center items-center text-center space-y-2">
             <h1 className="flex items-center gap-2 text-3xl md:text-4xl font-bold tracking-tight">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-700">
+              <span className="bg-clip-text text-transparent bg-linear-to-r from-gray-500 to-gray-700">
                 Papermind
               </span>
 

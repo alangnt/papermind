@@ -222,7 +222,7 @@ export default function ProfilePage() {
           />
         </div>
 
-        <div className="flex flex-col gap-y-2 grow w-full max-w-screen-md place-self-center text-gray-300 min-h-screen z-40">
+        <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">
           <main className="flex flex-col gap-2 items-center grow py-4 px-4 lg:px-0 overflow-hidden">
             {!user ? (
               <p className="text-sm text-gray-400">Checking access…</p>
