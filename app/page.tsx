@@ -8,7 +8,7 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, ArrowLeftRight, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
+import { ArrowUp, LoaderCircle, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -21,7 +21,7 @@ import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
 import { apiFetch, logout } from '@/lib/api';
 
-import { Document, SearchType, SystemType } from '@/types/documents';
+import { Document, SystemType } from '@/types/documents';
 import { BaseUser } from '@/types/users';
 
 export default function App() {
@@ -29,7 +29,6 @@ export default function App() {
   const [isAuthVisible, setIsAuthVisible] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
-  const [searchType, setSearchType] = useState<SearchType>('manual');
   const [query, setQuery] = useState<string>('');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [areDocumentsLoading, setAreDocumentsLoading] = useState<boolean>(false);
@@ -87,22 +86,15 @@ export default function App() {
       }
       aiResponse = aiData.content.length > 0 ? aiData.content : query;
     }
-    let results;
-    if (searchType === 'ai' && !nextPage) {
-      const vectorSearch = await fetch('/api/vector_search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: aiResponse }),
-      });
-      results = await vectorSearch.json();
-    } else {
-      const manualSearch = await fetch('/api/get_documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: aiResponse, page: targetPage }),
-      });
-      results = await manualSearch.json();
-    }
+
+    const manualSearch = await fetch('/api/get_documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: aiResponse, page: targetPage }),
+    });
+
+    const results = await manualSearch.json();
+
     setDocuments(results.documents || []);
     setPage(targetPage);
     setIsNewPageLoading(false);
@@ -343,17 +335,6 @@ export default function App() {
             />
             <div className="flex justify-between items-center gap-4">
               <div className="flex flex-col md:flex-row md:items-end gap-2 p-1 text-xs md:place-self-end">
-                <button
-                  type={'button'}
-                  className="flex gap-1 items-center hover:underline transition cursor-pointer"
-                  onClick={() => setSearchType(searchType === 'manual' ? 'ai' : 'manual')}
-                >
-                  {searchType === 'manual' ? 'Non-AI' : 'AI'}{' '}
-                  <ArrowLeftRight className="w-3 h-3"></ArrowLeftRight>
-                </button>
-
-                <span className="text-xs text-gray-400 max-md:hidden">|</span>
-
                 <p className="place-self-end">
                   Enter any scientific question and get a sample of research papers to work on.
                 </p>
