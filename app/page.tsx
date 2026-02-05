@@ -233,6 +233,32 @@ export default function App() {
     <div className="relative w-full overflow-hidden">
       <GooeyEffect />
 
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'PaperMind',
+            description: 'AI research assistant for scientific papers with semantic search',
+            url: 'https://www.papermind.ch',
+            applicationCategory: 'EducationalApplication',
+            operatingSystem: 'Any',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+            },
+            creator: {
+              '@type': 'Person',
+              name: 'Alan Geirnaert',
+              url: 'https://www.linkedin.com/in/alan-geirnaert/',
+            },
+          }),
+        }}
+      />
+
       <div className="absolute inset-0 w-full pointer-events-none">
         <Waves
           lineColor={'rgba(0, 0, 0, 0.3)'}
