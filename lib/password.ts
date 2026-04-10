@@ -2,7 +2,7 @@
  * Password strength validation utilities
  */
 
-export interface PasswordValidationResult {
+interface PasswordValidationResult {
   isValid: boolean;
   errors: string[];
 }
@@ -48,7 +48,7 @@ export function validatePasswordStrength(password: string): PasswordValidationRe
  * 3 = Good
  * 4 = Strong
  */
-export function getPasswordStrength(password: string): number {
+function getPasswordStrength(password: string): number {
   if (!password) return 0;
 
   let score = 0;
@@ -68,7 +68,7 @@ export function getPasswordStrength(password: string): number {
 /**
  * Get human-readable password strength label
  */
-export function getPasswordStrengthLabel(score: number): string {
+function getPasswordStrengthLabel(score: number): string {
   switch (score) {
     case 0:
       return 'Very Weak';
@@ -88,7 +88,7 @@ export function getPasswordStrengthLabel(score: number): string {
 /**
  * Get color for password strength indicator
  */
-export function getPasswordStrengthColor(score: number): string {
+function getPasswordStrengthColor(score: number): string {
   switch (score) {
     case 0:
     case 1:

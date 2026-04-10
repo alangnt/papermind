@@ -102,7 +102,7 @@ const rateLimiter = new RateLimiter();
 /**
  * Rate limit configurations
  */
-export const RATE_LIMITS = {
+const RATE_LIMITS = {
   SIGN_IN: {
     limit: 5,
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -180,4 +180,3 @@ export function getClientIp(headers: Headers): string {
   return 'unknown';
 }
 
-export default rateLimiter;

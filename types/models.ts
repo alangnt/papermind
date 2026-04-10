@@ -45,13 +45,13 @@ export interface UserInDB extends User {
 }
 
 // Auth models
-export interface Token {
+interface Token {
   access_token: string;
   token_type: string;
   refresh_token?: string;
 }
 
-export interface TokenData {
+interface TokenData {
   username?: string;
 }
 
@@ -67,13 +67,13 @@ export interface EditPassword {
   confirm_new_password: string;
 }
 
-export interface EditProfile {
+interface EditProfile {
   username: string;
   first_name: string;
   last_name: string;
 }
 
-export interface ResetToken {
+interface ResetToken {
   token: string;
   email: string;
   expiration_date: Date;
@@ -83,23 +83,23 @@ export interface ResetPasswordToken {
   email: string;
 }
 
-export interface ResetPassword {
+interface ResetPassword {
   email: string;
   password: string;
   confirm_password: string;
 }
 
-export interface RefreshRequest {
+interface RefreshRequest {
   refresh_token: string;
 }
 
 // User service models
-export interface SaveArticle {
+interface SaveArticle {
   username: string;
   article: Document;
 }
 
-export interface DeleteSavedArticle {
+interface DeleteSavedArticle {
   username: string;
   article_id: string;
 }

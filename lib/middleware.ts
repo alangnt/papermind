@@ -4,7 +4,7 @@ import { getCollection } from './mongodb';
 import { User } from '@/types/models';
 import { getCookie } from './cookies';
 
-export interface AuthenticatedRequest extends NextRequest {
+interface AuthenticatedRequest extends NextRequest {
   user?: User;
 }
 

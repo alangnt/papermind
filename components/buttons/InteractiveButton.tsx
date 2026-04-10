@@ -5,7 +5,7 @@ import { motion, useMotionValue, useSpring, type SpringOptions } from 'motion/re
 
 const SPRING_CONFIG = { stiffness: 26.7, damping: 4.1, mass: 0.2 };
 
-export type MagneticProps = {
+type MagneticProps = {
   children: React.ReactNode;
   intensity?: number;
   range?: number;

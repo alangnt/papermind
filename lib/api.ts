@@ -8,7 +8,7 @@ let refreshInFlight: Promise<boolean> | null = null;
  * Check if user is authenticated by making a test request
  * (cookies are automatically sent)
  */
-export async function isAuthenticated(): Promise<boolean> {
+async function isAuthenticated(): Promise<boolean> {
   try {
     const res = await fetch('/api/users/me', {
       credentials: 'include',

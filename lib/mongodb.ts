@@ -38,7 +38,7 @@ function getClientPromise(): Promise<MongoClient> {
  * Get the MongoDB database instance
  * @param dbName Optional database name, defaults to "Astra"
  */
-export async function getDatabase(dbName: string = 'Astra'): Promise<Db> {
+async function getDatabase(dbName: string = 'Astra'): Promise<Db> {
   const client = await getClientPromise();
   return client.db(dbName);
 }
@@ -56,4 +56,3 @@ export async function getCollection<TSchema extends Record<string, any> = any>(
   return db.collection<TSchema>(collectionName);
 }
 
-export default getClientPromise;

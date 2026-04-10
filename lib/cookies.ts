@@ -2,7 +2,7 @@
  * Cookie utilities for secure authentication
  */
 
-export interface CookieOptions {
+interface CookieOptions {
   httpOnly?: boolean;
   secure?: boolean;
   sameSite?: 'strict' | 'lax' | 'none';
@@ -14,7 +14,7 @@ export interface CookieOptions {
 /**
  * Serialize a cookie with secure defaults
  */
-export function serializeCookie(
+function serializeCookie(
   name: string,
   value: string,
   options: CookieOptions = {}
@@ -43,7 +43,7 @@ export function serializeCookie(
 /**
  * Parse cookies from request header
  */
-export function parseCookies(cookieHeader: string | null): Record<string, string> {
+function parseCookies(cookieHeader: string | null): Record<string, string> {
   if (!cookieHeader) return {};
 
   return cookieHeader.split(';').reduce((cookies, cookie) => {
@@ -59,7 +59,7 @@ export function parseCookies(cookieHeader: string | null): Record<string, string
 /**
  * Create a cookie header to clear a cookie
  */
-export function clearCookie(name: string, options: Pick<CookieOptions, 'path' | 'domain'> = {}): string {
+function clearCookie(name: string, options: Pick<CookieOptions, 'path' | 'domain'> = {}): string {
   return serializeCookie(name, '', {
     ...options,
     maxAge: 0,
