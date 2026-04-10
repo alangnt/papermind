@@ -13,11 +13,11 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@ai-sdk/groq": "^2.0.37",
-    "@types/bcryptjs": "^2.4.6",
+    "@ai-sdk/groq": "^3.0.35",
+    "@types/bcryptjs": "^3.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@vercel/analytics": "^2.0.1",
-    "ai": "^5.0.172",
+    "ai": "^6.0.156",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
