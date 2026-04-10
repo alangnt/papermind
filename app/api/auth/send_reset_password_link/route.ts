@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
 import { ResetPasswordToken } from '@/types/models';
+import { checkPasswordResetRateLimit } from '@/lib/ratelimit';
 import crypto from 'crypto';
 
 const postmark = require('postmark');
@@ -27,15 +28,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user exists
+    if (typeof email !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input' },
+        { status: 400 }
+      );
+    }
+
+    // Rate limiting: 3 reset requests per hour per email
+    const rateLimit = checkPasswordResetRateLimit(email);
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        { error: 'Too many reset attempts. Please try again later.', retryAfter },
+        { status: 429, headers: { 'Retry-After': retryAfter.toString() } }
+      );
+    }
+
+    // Check if user exists — always return 200 to avoid email enumeration
     const usersCollection = await getCollection('users');
     const userExists = await usersCollection.findOne({ email });
 
     if (!userExists) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ status: 200, message: 'Reset email sent' });
     }
 
     // Generate reset token
@@ -75,7 +90,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       status: 200,
       message: 'Reset email sent',
-      postmark: emailResult,
     });
   } catch (error) {
     console.error('Send reset password link error:', error);

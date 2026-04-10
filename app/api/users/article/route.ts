@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/middleware';
 import { getCollection } from '@/lib/mongodb';
-import { SaveArticle, DeleteSavedArticle, Document } from '@/types/models';
+import { Document } from '@/types/models';
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, { user }) => {
   try {
-    const body: SaveArticle = await req.json();
-    const { username, article } = body;
-
-    if (!username) {
-      return NextResponse.json(
-        { error: 'Username is required' },
-        { status: 400 }
-      );
-    }
+    const body = await req.json();
+    const { article } = body;
 
     if (!article) {
       return NextResponse.json(
@@ -22,28 +16,24 @@ export async function POST(req: NextRequest) {
     }
 
     const usersCollection = await getCollection('users');
-    const user = await usersCollection.findOne({ username });
+    const dbUser = await usersCollection.findOne({ username: user.username });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Get existing saved articles
-    const savedArticles: Document[] = user.saved_articles || [];
-    
-    // Check if article is already saved
+    const savedArticles: Document[] = dbUser.saved_articles || [];
     const articleExists = savedArticles.some((a) => a.id === article.id);
-    
+
     if (!articleExists) {
       savedArticles.push(article);
     }
 
-    // Update user with new saved articles
     const result = await usersCollection.updateOne(
-      { username },
+      { username: user.username },
       { $set: { saved_articles: savedArticles } }
     );
 
@@ -66,19 +56,12 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = withAuth(async (req: NextRequest, { user }) => {
   try {
-    const body: DeleteSavedArticle = await req.json();
-    const { username, article_id } = body;
-
-    if (!username) {
-      return NextResponse.json(
-        { error: 'Username is required' },
-        { status: 400 }
-      );
-    }
+    const body = await req.json();
+    const { article_id } = body;
 
     if (!article_id) {
       return NextResponse.json(
@@ -88,17 +71,16 @@ export async function DELETE(req: NextRequest) {
     }
 
     const usersCollection = await getCollection('users');
-    const user = await usersCollection.findOne({ username });
+    const dbUser = await usersCollection.findOne({ username: user.username });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Get existing saved articles and filter out the one to delete
-    const savedArticles: Document[] = user.saved_articles || [];
+    const savedArticles: Document[] = dbUser.saved_articles || [];
     const remaining = savedArticles.filter((a) => a.id !== article_id);
 
     if (remaining.length === savedArticles.length) {
@@ -108,9 +90,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Update user with filtered articles
     const result = await usersCollection.updateOne(
-      { username },
+      { username: user.username },
       { $set: { saved_articles: remaining } }
     );
 
@@ -133,4 +114,4 @@ export async function DELETE(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
