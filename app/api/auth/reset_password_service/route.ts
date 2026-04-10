@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
 import { hashPassword } from '@/lib/auth';
-import { ResetPassword } from '@/types/models';
+import { validatePasswordStrength } from '@/lib/password';
 
 export async function POST(req: NextRequest) {
   try {
-    const body: ResetPassword = await req.json();
-    const { email, password, confirm_password } = body;
+    const body = await req.json();
+    const { token, email, password, confirm_password } = body;
 
-    if (!password || !confirm_password) {
+    if (!token || !email || !password || !confirm_password) {
       return NextResponse.json(
-        { error: 'Both passwords are required' },
+        { error: 'All fields are required' },
         { status: 400 }
       );
+    }
+
+    if (typeof token !== 'string' || typeof email !== 'string') {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
     if (password !== confirm_password) {
@@ -22,24 +26,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!email) {
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        {
+          error: 'Password does not meet requirements',
+          details: passwordValidation.errors,
+        },
         { status: 400 }
       );
     }
 
-    if (typeof email !== 'string') {
+    // Validate the reset token before changing the password
+    const resetTokensCollection = await getCollection('reset_tokens');
+    const resetToken = await resetTokensCollection.findOne({ token, email });
+
+    if (!resetToken || new Date(resetToken.expiration_date) < new Date()) {
       return NextResponse.json(
-        { error: 'Invalid input' },
+        { error: 'Invalid or expired reset link' },
         { status: 400 }
       );
     }
 
-    // Hash the new password
+    // Hash and update the new password
     const hashedPassword = await hashPassword(password);
-
-    // Update user password
     const usersCollection = await getCollection('users');
     const result = await usersCollection.updateOne(
       { email },
@@ -48,19 +58,13 @@ export async function POST(req: NextRequest) {
 
     if (result.modifiedCount === 0) {
       return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 400 }
+        { error: 'User not found' },
+        { status: 404 }
       );
     }
 
-    // Delete the reset token
-    const resetTokensCollection = await getCollection('reset_tokens');
-    const deleteResult = await resetTokensCollection.deleteOne({ email });
-
-    if (deleteResult.deletedCount === 0) {
-      console.warn('Reset token not found for email:', email);
-      // Don't fail the request if token deletion fails
-    }
+    // Consume the token
+    await resetTokensCollection.deleteOne({ token });
 
     return NextResponse.json({
       status: 200,

@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/middleware';
 import { getCollection } from '@/lib/mongodb';
-import { EditProfile } from '@/types/models';
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, { user }) => {
   try {
-    const body: EditProfile = await req.json();
-    const { username, first_name, last_name } = body;
-
-    if (!username) {
-      return NextResponse.json(
-        { error: 'Username is required' },
-        { status: 400 }
-      );
-    }
-
-    if (typeof username !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid input' },
-        { status: 400 }
-      );
-    }
+    const body = await req.json();
+    const { first_name, last_name } = body;
 
     const usersCollection = await getCollection('users');
     const result = await usersCollection.updateOne(
-      { username },
+      { username: user.username },
       { $set: { first_name, last_name } }
     );
 
@@ -46,4 +32,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

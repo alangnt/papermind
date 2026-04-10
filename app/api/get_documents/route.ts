@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const limit = 10 * page;
+    const safePage = Math.min(Math.max(1, Number(page) || 1), 20);
+    const limit = 10 * safePage;
 
     // Search arXiv
     const documents = await searchArxiv(query, 0, limit);

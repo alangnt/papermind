@@ -5,12 +5,13 @@ import { GooeyEffect } from '@/components/effects/GooeyEffect';
 import { Waves } from '@/components/ui/WavesBackground';
 import { AnimatePresence, motion } from 'motion/react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 export default function ResetPasswordPage() {
   const pathname = usePathname();
   const router = useRouter();
+  const params = useParams<{ 'reset-token': string }>();
 
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
 
@@ -63,6 +64,7 @@ export default function ResetPasswordPage() {
 
     try {
       const newFormData = {
+        token: params['reset-token'],
         email: userEmail,
         password: formData.password,
         confirm_password: formData.confirm_password
