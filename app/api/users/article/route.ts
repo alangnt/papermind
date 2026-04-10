@@ -14,6 +14,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (typeof username !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input' },
+        { status: 400 }
+      );
+    }
+
     if (!article) {
       return NextResponse.json(
         { error: 'Article is required' },
@@ -76,6 +83,13 @@ export async function DELETE(req: NextRequest) {
     if (!username) {
       return NextResponse.json(
         { error: 'Username is required' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof username !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input' },
         { status: 400 }
       );
     }

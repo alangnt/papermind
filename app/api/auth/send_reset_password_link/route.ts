@@ -27,6 +27,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (typeof email !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input' },
+        { status: 400 }
+      );
+    }
+
     // Check if user exists
     const usersCollection = await getCollection('users');
     const userExists = await usersCollection.findOne({ email });

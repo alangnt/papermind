@@ -14,6 +14,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (typeof username !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input' },
+        { status: 400 }
+      );
+    }
+
     const usersCollection = await getCollection('users');
     const result = await usersCollection.updateOne(
       { username },

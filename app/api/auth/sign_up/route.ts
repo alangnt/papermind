@@ -18,6 +18,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input' },
+        { status: 400 }
+      );
+    }
+
     // Rate limiting: 3 sign-ups per hour per IP
     const clientIp = getClientIp(req.headers);
     const rateLimit = checkSignUpRateLimit(clientIp);

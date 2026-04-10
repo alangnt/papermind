@@ -29,6 +29,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (typeof email !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid input' },
+        { status: 400 }
+      );
+    }
+
     // Hash the new password
     const hashedPassword = await hashPassword(password);
 
