@@ -11,7 +11,7 @@ export default function SignUpFormComponent(
 ) {
   const { handleSignUp, isLoading, errorMessage } = useAuth();
 
-  const [signUpFormData, setSignUpFormData] = useState<SignUpForm>({ username: '', email: '', password: '', confirmPassword: '' });
+  const [signUpFormData, setSignUpFormData] = useState<SignUpForm>({ username: "", email: "", password: "", confirmPassword: "" });
   const [showPassword, setShowPassword] = useState(false);
 
   const usernameRef = useRef<HTMLInputElement | null>(null);
@@ -49,15 +49,14 @@ export default function SignUpFormComponent(
         <label className='text-xs font-medium' htmlFor='username'>Username</label>
         <input
           ref={usernameRef}
-          type='text'
-          id='username'
-          value={signUpFormData.username}
-          onChange={(e) => setSignUpFormData(p => ({ ...p, username: e.target.value }))}
-          placeholder='johndoe'
-          autoComplete='username'
+          type="text"
+          id="username"
+          name="username"
+          placeholder="johndoe"
+          autoComplete="username"
           className={inputBase}
           disabled={isLoading}
-          aria-required='true'
+          aria-required="true"
         />
       </div>
 
@@ -65,12 +64,11 @@ export default function SignUpFormComponent(
         <label className='text-xs font-medium' htmlFor='email'>Email</label>
         <input
           ref={emailRef}
-          type='email'
-          id='email'
-          value={signUpFormData.email}
-          onChange={(e) => setSignUpFormData(p => ({ ...p, email: e.target.value }))}
-          placeholder='john@doe.com'
-          autoComplete='email'
+          type="email"
+          id="email"
+          name="email"
+          placeholder="john@doe.com"
+          autoComplete="email"
           className={inputBase}
           disabled={isLoading}
           aria-required='true'
@@ -82,15 +80,14 @@ export default function SignUpFormComponent(
         <div className='relative'>
           <input
             ref={passwordRef}
-            type={showPassword ? 'text' : 'password'}
-            id='password'
-            value={signUpFormData.password}
-            onChange={(e) => setSignUpFormData(p => ({ ...p, password: e.target.value }))}
+            type={showPassword ? "text" : "password"}
+            id="password"
+            name="password"
             placeholder={showPassword ? "password" : "********"}
-            autoComplete='new-password'
-            className={inputBase + ' w-full pr-8'}
+            autoComplete="new-password"
+            className={inputBase + " w-full pr-8"}
             disabled={isLoading}
-            aria-required='true'
+            aria-required="true"
           />
           <button
             type='button'
@@ -109,15 +106,14 @@ export default function SignUpFormComponent(
         <div className='relative'>
           <input
             ref={confirmPasswordRef}
-            type={showPassword ? 'text' : 'password'}
-            id='confirmPassword'
-            value={signUpFormData.confirmPassword}
-            onChange={(e) => setSignUpFormData(p => ({ ...p, confirmPassword: e.target.value }))}
+            type={showPassword ? "text" : "password"}
+            id="confirmPassword"
+            name="confirmPassword"
             placeholder={showPassword ? "password" : "********"}
             autoComplete='new-password'
-            className={inputBase + ' w-full pr-8'}
+            className={inputBase + " w-full pr-8"}
             disabled={isLoading}
-            aria-required='true'
+            aria-required="true"
           />
           <button
             type='button'
@@ -146,7 +142,7 @@ export default function SignUpFormComponent(
       <div className='flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70'>
         <span className='text-[10px] tracking-wide text-muted-foreground'>OR</span>
       </div>
-      
+
       <button
         type='button'
         className='group relative flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-border/70 bg-background/40 hover:bg-background/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-foreground/30 disabled:bg-gray-200 cursor-pointer disabled:cursor-default'

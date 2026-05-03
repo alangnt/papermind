@@ -60,6 +60,8 @@ export function useAuth() {
     const password = data.get("password") as string;
     const confirmPassword = data.get("confirmPassword") as string;
 
+    console.log(username, email, password, confirmPassword);
+
     const validationError = validateSignUpForm(username, email, password, confirmPassword);
     if (validationError) { 
       setErrorMessage(validationError); 

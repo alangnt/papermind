@@ -137,7 +137,7 @@ export default function App() {
                 Papermind
               </span>
 
-              {user && (
+              {session && (
                 <motion.button
                   className='relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2'
                   aria-label='User profile'
@@ -216,7 +216,7 @@ export default function App() {
               </div>
 
               <div className='flex items-center gap-2'>
-                {!user ? (
+                {!session ? (
                   <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }} onClick={() => setIsAuthVisible(true)}>
                     <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-20 z-0">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

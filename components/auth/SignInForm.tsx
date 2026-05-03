@@ -47,15 +47,14 @@ export default function SignInFormComponent(
         <label className='text-xs font-medium' htmlFor='email'>Email</label>
         <input
           ref={emailRef}
-          type='email'
-          id='email'
-          value={signInFormData.email}
-          onChange={(e) => setSignInFormData(p => ({ ...p, email: e.target.value }))}
-          placeholder='johndoe'
-          autoComplete='email'
+          type="email"
+          id="email"
+          name="email"
+          placeholder="john@doe.com"
+          autoComplete="email"
           className={inputBase}
           disabled={isLoading}
-          aria-required='true'
+          aria-required="true"
         />
       </div>
 
@@ -64,15 +63,14 @@ export default function SignInFormComponent(
         <div className='relative'>
           <input
             ref={passwordRef}
-            type={showPassword ? 'text' : 'password'}
-            id='password'
-            value={signInFormData.password}
-            onChange={(e) => setSignInFormData(p => ({ ...p, password: e.target.value }))}
+            type={showPassword ? "text" : "password"}
+            id="password"
+            name="password"
             placeholder={showPassword ? "password" : "********"}
-            autoComplete='current-password'
-            className={inputBase + ' w-full pr-8'}
+            autoComplete="current-password"
+            className={inputBase + " w-full pr-8"}
             disabled={isLoading}
-            aria-required='true'
+            aria-required="true"
           />
           <button
             type='button'
