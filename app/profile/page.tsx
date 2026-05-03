@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, FormEvent, useRef, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from '@/lib/auth-client';
 import { Loader2, ChevronRight, Home, ArrowRight, EyeOff, Eye } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
@@ -12,9 +13,9 @@ import { Waves } from "@/components/ui/WavesBackground";
 
 import { BaseUser } from "@/types/users";
 import { Document } from "@/types/documents";
-import { logout, apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
+  const { data: session } = useSession();
   const router = useRouter();
 
   const [user, setUser] = useState<BaseUser | null>(null);
@@ -62,7 +63,7 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      
+
       if (!res.ok) return setError("Failed to update the user");
 
       const data = await res.json();
@@ -130,23 +131,6 @@ export default function ProfilePage() {
     }
   }
 
-  const getUserAccess = useCallback(async () => {
-    try {
-      const res = await apiFetch('/api/users/me', { method: 'GET' });
-
-      if (!res.ok) {
-        return 1;
-      }
-
-      const data = await res.json() as BaseUser;
-      setUser(data as BaseUser);
-      return 0;
-    } catch (error) {
-      console.error(error);
-      return 1;
-    }
-  }, [setUser]);
-
   const switchTab = (tab: "fullname" | "password") => {
     // Reset Forms
     setFullNameFormData({
@@ -181,15 +165,6 @@ export default function ProfilePage() {
   }, [firstNameRef, lastNameRef, oldPasswordRef, newPasswordRef, confirmNewPasswordRef, submitBtnRef, currentTab]);
 
   useEffect(() => {
-    getUserAccess().then((res) => {
-      if (res === 1) {
-        setUser(null);
-        router.replace("/");
-      }
-    });
-  }, [getUserAccess, router]);
-
-  useEffect(() => {
     if (user) {
       setFullNameFormData(prev => {
         const userFirst = user.first_name || "";
@@ -201,6 +176,12 @@ export default function ProfilePage() {
   }, [user]);
 
   const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
+
+  useEffect(() => {
+    if (session?.user) {
+      setUser(user);
+    }
+  }, [session]);
 
   return (
     <>
@@ -387,8 +368,8 @@ export default function ProfilePage() {
                                   >
                                     Change my password
                                     <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
-                          <ChevronRight className="w-4 h-4" />
-                        </span>
+                                      <ChevronRight className="w-4 h-4" />
+                                    </span>
                                   </button>
                                 </form>
                               )}
@@ -526,8 +507,8 @@ export default function ProfilePage() {
                                   >
                                     Edit my full name
                                     <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
-                                  <ChevronRight className="w-4 h-4" />
-                                </span>
+                                      <ChevronRight className="w-4 h-4" />
+                                    </span>
                                   </button>
                                 </form>
                               )}
