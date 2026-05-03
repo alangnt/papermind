@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
-import { ResetPasswordToken } from '@/types/models';
-import { checkPasswordResetRateLimit } from '@/lib/ratelimit';
 import crypto from 'crypto';
 
 const postmark = require('postmark');
@@ -18,7 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body: ResetPasswordToken = await req.json();
+    const body = await req.json();
     const { email } = body;
 
     if (!email) {
@@ -32,16 +30,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid input' },
         { status: 400 }
-      );
-    }
-
-    // Rate limiting: 3 reset requests per hour per email
-    const rateLimit = checkPasswordResetRateLimit(email);
-    if (!rateLimit.allowed) {
-      const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
-      return NextResponse.json(
-        { error: 'Too many reset attempts. Please try again later.', retryAfter },
-        { status: 429, headers: { 'Retry-After': retryAfter.toString() } }
       );
     }
 

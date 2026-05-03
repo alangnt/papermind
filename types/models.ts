@@ -36,25 +36,6 @@ export interface User {
   emailVerified?: boolean;
 }
 
-export interface UserInDB extends User {
-  password: string;
-  tokenVersion: number;
-  failedLoginAttempts: number;
-  lockedUntil: Date | null;
-  emailVerified: boolean;
-}
-
-// Auth models
-interface Token {
-  access_token: string;
-  token_type: string;
-  refresh_token?: string;
-}
-
-interface TokenData {
-  username?: string;
-}
-
 export interface BaseSignUp {
   username: string;
   email: string;
@@ -73,24 +54,10 @@ interface EditProfile {
   last_name: string;
 }
 
-interface ResetToken {
-  token: string;
-  email: string;
-  expiration_date: Date;
-}
-
-export interface ResetPasswordToken {
-  email: string;
-}
-
 interface ResetPassword {
   email: string;
   password: string;
   confirm_password: string;
-}
-
-interface RefreshRequest {
-  refresh_token: string;
 }
 
 // User service models

@@ -3,9 +3,8 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { User } from '@/types/models';
 import { getCollection } from '@/lib/mongodb';
-import { EditPassword, UserInDB } from '@/types/models';
+import { EditPassword } from '@/types/models';
 import { validatePasswordStrength } from '@/lib/password';
-import { checkPasswordChangeRateLimit, getClientIp } from '@/lib/ratelimit';
 import bcrypt from 'bcryptjs';
 
 async function verifyPassword(password: string, hash: string): Promise<boolean> {
@@ -24,26 +23,6 @@ export const POST = async (req: NextRequest) => {
   const user = session.user as unknown as User;
 
   try {
-    // Rate limiting for password changes
-    const clientIp = getClientIp(req.headers);
-    const rateLimit = checkPasswordChangeRateLimit(user._id.toString());
-
-    if (!rateLimit.allowed) {
-      const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
-      return NextResponse.json(
-        { 
-          error: 'Too many password change attempts. Please try again later.',
-          retryAfter 
-        },
-        { 
-          status: 429,
-          headers: {
-            'Retry-After': retryAfter.toString(),
-          }
-        }
-      );
-    }
-
     const body: EditPassword = await req.json();
     const { old_password, new_password, confirm_new_password } = body;
 
@@ -74,7 +53,7 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Get user with password from database
-    const usersCollection = await getCollection<UserInDB>('users');
+    const usersCollection = await getCollection('users');
     const userWithPassword = await usersCollection.findOne({ email: user.email });
 
     if (!userWithPassword) {
