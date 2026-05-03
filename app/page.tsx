@@ -33,11 +33,6 @@ export default function App() {
   const [areDocumentsLoading, setAreDocumentsLoading] = useState<boolean>(false);
   const [isNewPageLoading, setIsNewPageLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
-  const [cardIndex, setCardIndex] = useState<number>(0);
-
-  // Swipe the card animation
-  const x = useMotionValue(0);
-  const controls = useAnimationControls();
 
   const getUserAccess = useCallback(async () => {
     try {
@@ -119,82 +114,6 @@ export default function App() {
       fullQuery: 'What are the current challenges in nuclear fusion energy?',
     },
   ];
-
-  const swipeDocument = async (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const threshold = 100;
-    const duration = 0.25;
-
-    // Not enough swipe: snap back smoothly
-    if (info.offset.x <= threshold && info.offset.x >= -threshold) {
-      await controls.start({
-        x: 0,
-        opacity: 1,
-        transition: { type: 'spring', stiffness: 500, damping: 30 },
-      });
-      x.set(0);
-      return;
-    }
-
-    // Swipe Right
-    if (info.offset.x > threshold) {
-      // Animate card off-screen to the right
-      await controls.start({
-        x: typeof window !== 'undefined' ? window.innerWidth : 500,
-        opacity: 0,
-        transition: { duration, ease: 'easeInOut' },
-      });
-
-      if (cardIndex + 1 >= documents.length) {
-        await getDocument(true);
-        // Prepare and animate new content in
-        controls.set({ x: 40, opacity: 0 });
-        x.set(0);
-        await controls.start({
-          x: 0,
-          opacity: 1,
-          transition: { type: 'spring', stiffness: 400, damping: 28 },
-        });
-      } else {
-        setCardIndex((prev) => prev + 1);
-        controls.set({ x: 40, opacity: 0 });
-        x.set(0);
-        await controls.start({
-          x: 0,
-          opacity: 1,
-          transition: { type: 'spring', stiffness: 400, damping: 28 },
-        });
-      }
-      return;
-    }
-
-    // Swipe Left
-    if (info.offset.x < -threshold) {
-      if (cardIndex === 0) {
-        // Can't go left from the first card: bounce back
-        await controls.start({
-          x: 0,
-          opacity: 1,
-          transition: { type: 'spring', stiffness: 500, damping: 30 },
-        });
-        return;
-      }
-      // Animate card off-screen to the left
-      await controls.start({
-        x: typeof window !== 'undefined' ? -window.innerWidth : -500,
-        opacity: 0,
-        transition: { duration, ease: 'easeInOut' },
-      });
-      setCardIndex((prev) => prev - 1);
-      controls.set({ x: -40, opacity: 0 });
-      x.set(0);
-      await controls.start({
-        x: 0,
-        opacity: 1,
-        transition: { type: 'spring', stiffness: 400, damping: 28 },
-      });
-      return;
-    }
-  };
 
   const handleLogout = async () => {
     if (!user || isSigningOut) return;
