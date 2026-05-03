@@ -79,7 +79,7 @@ export default function AuthComponent({ setIsAuthVisible }: { setIsAuthVisible: 
 
           {/* Sign Up Section */}
           {currentTab === "signup" && (
-            <SignUpFormComponent setIsAuthVisible={setIsAuthVisible} switchTab={switchTab} error={error} setError={setError}></SignUpFormComponent>
+            <SignUpFormComponent setIsAuthVisible={setIsAuthVisible} switchTab={switchTab}></SignUpFormComponent>
           )}
 
           {/* Reset Password Section */}
