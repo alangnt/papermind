@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { dash } from "@better-auth/infra";
-import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
@@ -11,12 +11,18 @@ if (!process.env.MONGODB_NAME) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_NAME"');
 }
 
-const client = new MongoClient(process.env.MONGODB_URI);
+const uri = process.env.MONGODB_URI;
+const client = new MongoClient(uri);
 const db = client.db(process.env.MONGODB_NAME);
 
 export const auth = betterAuth({
-  database: mongodbAdapter(db),
-  baseURL: process.env.WEBSITE_URL!,
+  database: mongodbAdapter(db, {
+    client
+  }),
+  experimental: {
+    joins: true
+  },
+  baseURL: process.env.BETTER_AUTH_URL!,
   emailAndPassword: { enabled: true },
   /*
   socialProviders: {
