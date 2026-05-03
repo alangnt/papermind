@@ -2,7 +2,8 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUp, LoaderCircle, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
+import { useSession } from '@/lib/auth-client';
 import Link from 'next/link';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
@@ -12,12 +13,12 @@ import Footer from '@/components/ui/Footer';
 import AuthComponent from '@/components/ui/Auth';
 import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
-import { apiFetch, logout } from '@/lib/api';
-
 import { Document } from '@/types/documents';
 import { BaseUser } from '@/types/users';
 
 export default function App() {
+  const { data: session } = useSession();
+
   const [user, setUser] = useState<BaseUser | null>(null);
   const [isAuthVisible, setIsAuthVisible] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
@@ -27,23 +28,6 @@ export default function App() {
   const [areDocumentsLoading, setAreDocumentsLoading] = useState<boolean>(false);
   const [isNewPageLoading, setIsNewPageLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
-
-  const getUserAccess = useCallback(async () => {
-    try {
-      const res = await apiFetch('/api/users/me', { method: 'GET' });
-
-      if (!res.ok) {
-        return 1;
-      }
-
-      const data = await res.json() as BaseUser;
-      setUser(data as BaseUser);
-      return 0;
-    } catch (error) {
-      console.error(error);
-      return 1;
-    }
-  }, [setUser]);
 
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -110,25 +94,15 @@ export default function App() {
   ];
 
   const handleLogout = async () => {
-    if (!user || isSigningOut) return;
-    setIsSigningOut(true);
-    try {
-      await logout();
-      setUser(null);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSigningOut(false);
-    }
+    // TODO
+    setIsSigningOut(false);
   }
 
   useEffect(() => {
-    getUserAccess().then((res) => {
-      if (res === 1) {
-        setUser(null);
-      }
-    });
-  }, [getUserAccess]);
+    if (session?.user) {
+      setUser(user);
+    }
+  }, [session]);
 
   return (
     <div className="relative w-full overflow-hidden">
@@ -178,7 +152,7 @@ export default function App() {
 
       {/* Authentication */}
       {!user && isAuthVisible && (
-        <AuthComponent onLoggedIn={getUserAccess} setIsAuthVisible={setIsAuthVisible} />
+        <AuthComponent setIsAuthVisible={setIsAuthVisible} />
       )}
 
       <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">

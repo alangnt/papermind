@@ -4,7 +4,7 @@ import { useClickOutside } from '@/hooks/useClickOutside';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
 
-export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLoggedIn?: () => void, setIsAuthVisible: (arg0: boolean) => void }) {
+export default function AuthComponent({ setIsAuthVisible }: { setIsAuthVisible: (arg0: boolean) => void }) {
   const [resetPasswordFormData, setResetPasswordFormData] = useState({ email: '' });
   const [signInFormData, setSignInFormData] = useState({ username: '', password: '' });
   const [signUpFormData, setSignUpFormData] = useState({ username: '', email: '', password: '', confirm_password: '' });
@@ -96,8 +96,6 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         return setError(data.error || 'Sign in failed');
       }
       
-      // Success - tokens are now in HttpOnly cookies
-      onLoggedIn?.();
       setIsAuthVisible(false);
     } catch (error) {
       console.error(error);
@@ -148,9 +146,7 @@ export default function AuthComponent({ onLoggedIn, setIsAuthVisible }: { onLogg
         // Fallback error message
         return setError(data?.message || data?.error || 'Sign up failed');
       }
-
-      // Success - tokens are now in HttpOnly cookies
-      onLoggedIn?.();
+      
       setIsAuthVisible(false);
     } catch (error) {
       console.error(error);
