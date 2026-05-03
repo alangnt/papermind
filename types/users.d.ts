@@ -2,9 +2,9 @@ import { Document } from "./documents";
 
 export interface BaseUser {
   _id: string;
-  username: string;
+  name: string;
   email: string;
-  first_name?: string;
-  last_name?: string;
-  saved_articles?: Document[]
+  firstName?: string;
+  lastName?: string;
+  savedArticles?: Document[]
 }

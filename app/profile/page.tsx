@@ -26,8 +26,8 @@ export default function ProfilePage() {
   const [currentTab, setCurrentTab] = useState<"fullname" | "password">("fullname");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [fullNameFormData, setFullNameFormData] = useState({ first_name: "", last_name: "" });
-  const [passwordFormData, setPasswordFormData] = useState({ old_password: "", new_password: "", confirm_new_password: "" });
+  const [fullNameFormData, setFullNameFormData] = useState({ firstName: "", lastName: "" });
+  const [passwordFormData, setPasswordFormData] = useState({ oldPassword: "", newPassword: "", confirmNewPassword: "" });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const firstNameRef = useRef<HTMLInputElement | null>(null);
@@ -38,7 +38,7 @@ export default function ProfilePage() {
   const submitBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const validateNewPassword = () => {
-    if (passwordFormData.new_password !== passwordFormData.confirm_new_password) return "Both passwords must match"
+    if (passwordFormData.newPassword !== passwordFormData.confirmNewPassword) return "Both passwords must match"
     return null;
   };
 
@@ -46,16 +46,16 @@ export default function ProfilePage() {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    if (!fullNameFormData.first_name.trim() && !fullNameFormData.last_name.trim()) {
+    if (!fullNameFormData.firstName.trim() && !fullNameFormData.lastName.trim()) {
       setIsSubmitting(false);
       return;
     }
 
     try {
       const body = {
-        username: user?.username,
-        first_name: fullNameFormData.first_name.trim(),
-        last_name: fullNameFormData.last_name.trim()
+        username: user?.name,
+        firstName: fullNameFormData.firstName.trim(),
+        lastName: fullNameFormData.lastName.trim()
       }
 
       const res = await fetch('/api/users/edit', {
@@ -70,8 +70,8 @@ export default function ProfilePage() {
 
       if (data) {
         setFullNameFormData({
-          first_name: data.data.first_name,
-          last_name: data.data.last_name
+          firstName: data.data.firstName,
+          lastName: data.data.lastName
         });
 
         setError(null);
@@ -117,9 +117,9 @@ export default function ProfilePage() {
 
       setError(null);
       setPasswordFormData({
-        old_password: "",
-        new_password: "",
-        confirm_new_password: "",
+        oldPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
       })
       setShowPassword(false);
       return setValidation("Password changed successfully");
@@ -134,13 +134,13 @@ export default function ProfilePage() {
   const switchTab = (tab: "fullname" | "password") => {
     // Reset Forms
     setFullNameFormData({
-      first_name: user?.first_name ?? "",
-      last_name: user?.last_name ?? "",
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
     });
     setPasswordFormData({
-      old_password: "",
-      new_password: "",
-      confirm_new_password: ""
+      oldPassword: "",
+      newPassword: "",
+      confirmNewPassword: ""
     });
 
     setError(null);
@@ -167,10 +167,10 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setFullNameFormData(prev => {
-        const userFirst = user.first_name || "";
-        const userLast = user.last_name || "";
-        if (prev.first_name !== "" || prev.last_name !== "") return prev;
-        return { first_name: userFirst, last_name: userLast };
+        const userFirst = user.firstName || "";
+        const userLast = user.lastName || "";
+        if (prev.firstName !== "" || prev.lastName !== "") return prev;
+        return { firstName: userFirst, lastName: userLast };
       });
     }
   }, [user]);
@@ -179,7 +179,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (session?.user) {
-      setUser(user);
+      console.log(session?.user);
+      setUser(session.user as unknown as BaseUser);
+    } else {
+      router.push("/");
     }
   }, [session]);
 
@@ -205,7 +208,7 @@ export default function ProfilePage() {
 
         <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">
           <main className="flex flex-col gap-2 items-center grow py-4 px-4 lg:px-0 overflow-hidden">
-            {!user ? (
+            {!session?.user ? (
               <p className="text-sm text-gray-400">Checking access…</p>
             ) : (
               <>
@@ -262,9 +265,9 @@ export default function ProfilePage() {
                         <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit col-span-1 md:col-span-2">
                           <h1>
                             Welcome,{' '}
-                            {user.first_name && user.last_name
-                              ? `${user.first_name} ${user.last_name}`
-                              : user.username}
+                            {user?.firstName && user.lastName
+                              ? `${user.firstName} ${user.lastName}`
+                              : user?.name}
                           </h1>
 
                           <AnimatePresence mode="wait">
@@ -304,19 +307,19 @@ export default function ProfilePage() {
                                   )}
 
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="first_name">
+                                    <label className="text-xs font-medium" htmlFor="firstName">
                                       First Name
                                     </label>
                                     <input
                                       ref={firstNameRef}
                                       type="text"
-                                      id="first_name"
-                                      value={fullNameFormData.first_name}
+                                      id="firstName"
+                                      value={fullNameFormData.firstName}
                                       onChange={(e) =>
-                                        setFullNameFormData((p) => ({ ...p, first_name: e.target.value }))
+                                        setFullNameFormData((p) => ({ ...p, firstName: e.target.value }))
                                       }
                                       placeholder="John"
-                                      autoComplete="first_name"
+                                      autoComplete="firstName"
                                       className={inputBase}
                                       disabled={isSubmitting}
                                       aria-required="true"
@@ -324,19 +327,19 @@ export default function ProfilePage() {
                                   </div>
 
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="last_name">
+                                    <label className="text-xs font-medium" htmlFor="lastName">
                                       Last Name
                                     </label>
                                     <input
                                       ref={lastNameRef}
                                       type="text"
-                                      id="last_name"
-                                      value={fullNameFormData.last_name}
+                                      id="lastName"
+                                      value={fullNameFormData.lastName}
                                       onChange={(e) =>
-                                        setFullNameFormData((p) => ({ ...p, last_name: e.target.value }))
+                                        setFullNameFormData((p) => ({ ...p, lastName: e.target.value }))
                                       }
                                       placeholder="Doe"
-                                      autoComplete="last_name"
+                                      autoComplete="lastName"
                                       className={inputBase}
                                       disabled={isSubmitting}
                                       aria-required="true"
@@ -348,9 +351,9 @@ export default function ProfilePage() {
                                     type="submit"
                                     disabled={
                                       isSubmitting ||
-                                      (!fullNameFormData.first_name && !fullNameFormData.last_name) ||
-                                      (fullNameFormData.first_name === user.first_name &&
-                                        fullNameFormData.last_name === user.last_name)
+                                      (!fullNameFormData.firstName && !fullNameFormData.lastName) ||
+                                      (fullNameFormData.firstName === user?.firstName &&
+                                        fullNameFormData.lastName === user?.lastName)
                                     }
                                     className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
                                   >
@@ -402,18 +405,18 @@ export default function ProfilePage() {
                                   )}
 
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="old_password">
+                                    <label className="text-xs font-medium" htmlFor="oldPassword">
                                       Old Password
                                     </label>
                                     <div className='relative'>
                                       <input
                                         ref={oldPasswordRef}
                                         type={showPassword ? 'text' : 'password'}
-                                        id='old_password'
-                                        value={passwordFormData.old_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, old_password: e.target.value }))}
+                                        id='oldPassword'
+                                        value={passwordFormData.oldPassword}
+                                        onChange={(e) => setPasswordFormData(p => ({ ...p, oldPassword: e.target.value }))}
                                         placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='old_password'
+                                        autoComplete='oldPassword'
                                         className={inputBase + ' w-full pr-8'}
                                         disabled={isSubmitting}
                                         aria-required='true'
@@ -431,18 +434,18 @@ export default function ProfilePage() {
                                   </div>
 
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="new_password">
+                                    <label className="text-xs font-medium" htmlFor="newPassword">
                                       New Password
                                     </label>
                                     <div className='relative'>
                                       <input
                                         ref={newPasswordRef}
                                         type={showPassword ? 'text' : 'password'}
-                                        id='new_password'
-                                        value={passwordFormData.new_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, new_password: e.target.value }))}
+                                        id='newPassword'
+                                        value={passwordFormData.newPassword}
+                                        onChange={(e) => setPasswordFormData(p => ({ ...p, newPassword: e.target.value }))}
                                         placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='new_password'
+                                        autoComplete='newPassword'
                                         className={inputBase + ' w-full pr-8'}
                                         disabled={isSubmitting}
                                         aria-required='true'
@@ -460,18 +463,18 @@ export default function ProfilePage() {
                                   </div>
 
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="confirm_new_password">
+                                    <label className="text-xs font-medium" htmlFor="confirmNewPassword">
                                       Confirm New Password
                                     </label>
                                     <div className='relative'>
                                       <input
                                         ref={confirmNewPasswordRef}
                                         type={showPassword ? 'text' : 'password'}
-                                        id='confirm_new_password'
-                                        value={passwordFormData.confirm_new_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, confirm_new_password: e.target.value }))}
+                                        id='confirmNewPassword'
+                                        value={passwordFormData.confirmNewPassword}
+                                        onChange={(e) => setPasswordFormData(p => ({ ...p, confirmNewPassword: e.target.value }))}
                                         placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='confirm_new_password'
+                                        autoComplete='confirmNewPassword'
                                         className={inputBase + ' w-full pr-8'}
                                         disabled={isSubmitting}
                                         aria-required='true'
@@ -490,7 +493,7 @@ export default function ProfilePage() {
 
                                   <button
                                     type="submit"
-                                    disabled={isSubmitting || !passwordFormData.old_password || !passwordFormData.new_password || !passwordFormData.confirm_new_password}
+                                    disabled={isSubmitting || !passwordFormData.oldPassword || !passwordFormData.newPassword || !passwordFormData.confirmNewPassword}
                                     className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
                                   >
                                     {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -520,13 +523,13 @@ export default function ProfilePage() {
                         <div className="flex flex-col gap-4 rounded-lg bg-foreground text-background z-80 p-6 h-fit md:max-h-[90vh] overflow-y-auto col-span-1 md:col-span-3">
                           <h2>Saved Articles</h2>
 
-                          {user.saved_articles &&
-                            user.saved_articles.map((document: Document) => (
+                          {user?.savedArticles &&
+                            user.savedArticles.map((document: Document) => (
                               <DocumentCard
                                 key={document.id}
                                 document={document}
-                                username={user.username ?? undefined}
-                                isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
+                                username={user.name ?? undefined}
+                                isSaved={!!user?.savedArticles?.find((article) => article.id === document.id)}
                               />
                             ))}
                         </div>
