@@ -1,9 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/middleware';
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';                                                               
+import { headers } from 'next/headers';
 import { User } from '@/types/models';
 import { ObjectId } from 'mongodb';
 
-export const GET = withAuth(async (req: NextRequest, { user }) => {
+export const GET = async () => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const user = session.user as unknown as User;
+
   try {
     // Remove sensitive fields
     const { password, ...userWithoutPassword } = user as any;
@@ -22,4 +28,4 @@ export const GET = withAuth(async (req: NextRequest, { user }) => {
       { status: 500 }
     );
   }
-});
+};

@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/middleware';
+import { auth } from '@/lib/auth';                                                               
+import { headers } from 'next/headers';
+import { User } from '@/types/models';
 import { getCollection } from '@/lib/mongodb';
-import { verifyPassword, hashPassword } from '@/lib/auth';
 import { EditPassword, UserInDB } from '@/types/models';
 import { validatePasswordStrength } from '@/lib/password';
 import { checkPasswordChangeRateLimit, getClientIp } from '@/lib/ratelimit';
+import bcrypt from 'bcryptjs';
 
-export const POST = withAuth(async (req: NextRequest, { user }) => {
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+}
+
+export const POST = async (req: NextRequest) => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const user = session.user as unknown as User;
+
   try {
     // Rate limiting for password changes
     const clientIp = getClientIp(req.headers);
@@ -107,4 +123,4 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       { status: 500 }
     );
   }
-});
+};

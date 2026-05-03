@@ -99,13 +99,6 @@ export default function App() {
     setPage(targetPage);
     setIsNewPageLoading(false);
     setAreDocumentsLoading(false);
-    if (!nextPage) {
-      await fetch('/api/embed_documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: aiResponse }),
-      });
-    }
     if (system === 'swipe' && cardIndex + 1 < results?.documents?.length) setCardIndex(cardIndex + 1);
   };
 

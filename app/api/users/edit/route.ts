@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/middleware';
+import { auth } from '@/lib/auth';                                                               
+import { headers } from 'next/headers';
+import { User } from '@/types/models';
 import { getCollection } from '@/lib/mongodb';
 
-export const POST = withAuth(async (req: NextRequest, { user }) => {
+export const POST = async (req: NextRequest) => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const user = session.user as unknown as User;
+
   try {
     const body = await req.json();
     const { first_name, last_name } = body;
@@ -32,4 +39,4 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       { status: 500 }
     );
   }
-});
+};
