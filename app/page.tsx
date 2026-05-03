@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  PanInfo,
-  useAnimationControls,
-} from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUp, LoaderCircle, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
