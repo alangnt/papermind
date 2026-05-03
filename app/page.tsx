@@ -4,7 +4,6 @@ import {
   motion,
   AnimatePresence,
   useMotionValue,
-  useTransform,
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
@@ -21,7 +20,7 @@ import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
 import { apiFetch, logout } from '@/lib/api';
 
-import { Document, SystemType } from '@/types/documents';
+import { Document } from '@/types/documents';
 import { BaseUser } from '@/types/users';
 
 export default function App() {
@@ -36,11 +35,8 @@ export default function App() {
   const [page, setPage] = useState<number>(1);
   const [cardIndex, setCardIndex] = useState<number>(0);
 
-  const [system, setSystem] = useState<SystemType>('classic');
-
   // Swipe the card animation
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-5, 5]);
   const controls = useAnimationControls();
 
   const getUserAccess = useCallback(async () => {
@@ -99,7 +95,6 @@ export default function App() {
     setPage(targetPage);
     setIsNewPageLoading(false);
     setAreDocumentsLoading(false);
-    if (system === 'swipe' && cardIndex + 1 < results?.documents?.length) setCardIndex(cardIndex + 1);
   };
 
   const demoQueries: { name: string; subName: string; fullQuery: string }[] = [
@@ -414,22 +409,8 @@ export default function App() {
             </div>
           </form>
 
-          {/* Link to the new matching game */}
+          {/* Cards */}
           {documents.length > 0 && (
-            <div
-              className="underline z-80 text-foreground cursor-pointer"
-              onClick={() => setSystem(system === 'classic' ? 'swipe' : 'classic')}
-            >
-              <p>
-                {system === 'classic'
-                  ? 'Do you want to try our new Swiping system ?'
-                  : 'Do you want to go back to the classic system ?'}
-              </p>
-            </div>
-          )}
-
-          {/* Classic System */}
-          {documents.length > 0 && system === 'classic' && (
             <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
               {documents.map((document, index) => (
                 <DocumentCard 
@@ -442,27 +423,8 @@ export default function App() {
             </div>
           )}
 
-          {/* Swipe System */}
-          {documents.length > 0 && system === 'swipe' && cardIndex >= 0 && cardIndex < documents.length && (
-            <div className="relative w-full min-h-[360px] sm:min-h-[420px] md:min-h-[460px]">
-              <motion.div
-                style={{ rotate }}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                whileHover={{ scale: 1.01 }}
-                onDrag={(_e, info) => x.set(info.offset.x)}
-                onDragEnd={async (event, info) => swipeDocument(event, info)}
-                animate={controls}
-                className="absolute inset-0 flex items-center justify-center cursor-pointer"
-              >
-                <DocumentCard username={user?.username ?? undefined} document={documents[cardIndex]} isSaved={!!user?.saved_articles?.find(article => article.id === documents[cardIndex].id)}></DocumentCard>
-              </motion.div>
-            </div>
-          )}
-
-          {(system === 'swipe'
-            ? documents.length > 0 && cardIndex === documents.length
-            : documents.length > 0) && (
+          {/* Next page */}
+          {documents.length > 0 && (
             <InteractiveButton>
               <button
                 onClick={async () => {
@@ -474,7 +436,7 @@ export default function App() {
                 {isNewPageLoading ? <LoaderCircle className="w-6 h-6 animate-spin" /> : 'More'}
               </button>
             </InteractiveButton>
-          )}
+          )}      
         </main>
         <Footer />
       </div>

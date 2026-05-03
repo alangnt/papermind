@@ -10,6 +10,3 @@ export type Document = {
   id: string;
   category: string;
 };
-
-export type SearchType = 'manual' | 'ai';
-export type SystemType = 'classic' | 'swipe';
