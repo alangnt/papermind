@@ -21,7 +21,7 @@
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.3",
     "knip": "^6.11.0",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.14.0",
     "mongodb": "^7.2.0",
     "motion": "^12.38.0",
     "next": "16.2.4",
