@@ -37,6 +37,14 @@ export default function App() {
   const [cardIndex, setCardIndex] = useState<number>(0);
 
   const [system, setSystem] = useState<SystemType>('classic');
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+
+  const toggleCard = (index: number) =>
+    setExpandedCards(prev => {
+      const next = new Set(prev);
+      next.has(index) ? next.delete(index) : next.add(index);
+      return next;
+    });
 
   // Swipe the card animation
   const x = useMotionValue(0);
@@ -69,6 +77,7 @@ export default function App() {
     } else {
       setAreDocumentsLoading(true);
       setPage(1);
+      setExpandedCards(new Set());
     }
     let aiResponse = query;
     if (!nextPage) {
@@ -437,15 +446,26 @@ export default function App() {
 
           {/* Classic System */}
           {documents.length > 0 && system === 'classic' && (
-            <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4 text-center mt-6'}>
-              {documents.map((document, index) => (
-                <DocumentCard 
-                  key={index} 
-                  username={user?.username ?? undefined} 
-                  document={document} 
-                  isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
-                ></DocumentCard>
-              ))}
+            <div className="flex flex-col gap-4 text-center mt-6">
+              {Array.from({ length: Math.ceil(documents.length / 2) }, (_, rowIndex) => {
+                const base = rowIndex * 2;
+                const rowDocs = documents.slice(base, base + 2);
+                const rowExpanded = expandedCards.has(base) || expandedCards.has(base + 1);
+                return (
+                  <div key={rowIndex} className={`grid grid-cols-1 sm:grid-cols-2 gap-4${rowExpanded ? ' sm:items-start' : ''}`}>
+                    {rowDocs.map((doc, i) => (
+                      <DocumentCard
+                        key={base + i}
+                        username={user?.username ?? undefined}
+                        document={doc}
+                        isSaved={!!user?.saved_articles?.find((article) => article.id === doc.id)}
+                        expanded={expandedCards.has(base + i)}
+                        onToggleExpand={() => toggleCard(base + i)}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
 

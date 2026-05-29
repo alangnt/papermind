@@ -10,21 +10,25 @@ type Props = {
   document: Document;
   username?: string;
   isSaved?: boolean;
+  expanded?: boolean;
+  onToggleExpand?: () => void;
 };
 
-export default function DocumentCard({ document, username, isSaved = false }: Props) {
+export default function DocumentCard({ document, username, isSaved = false, expanded: controlledExpanded, onToggleExpand }: Props) {
   const { title, authors, published, summary, pdfLink, id, category, doi } = document;
   const publishedDate = published ? new Date(published).toLocaleDateString() : 'Unknown';
 
   // UI state
-  const [expanded, setExpanded] = useState(false);
+  const isControlled = onToggleExpand !== undefined;
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = isControlled ? (controlledExpanded ?? false) : internalExpanded;
+  const toggleExpand = isControlled ? onToggleExpand : () => setInternalExpanded(p => !p);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(isSaved);
   const isConnected = !!username;
   const abstract = summary?.trim() || 'No summary available.';
   const truncated = useMemo(() => abstract.slice(0, 320) + (abstract.length > 320 ? '…' : ''), [abstract]);
-
-  const toggleExpand = () => setExpanded(p => !p);
 
   const saveArticle = useCallback(async () => {
     if (!isConnected || !username) return; // guard
