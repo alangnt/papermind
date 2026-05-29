@@ -119,6 +119,10 @@ const RATE_LIMITS = {
     limit: 5,
     windowMs: 60 * 60 * 1000, // 1 hour
   },
+  SEARCH: {
+    limit: 20,
+    windowMs: 60 * 1000, // 1 minute
+  },
 };
 
 /**
@@ -151,6 +155,14 @@ export function checkPasswordResetRateLimit(email: string) {
 export function checkPasswordChangeRateLimit(userId: string) {
   const key = `password-change:${userId}`;
   return rateLimiter.check(key, RATE_LIMITS.PASSWORD_CHANGE.limit, RATE_LIMITS.PASSWORD_CHANGE.windowMs);
+}
+
+/**
+ * Check rate limit for arXiv search requests
+ */
+export function checkSearchRateLimit(ip: string) {
+  const key = `search:${ip}`;
+  return rateLimiter.check(key, RATE_LIMITS.SEARCH.limit, RATE_LIMITS.SEARCH.windowMs);
 }
 
 /**

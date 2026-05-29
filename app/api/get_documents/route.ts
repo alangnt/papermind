@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchArxiv } from '@/lib/arxiv';
+import { checkSearchRateLimit, getClientIp } from '@/lib/ratelimit';
 import { Query } from '@/types/models';
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req.headers);
+  const { allowed, resetAt } = checkSearchRateLimit(ip);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)) },
+      }
+    );
+  }
+
   try {
     const body: Query = await req.json();
     const { query, page = 1 } = body;
