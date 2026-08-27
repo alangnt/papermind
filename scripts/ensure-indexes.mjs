@@ -10,12 +10,8 @@
  * it surfaces the bad data instead of silently skipping. Resolve the reported
  * duplicates, then re-run.
  *
- * NOTE: the database name is hardcoded to match lib/mongodb.ts, which ignores
- * MONGODB_NAME. If that is ever fixed, fix it here too.
  */
 import { MongoClient } from 'mongodb';
-
-const DB_NAME = 'Astra';
 const DRY_RUN = process.argv.includes('--dry-run');
 
 const INDEXES = [
@@ -26,6 +22,13 @@ const INDEXES = [
 const uri = process.env.MONGODB_URI;
 if (!uri) {
   console.error('MONGODB_URI is not set');
+  process.exit(1);
+}
+
+// Matches lib/mongodb.ts: no fallback, so this can never index the wrong database.
+const DB_NAME = process.env.MONGODB_NAME;
+if (!DB_NAME) {
+  console.error('MONGODB_NAME is not set');
   process.exit(1);
 }
 
@@ -50,18 +53,25 @@ try {
 
   let failed = 0;
 
+  // indexExists() and aggregate() both throw on a namespace that does not exist,
+  // which is the normal state of a brand-new database.
+  const existingCollections = new Set(
+    (await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name)
+  );
+
   for (const { collection: name, spec, options } of INDEXES) {
     const collection = db.collection(name);
     const field = Object.keys(spec)[0];
     const label = `${name}.${field}`;
+    const collectionExists = existingCollections.has(name);
 
-    const existing = await collection.indexExists(options.name);
-    if (existing) {
+    if (collectionExists && (await collection.indexExists(options.name))) {
       console.log(`= ${label}: ${options.name} already present`);
       continue;
     }
 
-    if (options.unique) {
+    // A collection that does not exist yet cannot hold duplicates.
+    if (options.unique && collectionExists) {
       const duplicates = await findDuplicates(collection, field);
       if (duplicates.length > 0) {
         failed++;

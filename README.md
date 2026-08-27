@@ -79,6 +79,7 @@ Create `.env.local`:
 ```bash
 # Required
 MONGODB_URI=                    # MongoDB Atlas connection string
+MONGODB_NAME=                   # database name, e.g. Astra
 SECRET_KEY=                     # signing key for access tokens
 
 # Recommended
@@ -94,7 +95,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_MINUTES=43200
 ```
 
-> **Note:** the database name is currently hardcoded to `Astra` in `lib/mongodb.ts`.
+> **Note:** `MONGODB_NAME` has no default. A fallback would let a misconfigured deployment silently read and write the wrong database, so the app throws instead.
 
 ### 3. Create the database indexes
 

@@ -35,18 +35,32 @@ function getClientPromise(): Promise<MongoClient> {
 }
 
 /**
- * Get the MongoDB database instance
- * @param dbName Optional database name, defaults to "Astra"
+ * Resolve the database name from the environment.
+ *
+ * Deliberately has no fallback: a default would let a misconfigured
+ * deployment silently read and write the wrong database.
  */
-async function getDatabase(dbName: string = 'Astra'): Promise<Db> {
+function getDatabaseName(): string {
+  const name = process.env.MONGODB_NAME;
+  if (!name) {
+    throw new Error('MONGODB_NAME is not defined in environment variables');
+  }
+  return name;
+}
+
+/**
+ * Get the MongoDB database instance
+ * @param dbName Optional override; defaults to MONGODB_NAME
+ */
+async function getDatabase(dbName?: string): Promise<Db> {
   const client = await getClientPromise();
-  return client.db(dbName);
+  return client.db(dbName ?? getDatabaseName());
 }
 
 /**
  * Get a specific collection from the database
  * @param collectionName Name of the collection
- * @param dbName Optional database name, defaults to "Astra"
+ * @param dbName Optional database name; defaults to MONGODB_NAME
  */
 export async function getCollection<TSchema extends Record<string, any> = any>(
   collectionName: string,
