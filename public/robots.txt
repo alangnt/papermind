@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /profile
+Disallow: /reset_password
 
 Sitemap: https://www.papermind.ch/sitemap.xml
