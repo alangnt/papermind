@@ -9,14 +9,15 @@
   "icons": [
     {
       "src": "/icon.png",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
       "src": "/apple-icon.png",
-      "sizes": "any",
-      "type": "image/png"
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

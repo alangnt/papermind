@@ -167,7 +167,7 @@ export default function ResetPasswordPage() {
             >
               <div className='flex flex-col items-center text-foreground mb-2 gap-2'>
                 <div className='flex items-center justify-center rounded-full border border-border size-12 bg-background/40 backdrop-blur-sm shadow-inner overflow-hidden'>
-                  <Image src={"/papermind-light.png"} alt="Papermind Logo Light" height={200} width={200}></Image>
+                  <Image src={"/papermind-light.png"} alt="Papermind Logo Light" height={96} width={96}></Image>
                 </div>
                 <h2 id='login-title' className='text-lg font-medium'>Welcome back</h2>
                 <p className='text-xs text-gray-500'>Set a new password below</p>

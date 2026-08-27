@@ -31,7 +31,7 @@ export const metadata: Metadata = {
       {
         url: '/og-image.png',
         width: 1200,
-        height: 630,
+        height: 675,
         alt: 'PaperMind - AI Research Assistant for Scientific Papers',
       },
     ],
@@ -54,10 +54,8 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  icons: {
-    icon: '/icon.png',
-    apple: '/apple-icon.png',
-  },
+  // Icon links are generated from app/icon.png, app/apple-icon.png and
+  // app/favicon.ico by the file convention; declaring them here duplicates them.
   manifest: '/manifest.json',
 };
 
