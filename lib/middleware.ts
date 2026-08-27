@@ -73,8 +73,8 @@ export function withAuth<T = any>(
 
       if (user.disabled) {
         return NextResponse.json(
-          { error: 'User account is disabled' },
-          { status: 400 }
+          { error: 'Account is disabled' },
+          { status: 403 }
         );
       }
 

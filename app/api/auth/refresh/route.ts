@@ -65,6 +65,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (user.disabled) {
+      return NextResponse.json(
+        { error: 'Account is disabled' },
+        { status: 403 }
+      );
+    }
+
     // Create new access token and refresh token
     const tokenVersion = user.tokenVersion ?? 0;
     const access_token = createAccessToken({ sub: username, tokenVersion });
