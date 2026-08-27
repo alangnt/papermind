@@ -13,18 +13,18 @@
     "knip": "knip"
   },
   "dependencies": {
-    "@ai-sdk/groq": "^3.0.60",
+    "@ai-sdk/groq": "^3.0.63",
     "@types/jsonwebtoken": "^9.0.10",
     "@vercel/analytics": "^2.0.1",
-    "ai": "^6.0.256",
+    "ai": "^6.0.270",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.3",
-    "knip": "^6.32.2",
+    "knip": "^6.32.3",
     "lucide-react": "^0.577.0",
-    "mongodb": "^7.5.0",
+    "mongodb": "^7.6.0",
     "motion": "^12.43.0",
-    "next": "16.3.1",
+    "next": "16.3.3",
     "postmark": "^4.0.7",
     "prettier": "^3.9.6",
     "react": "19.2.8",
@@ -34,9 +34,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^25.9.5",
+    "@types/node": "^26.4.0",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
+    "@types/react-dom": "19.2.5",
     "@types/xml2js": "^0.4.14",
     "husky": "^9.1.7",
     "tailwindcss": "^4.3.3",
@@ -45,6 +45,6 @@
   },
   "overrides": {
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4"
+    "@types/react-dom": "19.2.5"
   }
 }
