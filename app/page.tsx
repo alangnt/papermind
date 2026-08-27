@@ -36,6 +36,8 @@ export default function App() {
   const [page, setPage] = useState<number>(1);
   const [cardIndex, setCardIndex] = useState<number>(0);
 
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   const [system, setSystem] = useState<SystemType>('classic');
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
@@ -68,6 +70,27 @@ export default function App() {
     }
   }, [setUser]);
 
+  /**
+   * Ask the LLM for a search keyword. Purely an enhancement: if it is
+   * unavailable, rate limited or malformed we search the raw query instead.
+   */
+  const extractKeyword = async (): Promise<string> => {
+    try {
+      const res = await fetch('/api/askAi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      if (!res.ok) return query;
+      const data = await res.json();
+      const keyword = typeof data?.content === 'string' ? data.content.trim() : '';
+      return keyword.length > 0 ? keyword : query;
+    } catch (error) {
+      console.error('Keyword extraction failed, searching raw query instead', error);
+      return query;
+    }
+  };
+
   const getDocument = async (nextPage?: boolean, event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     const targetPage = nextPage ? page + 1 : 1;
@@ -77,45 +100,48 @@ export default function App() {
     } else {
       setAreDocumentsLoading(true);
       setPage(1);
+      setCardIndex(0);
       setExpandedCards(new Set());
     }
-    let aiResponse = query;
-    if (!nextPage) {
-      const askAi = await fetch('/api/askAi', {
+    setSearchError(null);
+
+    try {
+      const aiResponse = nextPage ? query : await extractKeyword();
+
+      const manualSearch = await fetch('/api/get_documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: aiResponse, page: targetPage }),
       });
-      const aiData = await askAi.json();
-      if (aiData && aiData.status) {
-        setAreDocumentsLoading(false);
-        setIsNewPageLoading(false);
-        setDocuments([]);
+
+      if (!manualSearch.ok) {
+        if (!nextPage) setDocuments([]);
+        if (manualSearch.status === 429) {
+          setSearchError('Too many searches. Please wait a moment and try again.');
+        } else if (manualSearch.status === 404) {
+          setSearchError(
+            nextPage ? 'No more results to load.' : 'No results found. Try different wording.'
+          );
+        } else {
+          setSearchError('Search failed. Please try again.');
+        }
         return;
       }
-      aiResponse = aiData.content.length > 0 ? aiData.content : query;
+
+      const results = await manualSearch.json();
+
+      setDocuments(results.documents || []);
+      setPage(targetPage);
+      if (nextPage && system === 'swipe' && cardIndex + 1 < (results?.documents?.length ?? 0)) {
+        setCardIndex(cardIndex + 1);
+      }
+    } catch (error) {
+      console.error(error);
+      setSearchError('Search failed. Please check your connection and try again.');
+    } finally {
+      setIsNewPageLoading(false);
+      setAreDocumentsLoading(false);
     }
-
-    const manualSearch = await fetch('/api/get_documents', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: aiResponse, page: targetPage }),
-    });
-
-    const results = await manualSearch.json();
-
-    setDocuments(results.documents || []);
-    setPage(targetPage);
-    setIsNewPageLoading(false);
-    setAreDocumentsLoading(false);
-    if (!nextPage) {
-      await fetch('/api/embed_documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: aiResponse }),
-      });
-    }
-    if (system === 'swipe' && cardIndex + 1 < results?.documents?.length) setCardIndex(cardIndex + 1);
   };
 
   const demoQueries: { name: string; subName: string; fullQuery: string }[] = [
@@ -429,6 +455,20 @@ export default function App() {
               </div>
             </div>
           </form>
+
+          <AnimatePresence>
+            {searchError && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                role="alert"
+                className="z-80 w-full text-red-500 text-xs bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md"
+              >
+                {searchError}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Link to the new matching game */}
           {documents.length > 0 && (
