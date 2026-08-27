@@ -10,7 +10,9 @@
     "test": "echo \"No tests yet\" && exit 0",
     "prepare": "husky",
     "format": "prettier --write .",
-    "knip": "knip"
+    "knip": "knip",
+    "db:indexes": "node --env-file=.env.local scripts/ensure-indexes.mjs",
+    "db:indexes:check": "node --env-file=.env.local scripts/ensure-indexes.mjs --dry-run"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.63",

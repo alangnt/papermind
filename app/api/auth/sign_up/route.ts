@@ -6,6 +6,16 @@ import { createAuthCookies } from '@/lib/cookies';
 import { validatePasswordStrength } from '@/lib/password';
 import { checkSignUpRateLimit, getClientIp } from '@/lib/ratelimit';
 
+function isDuplicateKeyError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000;
+}
+
+/** Which indexed field collided, read off the driver's keyPattern. */
+function duplicateKeyField(error: unknown): string | undefined {
+  const keyPattern = (error as { keyPattern?: Record<string, unknown> }).keyPattern;
+  return keyPattern ? Object.keys(keyPattern)[0] : undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body: BaseSignUp = await req.json();
@@ -94,8 +104,22 @@ export async function POST(req: NextRequest) {
       disabled: false,
     };
 
-    const result = await usersCollection.insertOne(newUser as any);
-    
+    let result;
+    try {
+      result = await usersCollection.insertOne(newUser as any);
+    } catch (error) {
+      // The checks above lose to a concurrent signup; the unique indexes on
+      // username/email are what actually prevent duplicates. Translate the
+      // driver's duplicate-key error into the same 409 those checks return.
+      if (isDuplicateKeyError(error)) {
+        const field = duplicateKeyField(error);
+        return field === 'email'
+          ? NextResponse.json({ code: 2002, message: 'Email already exists' }, { status: 409 })
+          : NextResponse.json({ code: 2001, message: 'Username already exists' }, { status: 409 });
+      }
+      throw error;
+    }
+
     if (!result.insertedId) {
       return NextResponse.json(
         { error: 'User creation failed' },
