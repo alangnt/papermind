@@ -1,1 +1,20 @@
-npm test
+#!/usr/bin/env sh
+
+# Hooks run in a non-interactive shell that skips shell init, so nvm-managed
+# node and bun are usually absent from PATH — especially from GUI git clients.
+export PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+[ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "pre-commit: bun not found on PATH; skipping lint" >&2
+  exit 0
+fi
+
+bun run lint || {
+  echo ""
+  echo "pre-commit: lint failed. Fix the errors above, or run 'bun run lint:fix'."
+  echo "To bypass for one commit: git commit --no-verify"
+  exit 1
+}
+
+bun run test
