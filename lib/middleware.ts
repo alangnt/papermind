@@ -4,10 +4,6 @@ import { getCollection } from './mongodb';
 import { User } from '@/types/models';
 import { getCookie } from './cookies';
 
-interface AuthenticatedRequest extends NextRequest {
-  user?: User;
-}
-
 /**
  * Higher-order function to protect API routes with authentication
  * Extracts JWT from cookies (primary) or Authorization header (fallback)
@@ -38,7 +34,7 @@ export function withAuth<T = any>(
       let payload;
       try {
         payload = verifyAccessToken(token);
-      } catch (error) {
+      } catch {
         return NextResponse.json(
           { error: 'Invalid or expired token' },
           { status: 401 }

@@ -8,7 +8,6 @@ import {
 import { getCollection } from '@/lib/mongodb';
 import { User } from '@/types/models';
 import { getCookie } from '@/lib/cookies';
-import { createAuthCookies } from '@/lib/cookies';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +21,7 @@ export async function POST(req: NextRequest) {
       try {
         const body = await req.json();
         refresh_token = body.refresh_token;
-      } catch (error) {
+      } catch {
         // No JSON body, that's okay if we have cookie
       }
     }
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
     let payload;
     try {
       payload = verifyRefreshToken(refresh_token);
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid refresh token' },
         { status: 401 }

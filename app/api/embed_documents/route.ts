@@ -1,7 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { searchArxiv } from '@/lib/arxiv';
-import { getCollection } from '@/lib/mongodb';
-import { Query } from '@/types/models';
+import { NextResponse } from 'next/server';
 
 /*
  * NOTE: This endpoint currently requires Python's sentence-transformers library
@@ -17,7 +14,7 @@ import { Query } from '@/types/models';
  * For now, this endpoint returns a 501 Not Implemented status.
  */
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     return NextResponse.json(
       {

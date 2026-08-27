@@ -5,21 +5,6 @@ const API_URL = ''; // Use relative paths for Next.js API routes
 let refreshInFlight: Promise<boolean> | null = null;
 
 /**
- * Check if user is authenticated by making a test request
- * (cookies are automatically sent)
- */
-async function isAuthenticated(): Promise<boolean> {
-  try {
-    const res = await fetch('/api/users/me', {
-      credentials: 'include',
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Clear authentication (logout)
  */
 export async function logout(): Promise<void> {

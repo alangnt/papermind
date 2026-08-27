@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     // Send email via Postmark
     const client = new postmark.ServerClient(POSTMARK_TOKEN);
     
-    const emailResult = await client.sendEmail({
+    await client.sendEmail({
       From: 'info@papermind.ch',
       To: email,
       Subject: 'Reset your password',

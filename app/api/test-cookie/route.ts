@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const response = NextResponse.json({
     message: 'Test cookie endpoint',
     timestamp: new Date().toISOString(),

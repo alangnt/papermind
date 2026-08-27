@@ -4,12 +4,11 @@ import { getCollection } from '@/lib/mongodb';
 import { verifyPassword, hashPassword } from '@/lib/auth';
 import { EditPassword, UserInDB } from '@/types/models';
 import { validatePasswordStrength } from '@/lib/password';
-import { checkPasswordChangeRateLimit, getClientIp } from '@/lib/ratelimit';
+import { checkPasswordChangeRateLimit } from '@/lib/ratelimit';
 
 export const POST = withAuth(async (req: NextRequest, { user }) => {
   try {
     // Rate limiting for password changes
-    const clientIp = getClientIp(req.headers);
     const rateLimit = checkPasswordChangeRateLimit(user._id.toString());
 
     if (!rateLimit.allowed) {

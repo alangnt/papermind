@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
 import { hashPassword, createAccessToken, createRefreshToken } from '@/lib/auth';
 import { UserInDB, BaseSignUp } from '@/types/models';
-import { createAuthCookies } from '@/lib/cookies';
 import { validatePasswordStrength } from '@/lib/password';
 import { checkSignUpRateLimit, getClientIp } from '@/lib/ratelimit';
 

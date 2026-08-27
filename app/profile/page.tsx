@@ -12,7 +12,7 @@ import { Waves } from "@/components/ui/WavesBackground";
 
 import { BaseUser } from "@/types/users";
 import { Document } from "@/types/documents";
-import { logout, apiFetch } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
   const router = useRouter();

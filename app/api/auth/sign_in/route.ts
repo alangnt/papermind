@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
 import { verifyPassword, createAccessToken, createRefreshToken, hashPassword } from '@/lib/auth';
 import { UserInDB } from '@/types/models';
-import { createAuthCookies } from '@/lib/cookies';
 import { checkSignInRateLimit, getClientIp, resetRateLimit } from '@/lib/ratelimit';
 
 export async function POST(req: NextRequest) {
