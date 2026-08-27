@@ -130,22 +130,16 @@ export default function ProfilePage() {
     }
   }
 
-  const getUserAccess = useCallback(async () => {
+  const getUserAccess = useCallback(async (): Promise<BaseUser | null> => {
     try {
       const res = await apiFetch('/api/users/me', { method: 'GET' });
-
-      if (!res.ok) {
-        return 1;
-      }
-
-      const data = await res.json() as BaseUser;
-      setUser(data as BaseUser);
-      return 0;
+      if (!res.ok) return null;
+      return (await res.json()) as BaseUser;
     } catch (error) {
       console.error(error);
-      return 1;
+      return null;
     }
-  }, [setUser]);
+  }, []);
 
   const switchTab = (tab: "fullname" | "password") => {
     // Reset Forms
@@ -181,24 +175,28 @@ export default function ProfilePage() {
   }, [firstNameRef, lastNameRef, oldPasswordRef, newPasswordRef, confirmNewPasswordRef, submitBtnRef, currentTab]);
 
   useEffect(() => {
-    getUserAccess().then((res) => {
-      if (res === 1) {
+    let cancelled = false;
+    (async () => {
+      const fetched = await getUserAccess();
+      if (cancelled) return;
+      if (!fetched) {
         setUser(null);
-        router.replace("/");
+        router.replace('/');
+        return;
       }
-    });
-  }, [getUserAccess, router]);
-
-  useEffect(() => {
-    if (user) {
-      setFullNameFormData(prev => {
-        const userFirst = user.first_name || "";
-        const userLast = user.last_name || "";
-        if (prev.first_name !== "" || prev.last_name !== "") return prev;
-        return { first_name: userFirst, last_name: userLast };
+      // Seeding the form here rather than in a second effect keyed on `user`
+      // avoids an extra render pass, and the fetch happens exactly once so
+      // there is no in-progress edit to clobber.
+      setUser(fetched);
+      setFullNameFormData({
+        first_name: fetched.first_name || '',
+        last_name: fetched.last_name || '',
       });
-    }
-  }, [user]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [getUserAccess, router]);
 
   const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
 

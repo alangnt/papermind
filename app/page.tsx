@@ -257,11 +257,14 @@ export default function App() {
   }
 
   useEffect(() => {
-    getUserAccess().then((res) => {
-      if (res === 1) {
-        setUser(null);
-      }
-    });
+    let cancelled = false;
+    (async () => {
+      const res = await getUserAccess();
+      if (!cancelled && res === 1) setUser(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [getUserAccess]);
 
   return (

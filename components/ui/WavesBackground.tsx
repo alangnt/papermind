@@ -137,7 +137,10 @@ export function Waves({
     left: 0,
     top: 0,
   });
-  const noiseRef = useRef<Noise>(new Noise(Math.random()));
+  // Seeded lazily inside the effect: useRef evaluates its argument on every
+  // render, so seeding here would both waste a Noise per render and make the
+  // component impure.
+  const noiseRef = useRef<Noise | null>(null);
   const linesRef = useRef<Point[][]>([]);
   const mouseRef = useRef({
     x: -10,
@@ -153,6 +156,8 @@ export function Waves({
   });
 
   useEffect(() => {
+    if (!noiseRef.current) noiseRef.current = new Noise(Math.random());
+
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
@@ -191,7 +196,7 @@ export function Waves({
     function movePoints(time: number) {
       const lines = linesRef.current;
       const mouse = mouseRef.current;
-      const noise = noiseRef.current;
+      const noise = noiseRef.current!;
       lines.forEach((pts) => {
         pts.forEach((p) => {
           const move =

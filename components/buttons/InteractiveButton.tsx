@@ -20,7 +20,10 @@ export function InteractiveButton({
   actionArea = 'self',
   springOptions = SPRING_CONFIG,
 }: MagneticProps) {
-  const [isHovered, setIsHovered] = useState(false);
+  // 'global' means always active, which is derived from the prop rather than
+  // state; only 'self'/'parent' actually track pointer entry.
+  const [isPointerInside, setIsPointerInside] = useState(false);
+  const isHovered = actionArea === 'global' || isPointerInside;
   const ref = useRef<HTMLDivElement>(null);
 
   const x = useMotionValue(0);
@@ -62,8 +65,8 @@ export function InteractiveButton({
     if (actionArea === 'parent' && ref.current?.parentElement) {
       const parent = ref.current.parentElement;
 
-      const handleParentEnter = () => setIsHovered(true);
-      const handleParentLeave = () => setIsHovered(false);
+      const handleParentEnter = () => setIsPointerInside(true);
+      const handleParentLeave = () => setIsPointerInside(false);
 
       parent.addEventListener('mouseenter', handleParentEnter);
       parent.addEventListener('mouseleave', handleParentLeave);
@@ -72,20 +75,18 @@ export function InteractiveButton({
         parent.removeEventListener('mouseenter', handleParentEnter);
         parent.removeEventListener('mouseleave', handleParentLeave);
       };
-    } else if (actionArea === 'global') {
-      setIsHovered(true);
     }
   }, [actionArea]);
 
   const handleMouseEnter = () => {
     if (actionArea === 'self') {
-      setIsHovered(true);
+      setIsPointerInside(true);
     }
   };
 
   const handleMouseLeave = () => {
     if (actionArea === 'self') {
-      setIsHovered(false);
+      setIsPointerInside(false);
       x.set(0);
       y.set(0);
     }
