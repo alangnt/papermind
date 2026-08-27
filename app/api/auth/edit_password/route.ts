@@ -81,11 +81,9 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     const hashedPassword = await hashPassword(new_password);
     const result = await usersCollection.updateOne(
       { email: user.email },
-      { 
-        $set: { 
-          password: hashedPassword,
-          tokenVersion: (userWithPassword.tokenVersion || 0) + 1, // Invalidate all tokens
-        } 
+      {
+        $set: { password: hashedPassword },
+        $inc: { tokenVersion: 1 }, // invalidates every existing access/refresh token
       }
     );
 

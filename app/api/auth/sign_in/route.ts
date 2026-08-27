@@ -102,8 +102,9 @@ export async function POST(req: NextRequest) {
     resetRateLimit('signin', `${clientIp}:${username}`);
 
     // Create tokens
-    const access_token = createAccessToken({ sub: user.username });
-    const refresh_token = createRefreshToken({ sub: user.username });
+    const tokenVersion = user.tokenVersion ?? 0;
+    const access_token = createAccessToken({ sub: user.username, tokenVersion });
+    const refresh_token = createRefreshToken({ sub: user.username, tokenVersion });
 
     // Return success without tokens in body
     const response = NextResponse.json(

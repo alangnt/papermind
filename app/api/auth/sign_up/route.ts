@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Create tokens
-    const access_token = createAccessToken({ sub: username });
-    const refresh_token = createRefreshToken({ sub: username });
+    const access_token = createAccessToken({ sub: username, tokenVersion: 0 });
+    const refresh_token = createRefreshToken({ sub: username, tokenVersion: 0 });
 
     // Return success without tokens in body
     const response = NextResponse.json(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAccessToken } from './auth';
+import { verifyAccessToken, isTokenVersionCurrent } from './auth';
 import { getCollection } from './mongodb';
 import { User } from '@/types/models';
 import { getCookie } from './cookies';
@@ -60,6 +60,13 @@ export function withAuth<T = any>(
       if (!user) {
         return NextResponse.json(
           { error: 'User not found' },
+          { status: 401 }
+        );
+      }
+
+      if (!isTokenVersionCurrent(payload, user.tokenVersion)) {
+        return NextResponse.json(
+          { error: 'Session expired. Please sign in again.' },
           { status: 401 }
         );
       }

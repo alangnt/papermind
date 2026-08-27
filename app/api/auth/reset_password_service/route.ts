@@ -53,7 +53,10 @@ export async function POST(req: NextRequest) {
     const usersCollection = await getCollection('users');
     const result = await usersCollection.updateOne(
       { email },
-      { $set: { password: hashedPassword } }
+      {
+        $set: { password: hashedPassword },
+        $inc: { tokenVersion: 1 }, // invalidates every existing access/refresh token
+      }
     );
 
     if (result.modifiedCount === 0) {

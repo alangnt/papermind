@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyRefreshToken, createAccessToken, createRefreshToken } from '@/lib/auth';
+import {
+  verifyRefreshToken,
+  createAccessToken,
+  createRefreshToken,
+  isTokenVersionCurrent,
+} from '@/lib/auth';
+import { getCollection } from '@/lib/mongodb';
+import { User } from '@/types/models';
 import { getCookie } from '@/lib/cookies';
 import { createAuthCookies } from '@/lib/cookies';
 
@@ -46,9 +53,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // A valid signature is not enough: the user must still exist and the
+    // token's version must match, or a password change would not log them out.
+    const usersCollection = await getCollection<User>('users');
+    const user = await usersCollection.findOne({ username });
+
+    if (!user || !isTokenVersionCurrent(payload, user.tokenVersion)) {
+      return NextResponse.json(
+        { error: 'Session expired. Please sign in again.' },
+        { status: 401 }
+      );
+    }
+
     // Create new access token and refresh token
-    const access_token = createAccessToken({ sub: username });
-    const new_refresh_token = createRefreshToken({ sub: username });
+    const tokenVersion = user.tokenVersion ?? 0;
+    const access_token = createAccessToken({ sub: username, tokenVersion });
+    const new_refresh_token = createRefreshToken({ sub: username, tokenVersion });
 
     // Return success
     const response = NextResponse.json(
