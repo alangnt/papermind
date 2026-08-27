@@ -123,6 +123,10 @@ const RATE_LIMITS = {
     limit: 20,
     windowMs: 60 * 1000, // 1 minute
   },
+  ASK_AI: {
+    limit: 10,
+    windowMs: 60 * 1000, // 1 minute
+  },
 };
 
 /**
@@ -163,6 +167,15 @@ export function checkPasswordChangeRateLimit(userId: string) {
 export function checkSearchRateLimit(ip: string) {
   const key = `search:${ip}`;
   return rateLimiter.check(key, RATE_LIMITS.SEARCH.limit, RATE_LIMITS.SEARCH.windowMs);
+}
+
+/**
+ * Check rate limit for LLM keyword-extraction requests.
+ * Tighter than SEARCH because each call costs Groq credits.
+ */
+export function checkAskAiRateLimit(ip: string) {
+  const key = `askai:${ip}`;
+  return rateLimiter.check(key, RATE_LIMITS.ASK_AI.limit, RATE_LIMITS.ASK_AI.windowMs);
 }
 
 /**

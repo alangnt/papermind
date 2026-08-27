@@ -1,8 +1,21 @@
 import { groq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAskAiRateLimit, getClientIp } from '@/lib/ratelimit';
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request.headers);
+  const { allowed, resetAt } = checkAskAiRateLimit(ip);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)) },
+      }
+    );
+  }
+
   const apiKey = process.env.GROQ_API_KEY || '';
   if (!apiKey.length) return NextResponse.json({ message: 'No API key found.' }, { status: 404 });
 
