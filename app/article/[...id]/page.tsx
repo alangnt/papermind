@@ -7,8 +7,7 @@ import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 import Footer from '@/components/ui/Footer';
 import { getArticle } from '@/lib/articles';
 import { categoryBadgeClass } from '@/lib/categories';
-
-const SITE_URL = 'https://www.papermind.ch';
+import { articleUrl } from '@/lib/site';
 
 type Props = {
   // Catch-all: old-style arXiv IDs contain a slash (cs/0701001), so the ID
@@ -48,7 +47,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { document, arxivId } = article;
   const description = document.summary?.trim().slice(0, 200) ?? '';
-  const url = `${SITE_URL}/article/${arxivId}`;
+  const url = articleUrl(arxivId);
+  const image = {
+    url: `/api/og/article?id=${encodeURIComponent(arxivId)}`,
+    width: 1200,
+    height: 630,
+    alt: `${document.title} — scan the QR code to read it on PaperMind`,
+  };
 
   return {
     title: document.title,
@@ -64,11 +69,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       publishedTime: document.published || undefined,
       modifiedTime: document.updated || undefined,
       authors: document.authors,
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title: document.title,
       description,
+      images: [image],
     },
   };
 }
@@ -108,7 +115,7 @@ export default async function ArticlePage({ params }: Props) {
             datePublished: document.published || undefined,
             dateModified: document.updated || undefined,
             identifier: document.doi ? `https://doi.org/${document.doi}` : absUrl,
-            url: `${SITE_URL}/article/${arxivId}`,
+            url: articleUrl(arxivId),
             sameAs: absUrl,
             isAccessibleForFree: true,
             publisher: { '@type': 'Organization', name: 'arXiv' },
