@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { BookmarkPlus, BookmarkCheck, ExternalLink, FileText, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { Document } from '@/types/documents';
+import { categoryBadgeClass } from '@/lib/categories';
 
 type Props = {
   document: Document;
@@ -60,16 +61,7 @@ export default function DocumentCard({ document, username, isSaved = false, expa
     }
   }, [document, isConnected, saved, username, isSaving]);
 
-  const categoryStyle = useMemo(() => {
-    if (!category) return 'bg-white/10 text-gray-300';
-    const c = category.toLowerCase();
-    if (c.includes('cs')) return 'bg-sky-500/20 text-sky-200';
-    if (c.includes('math') || c.includes('stat')) return 'bg-indigo-500/20 text-indigo-200';
-    if (c.includes('bio') || c.includes('med')) return 'bg-emerald-500/20 text-emerald-200';
-    if (c.includes('phys')) return 'bg-fuchsia-500/20 text-fuchsia-200';
-    if (c.includes('econ') || c.includes('fin')) return 'bg-amber-500/20 text-amber-200';
-    return 'bg-white/10 text-gray-300';
-  }, [category]);
+  const categoryStyle = useMemo(() => categoryBadgeClass(category), [category]);
 
   return (
     <motion.article
