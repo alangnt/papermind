@@ -13,9 +13,12 @@ class RateLimiter {
 
   constructor() {
     // Clean up expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      5 * 60 * 1000
+    );
   }
 
   /**
@@ -25,7 +28,11 @@ class RateLimiter {
    * @param windowMs - Time window in milliseconds
    * @returns Object with allowed status and remaining attempts
    */
-  check(key: string, limit: number, windowMs: number): {
+  check(
+    key: string,
+    limit: number,
+    windowMs: number
+  ): {
     allowed: boolean;
     remaining: number;
     resetAt: number;
@@ -127,6 +134,10 @@ const RATE_LIMITS = {
     limit: 10,
     windowMs: 60 * 1000, // 1 minute
   },
+  GROUP_WRITE: {
+    limit: 30,
+    windowMs: 60 * 1000, // 1 minute
+  },
 };
 
 /**
@@ -150,7 +161,11 @@ export function checkSignUpRateLimit(ip: string) {
  */
 export function checkPasswordResetRateLimit(email: string) {
   const key = `password-reset:${email}`;
-  return rateLimiter.check(key, RATE_LIMITS.PASSWORD_RESET.limit, RATE_LIMITS.PASSWORD_RESET.windowMs);
+  return rateLimiter.check(
+    key,
+    RATE_LIMITS.PASSWORD_RESET.limit,
+    RATE_LIMITS.PASSWORD_RESET.windowMs
+  );
 }
 
 /**
@@ -158,7 +173,11 @@ export function checkPasswordResetRateLimit(email: string) {
  */
 export function checkPasswordChangeRateLimit(userId: string) {
   const key = `password-change:${userId}`;
-  return rateLimiter.check(key, RATE_LIMITS.PASSWORD_CHANGE.limit, RATE_LIMITS.PASSWORD_CHANGE.windowMs);
+  return rateLimiter.check(
+    key,
+    RATE_LIMITS.PASSWORD_CHANGE.limit,
+    RATE_LIMITS.PASSWORD_CHANGE.windowMs
+  );
 }
 
 /**
@@ -176,6 +195,16 @@ export function checkSearchRateLimit(ip: string) {
 export function checkAskAiRateLimit(ip: string) {
   const key = `askai:${ip}`;
   return rateLimiter.check(key, RATE_LIMITS.ASK_AI.limit, RATE_LIMITS.ASK_AI.windowMs);
+}
+
+/**
+ * Check rate limit for writes to groups.
+ * Keyed on the username rather than the IP: these routes are authenticated, and
+ * the thing worth bounding is one account creating groups or spamming invites.
+ */
+export function checkGroupWriteRateLimit(username: string) {
+  const key = `group-write:${username}`;
+  return rateLimiter.check(key, RATE_LIMITS.GROUP_WRITE.limit, RATE_LIMITS.GROUP_WRITE.windowMs);
 }
 
 /**
@@ -204,4 +233,3 @@ export function getClientIp(headers: Headers): string {
   // Fallback to connection IP (not reliable behind proxies)
   return 'unknown';
 }
-

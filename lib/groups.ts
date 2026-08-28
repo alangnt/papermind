@@ -37,7 +37,7 @@ export interface Group {
 
 const COLLECTION = 'groups';
 
-export const MAX_NAME_LENGTH = 60;
+const MAX_NAME_LENGTH = 60;
 export const MAX_GROUPS_PER_USER = 50;
 export const MAX_ARTICLES_PER_GROUP = 500;
 
@@ -162,12 +162,15 @@ export async function removeArticleFromGroup(
   if (!arxivId) return false;
 
   const collection = await groups();
+  // `articles.arxiv_id` is part of the filter, not just the $pull: the $set of
+  // updated_at always counts as a modification, so modifiedCount alone would
+  // report success even when the paper was never in the group.
   const result = await collection.updateOne(
-    { _id: id, members: username },
+    { _id: id, members: username, 'articles.arxiv_id': arxivId },
     { $pull: { articles: { arxiv_id: arxivId } }, $set: { updated_at: new Date() } }
   );
 
-  return result.modifiedCount > 0;
+  return result.matchedCount > 0;
 }
 
 /**
@@ -209,12 +212,18 @@ export async function findGroupByInviteToken(token: string): Promise<Group | nul
   return collection.findOne({ 'invite.token': token, 'invite.expires_at': { $gt: new Date() } });
 }
 
-export type JoinResult = 'joined' | 'already-a-member' | 'invalid-token';
+export type JoinOutcome =
+  | { result: 'joined' | 'already-a-member'; groupId: string; name: string }
+  | { result: 'invalid-token' };
 
-export async function joinGroupByToken(token: string, username: string): Promise<JoinResult> {
+export async function joinGroupByToken(token: string, username: string): Promise<JoinOutcome> {
   const group = await findGroupByInviteToken(token);
-  if (!group) return 'invalid-token';
-  if (group.members.includes(username)) return 'already-a-member';
+  if (!group) return { result: 'invalid-token' };
+
+  const groupId = group._id.toString();
+  if (group.members.includes(username)) {
+    return { result: 'already-a-member', groupId, name: group.name };
+  }
 
   const collection = await groups();
   await collection.updateOne(
@@ -222,7 +231,7 @@ export async function joinGroupByToken(token: string, username: string): Promise
     { $addToSet: { members: username }, $set: { updated_at: new Date() } }
   );
 
-  return 'joined';
+  return { result: 'joined', groupId, name: group.name };
 }
 
 export type LeaveResult = 'left' | 'owner-must-delete' | 'not-a-member';
