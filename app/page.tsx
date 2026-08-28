@@ -8,9 +8,8 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, LogOut, Loader2, User, ArrowRight, Users } from 'lucide-react';
+import { ArrowUp, LoaderCircle, LogOut, Loader2, User } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 
 import { InteractiveButton } from '@/components/buttons/InteractiveButton';
 import { Waves } from '@/components/ui/WavesBackground';
@@ -18,6 +17,7 @@ import DocumentCard from '@/components/cards/DocumentCard';
 import Footer from '@/components/ui/Footer';
 import AuthComponent from '@/components/ui/Auth';
 import { GooeyEffect } from '@/components/effects/GooeyEffect';
+import SiteNav from '@/components/ui/SiteNav';
 
 import { apiFetch, logout } from '@/lib/api';
 import { loadSearchSession, saveSearchSession } from '@/lib/searchSession';
@@ -359,81 +359,13 @@ export default function App() {
 
       <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">
         <header className="mb-6 px-4 lg:px-0 py-8 z-80">
+          <SiteNav />
+
           <div className="flex flex-col justify-center items-center text-center space-y-2">
-            <h1 className="flex items-center gap-2 text-3xl md:text-4xl font-bold tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
               <span className="bg-clip-text text-transparent bg-linear-to-r from-gray-500 to-gray-700">
                 Papermind
               </span>
-
-              {user && (
-                <motion.button
-                  className="relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2"
-                  aria-label="User profile"
-                  initial="rest"
-                  animate="rest"
-                  whileHover="hover"
-                  variants={{
-                    rest: { paddingRight: '0.5rem' },
-                    hover: {
-                      paddingRight: '1.75rem',
-                      transition: { type: 'spring', stiffness: 260, damping: 20 },
-                    },
-                  }}
-                >
-                  <Link href={'/profile'}>
-                    <User className="w-4 h-4" />
-                    <motion.span
-                      className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
-                      variants={{
-                        rest: { opacity: 0, x: 6, scale: 0.6 },
-                        hover: {
-                          opacity: 1,
-                          x: 0,
-                          scale: 1,
-                          transition: { type: 'spring', stiffness: 300, damping: 18 },
-                        },
-                      }}
-                    >
-                      <ArrowRight className="w-3 h-3" />
-                    </motion.span>
-                  </Link>
-                </motion.button>
-              )}
-
-              {user && (
-                <motion.button
-                  className="relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2"
-                  aria-label="Your groups"
-                  initial="rest"
-                  animate="rest"
-                  whileHover="hover"
-                  variants={{
-                    rest: { paddingRight: '0.5rem' },
-                    hover: {
-                      paddingRight: '1.75rem',
-                      transition: { type: 'spring', stiffness: 260, damping: 20 },
-                    },
-                  }}
-                >
-                  <Link href={'/groups'}>
-                    <Users className="w-4 h-4" />
-                    <motion.span
-                      className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
-                      variants={{
-                        rest: { opacity: 0, x: 6, scale: 0.6 },
-                        hover: {
-                          opacity: 1,
-                          x: 0,
-                          scale: 1,
-                          transition: { type: 'spring', stiffness: 300, damping: 18 },
-                        },
-                      }}
-                    >
-                      <ArrowRight className="w-3 h-3" />
-                    </motion.span>
-                  </Link>
-                </motion.button>
-              )}
             </h1>
             <p className="text-sm text-gray-700">
               Search and explore research papers with AI-assisted queries.
