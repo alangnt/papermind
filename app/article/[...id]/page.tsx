@@ -6,7 +6,7 @@ import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 
 import ArticleActions from '@/components/article/ArticleActions';
 import Footer from '@/components/ui/Footer';
-import { getArticle } from '@/lib/articles';
+import { getArticle, listRelatedArticles, recordArticleView } from '@/lib/articles';
 import { categoryBadgeClass } from '@/lib/categories';
 import { articleUrl } from '@/lib/site';
 
@@ -99,6 +99,10 @@ export default async function ArticlePage({ params }: Props) {
   const publishedDate = formatDate(document.published);
   const updatedDate = formatDate(document.updated);
   const abstract = document.summary?.trim() || 'No summary available.';
+  // Both read from the cache, so neither costs an arXiv call.
+  const related = await listRelatedArticles(arxivId, document.category, 5);
+  void recordArticleView(arxivId);
+
   const absUrl = `https://arxiv.org/abs/${arxivId}`;
   const pdfUrl = document.pdfLink || `https://arxiv.org/pdf/${arxivId}`;
 
@@ -202,6 +206,34 @@ export default async function ArticlePage({ params }: Props) {
             </a>
             <ArticleActions document={document} arxivId={arxivId} />
           </div>
+
+          {related.length > 0 && (
+            <section className="space-y-2 pt-2">
+              <h2 className="text-xs uppercase tracking-wide text-gray-500 font-medium">
+                More in {document.category}
+              </h2>
+              <ul className="space-y-1">
+                {related.map((paper) => (
+                  <li key={paper.arxivId}>
+                    <Link
+                      href={`/article/${paper.arxivId}`}
+                      className="block rounded-md px-2 py-1.5 -mx-2 hover:bg-white/5 transition-colors"
+                    >
+                      <span className="block text-sm text-gray-200 leading-snug">
+                        {paper.title}
+                      </span>
+                      {paper.authors.length > 0 && (
+                        <span className="block text-[11px] text-gray-500">
+                          {paper.authors.slice(0, 3).join(', ')}
+                          {paper.authors.length > 3 && ` +${paper.authors.length - 3}`}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <footer className="text-[10px] text-gray-500 pt-4 border-t border-gray-700">
             {source === 'cache' ? (

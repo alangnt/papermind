@@ -17,6 +17,8 @@ interface CachedArticle {
   document: Document;
   cached_at: Date;
   refreshed_at: Date;
+  /** Article-page views, used to decide which pages are worth submitting to search engines. */
+  view_count?: number;
 }
 
 const COLLECTION = 'articles';
@@ -156,12 +158,12 @@ export interface SitemapArticle {
 }
 
 /**
- * The cached articles worth listing in the sitemap, newest paper first.
+ * The cached articles worth listing in the sitemap, most-viewed first.
  *
- * Bounded rather than exhaustive: Google accepts 50,000 URLs per sitemap, and
- * an unbounded scan of a collection that grows with every search would make
- * generating the sitemap slower the longer the app runs. Callers get the most
- * recently published papers, which are the ones most likely to be searched for.
+ * Deliberately a small slice rather than the whole cache. Every search adds
+ * rows here, and submitting thousands of pages whose content is largely an
+ * arXiv abstract invites them all to be judged as thin and duplicated. Listing
+ * only the pages people actually open keeps what we submit worth submitting.
  */
 export async function listArticlesForSitemap(limit: number): Promise<SitemapArticle[]> {
   try {
@@ -176,7 +178,9 @@ export async function listArticlesForSitemap(limit: number): Promise<SitemapArti
             'document.updated': 1,
             'document.published': 1,
           },
-          sort: { 'document.published': -1 },
+          // Most-viewed first: these pages earn their place in the index, and
+          // the cap keeps the long tail of one-off searches out of it.
+          sort: { view_count: -1, 'document.published': -1 },
           limit,
         }
       )
@@ -195,6 +199,65 @@ export async function listArticlesForSitemap(limit: number): Promise<SitemapArti
     });
   } catch (error) {
     console.error('Sitemap article lookup error:', error);
+    return [];
+  }
+}
+
+/**
+ * Count an article-page view.
+ *
+ * Called only from the page itself, not from generateMetadata or the Open Graph
+ * card, so one visit counts once. Fire-and-forget: a miscount is not worth
+ * delaying or failing a render over.
+ */
+export async function recordArticleView(arxivId: string): Promise<void> {
+  try {
+    const articles = await getCollection<CachedArticle>(COLLECTION);
+    await articles.updateOne({ arxiv_id: arxivId }, { $inc: { view_count: 1 } });
+  } catch (error) {
+    console.error('Article view count error:', error);
+  }
+}
+
+export interface RelatedArticle {
+  arxivId: string;
+  title: string;
+  authors: string[];
+}
+
+/**
+ * Other cached papers sharing an arXiv category.
+ *
+ * Read straight from the cache, so this costs no arXiv call, and it gives every
+ * article page real internal links instead of leaving it a dead end.
+ */
+export async function listRelatedArticles(
+  arxivId: string,
+  category: string | undefined,
+  limit: number
+): Promise<RelatedArticle[]> {
+  if (!category) return [];
+
+  try {
+    const articles = await getCollection<CachedArticle>(COLLECTION);
+    const rows = await articles
+      .find(
+        { 'document.category': category, arxiv_id: { $ne: arxivId } },
+        {
+          projection: { arxiv_id: 1, 'document.title': 1, 'document.authors': 1 },
+          sort: { 'document.published': -1 },
+          limit,
+        }
+      )
+      .toArray();
+
+    return rows.map((row) => ({
+      arxivId: row.arxiv_id,
+      title: row.document?.title ?? '',
+      authors: row.document?.authors ?? [],
+    }));
+  } catch (error) {
+    console.error('Related article lookup error:', error);
     return [];
   }
 }

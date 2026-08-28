@@ -8,10 +8,12 @@ import { articleUrl } from '@/lib/site';
 export const revalidate = 86400;
 
 /**
- * Well under Google's 50,000-URL ceiling. If the cache ever outgrows this,
- * split the sitemap with generateSitemaps rather than raising the cap.
+ * Deliberately small. The cache grows with every search, and submitting the
+ * whole of it would flood the index with pages nobody has ever opened. Only the
+ * most-viewed articles are listed; raise this once the pages earn it, and split
+ * with generateSitemaps rather than going anywhere near Google's 50,000 ceiling.
  */
-const MAX_ARTICLES = 5000;
+const MAX_ARTICLES = 300;
 
 // Only public, indexable routes belong here. /profile and /reset_password are
 // noindex (see their layouts) and are deliberately omitted.
