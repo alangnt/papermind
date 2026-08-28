@@ -17,6 +17,11 @@ const DRY_RUN = process.argv.includes('--dry-run');
 const INDEXES = [
   { collection: 'users', spec: { username: 1 }, options: { name: 'username_unique', unique: true } },
   { collection: 'users', spec: { email: 1 }, options: { name: 'email_unique', unique: true } },
+  {
+    collection: 'articles',
+    spec: { arxiv_id: 1 },
+    options: { name: 'arxiv_id_unique', unique: true },
+  },
 ];
 
 const uri = process.env.MONGODB_URI;
