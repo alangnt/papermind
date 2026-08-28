@@ -8,7 +8,7 @@ import {
   PanInfo,
   useAnimationControls,
 } from 'motion/react';
-import { ArrowUp, LoaderCircle, LogOut, Loader2, User, ArrowRight } from 'lucide-react';
+import { ArrowUp, LoaderCircle, LogOut, Loader2, User, ArrowRight, Users } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -382,6 +382,41 @@ export default function App() {
                 >
                   <Link href={'/profile'}>
                     <User className="w-4 h-4" />
+                    <motion.span
+                      className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
+                      variants={{
+                        rest: { opacity: 0, x: 6, scale: 0.6 },
+                        hover: {
+                          opacity: 1,
+                          x: 0,
+                          scale: 1,
+                          transition: { type: 'spring', stiffness: 300, damping: 18 },
+                        },
+                      }}
+                    >
+                      <ArrowRight className="w-3 h-3" />
+                    </motion.span>
+                  </Link>
+                </motion.button>
+              )}
+
+              {user && (
+                <motion.button
+                  className="relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2"
+                  aria-label="Your groups"
+                  initial="rest"
+                  animate="rest"
+                  whileHover="hover"
+                  variants={{
+                    rest: { paddingRight: '0.5rem' },
+                    hover: {
+                      paddingRight: '1.75rem',
+                      transition: { type: 'spring', stiffness: 260, damping: 20 },
+                    },
+                  }}
+                >
+                  <Link href={'/groups'}>
+                    <Users className="w-4 h-4" />
                     <motion.span
                       className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
                       variants={{

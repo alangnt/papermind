@@ -9,6 +9,7 @@ import {
   FileText,
   Maximize2,
   Share2,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Document } from '@/types/documents';
@@ -20,9 +21,18 @@ type Props = {
   document: Document;
   username?: string;
   isSaved?: boolean;
+  /** Supplied by the group page; absent everywhere else, which hides the control. */
+  onRemove?: () => void;
+  removeLabel?: string;
 };
 
-export default function DocumentCard({ document, username, isSaved = false }: Props) {
+export default function DocumentCard({
+  document,
+  username,
+  isSaved = false,
+  onRemove,
+  removeLabel = 'Remove',
+}: Props) {
   const { title, authors, published, summary, pdfLink, id, category, doi } = document;
   const publishedDate = published ? new Date(published).toLocaleDateString() : 'Unknown';
 
@@ -190,6 +200,16 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
               className="px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border border-white/10 bg-white/10 hover:bg-white/15 backdrop-blur-sm inline-flex items-center gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
             >
               <Share2 className="w-3.5 h-3.5" /> Share
+            </button>
+          )}
+          {onRemove && (
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label={removeLabel}
+              className="px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/20 backdrop-blur-sm inline-flex items-center gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400/40"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> {removeLabel}
             </button>
           )}
         </div>
