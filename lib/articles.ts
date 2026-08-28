@@ -149,3 +149,52 @@ export async function cacheArticles(documents: Document[]): Promise<void> {
     console.error('Article cache bulk write error:', error);
   }
 }
+
+export interface SitemapArticle {
+  arxivId: string;
+  lastModified: Date;
+}
+
+/**
+ * The cached articles worth listing in the sitemap, newest paper first.
+ *
+ * Bounded rather than exhaustive: Google accepts 50,000 URLs per sitemap, and
+ * an unbounded scan of a collection that grows with every search would make
+ * generating the sitemap slower the longer the app runs. Callers get the most
+ * recently published papers, which are the ones most likely to be searched for.
+ */
+export async function listArticlesForSitemap(limit: number): Promise<SitemapArticle[]> {
+  try {
+    const articles = await getCollection<CachedArticle>(COLLECTION);
+    const rows = await articles
+      .find(
+        {},
+        {
+          projection: {
+            arxiv_id: 1,
+            refreshed_at: 1,
+            'document.updated': 1,
+            'document.published': 1,
+          },
+          sort: { 'document.published': -1 },
+          limit,
+        }
+      )
+      .toArray();
+
+    return rows.map((row) => {
+      // Prefer the paper's own revision date; a new version is the only thing
+      // that actually changes the page. Fall back to when we last saw it.
+      const stamp = row.document?.updated || row.document?.published;
+      const parsed = stamp ? new Date(stamp) : null;
+
+      return {
+        arxivId: row.arxiv_id,
+        lastModified: parsed && !Number.isNaN(parsed.getTime()) ? parsed : row.refreshed_at,
+      };
+    });
+  } catch (error) {
+    console.error('Sitemap article lookup error:', error);
+    return [];
+  }
+}
