@@ -4,6 +4,7 @@ import { cache } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 
+import ArticleActions from '@/components/article/ArticleActions';
 import Footer from '@/components/ui/Footer';
 import { getArticle } from '@/lib/articles';
 import { categoryBadgeClass } from '@/lib/categories';
@@ -199,6 +200,7 @@ export default async function ArticlePage({ params }: Props) {
             >
               <ExternalLink className="w-3.5 h-3.5" /> View on arXiv
             </a>
+            <ArticleActions document={document} arxivId={arxivId} />
           </div>
 
           <footer className="text-[10px] text-gray-500 pt-4 border-t border-gray-700">

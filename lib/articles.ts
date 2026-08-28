@@ -108,14 +108,43 @@ export async function getArticle(rawId: string): Promise<ArticleResult | null> {
 }
 
 /**
- * Store an article the client already has, so a shared link resolves even if
- * arXiv is down the first time someone opens it. Called when a share card is
- * created, using the document from the search results the sharer is looking at.
+ * Store every article a search returned, so any of them can later be shared and
+ * still resolve while arXiv is unavailable.
+ *
+ * Deliberately takes documents that the server itself fetched from arXiv rather
+ * than anything a client posted back: these rows are served to every visitor of
+ * an article page, so accepting client-supplied content here would let anyone
+ * overwrite a real paper's title and abstract.
+ *
+ * Fire-and-forget — callers should not await this on the request path, and a
+ * failure only costs the cache entry.
  */
-export async function cacheArticle(document: Document): Promise<string | null> {
-  const arxivId = parseArxivId(document.id);
-  if (!arxivId) return null;
+export async function cacheArticles(documents: Document[]): Promise<void> {
+  const operations = documents.flatMap((document) => {
+    const arxivId = parseArxivId(document.id);
+    if (!arxivId) return [];
 
-  await writeCache(arxivId, document);
-  return arxivId;
+    const now = new Date();
+    return [
+      {
+        updateOne: {
+          filter: { arxiv_id: arxivId },
+          update: {
+            $set: { document, refreshed_at: now },
+            $setOnInsert: { arxiv_id: arxivId, cached_at: now },
+          },
+          upsert: true,
+        },
+      },
+    ];
+  });
+
+  if (operations.length === 0) return;
+
+  try {
+    const articles = await getCollection<CachedArticle>(COLLECTION);
+    await articles.bulkWrite(operations, { ordered: false });
+  } catch (error) {
+    console.error('Article cache bulk write error:', error);
+  }
 }
