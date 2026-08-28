@@ -240,7 +240,7 @@ export default function ProfilePage() {
           />
         </div>
 
-        <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">
+        <div className="relative z-40 flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen">
           <main className="flex flex-col gap-2 items-center grow py-4 px-4 lg:px-0 overflow-hidden">
             <SiteNav />
 

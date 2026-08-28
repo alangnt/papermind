@@ -357,7 +357,7 @@ export default function App() {
         <AuthComponent onLoggedIn={getUserAccess} setIsAuthVisible={setIsAuthVisible} />
       )}
 
-      <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">
+      <div className="relative z-40 flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen">
         <header className="mb-6 px-4 lg:px-0 py-8 z-80">
           <SiteNav />
 

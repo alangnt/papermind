@@ -89,8 +89,10 @@ export default function SiteNav({ className = '' }: { className?: string }) {
             layout
             initial="rest"
             animate="rest"
-            whileHover="hover"
-            whileTap={{ scale: 0.94 }}
+            // The page you are already on has nowhere to take you, so it neither
+            // widens nor reveals the arrow.
+            whileHover={isCurrent ? undefined : 'hover'}
+            whileTap={isCurrent ? undefined : { scale: 0.94 }}
             variants={PILL}
             transition={SPRING}
             className={`relative flex items-center justify-center rounded-full p-2 overflow-visible text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40 ${
@@ -98,13 +100,15 @@ export default function SiteNav({ className = '' }: { className?: string }) {
             }`}
           >
             <Icon className="w-4 h-4" />
-            <motion.span
-              aria-hidden
-              variants={ARROW}
-              className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
-            >
-              <ArrowRight className="w-3 h-3" />
-            </motion.span>
+            {!isCurrent && (
+              <motion.span
+                aria-hidden
+                variants={ARROW}
+                className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
+              >
+                <ArrowRight className="w-3 h-3" />
+              </motion.span>
+            )}
           </MotionLink>
         );
       })}
