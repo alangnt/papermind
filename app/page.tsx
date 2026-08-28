@@ -39,14 +39,6 @@ export default function App() {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const [system, setSystem] = useState<SystemType>('classic');
-  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
-
-  const toggleCard = (index: number) =>
-    setExpandedCards(prev => {
-      const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
-      return next;
-    });
 
   // Swipe the card animation
   const x = useMotionValue(0);
@@ -101,7 +93,6 @@ export default function App() {
       setAreDocumentsLoading(true);
       setPage(1);
       setCardIndex(0);
-      setExpandedCards(new Set());
     }
     setSearchError(null);
 
@@ -493,17 +484,14 @@ export default function App() {
               {Array.from({ length: Math.ceil(documents.length / 2) }, (_, rowIndex) => {
                 const base = rowIndex * 2;
                 const rowDocs = documents.slice(base, base + 2);
-                const rowExpanded = expandedCards.has(base) || expandedCards.has(base + 1);
                 return (
-                  <div key={rowIndex} className={`grid grid-cols-1 sm:grid-cols-2 gap-4${rowExpanded ? ' sm:items-start' : ''}`}>
+                  <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {rowDocs.map((doc, i) => (
                       <DocumentCard
                         key={base + i}
                         username={user?.username ?? undefined}
                         document={doc}
                         isSaved={!!user?.saved_articles?.find((article) => article.id === doc.id)}
-                        expanded={expandedCards.has(base + i)}
-                        onToggleExpand={() => toggleCard(base + i)}
                       />
                     ))}
                   </div>

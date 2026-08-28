@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   BookmarkPlus,
   BookmarkCheck,
   ExternalLink,
   FileText,
-  ChevronDown,
   Maximize2,
   Share2,
 } from 'lucide-react';
@@ -21,26 +20,13 @@ type Props = {
   document: Document;
   username?: string;
   isSaved?: boolean;
-  expanded?: boolean;
-  onToggleExpand?: () => void;
 };
 
-export default function DocumentCard({
-  document,
-  username,
-  isSaved = false,
-  expanded: controlledExpanded,
-  onToggleExpand,
-}: Props) {
+export default function DocumentCard({ document, username, isSaved = false }: Props) {
   const { title, authors, published, summary, pdfLink, id, category, doi } = document;
   const publishedDate = published ? new Date(published).toLocaleDateString() : 'Unknown';
 
   // UI state
-  const isControlled = onToggleExpand !== undefined;
-  const [internalExpanded, setInternalExpanded] = useState(false);
-  const expanded = isControlled ? (controlledExpanded ?? false) : internalExpanded;
-  const toggleExpand = isControlled ? onToggleExpand : () => setInternalExpanded((p) => !p);
-
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(isSaved);
@@ -129,33 +115,8 @@ export default function DocumentCard({
           <p className="text-[11px] text-gray-500">Published {publishedDate}</p>
         </header>
 
-        <div className="text-sm text-gray-200 leading-relaxed">
-          <AnimatePresence initial={false} mode="wait">
-            <motion.p
-              key={expanded ? 'expanded' : 'collapsed'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className={expanded ? '' : 'line-clamp-3'}
-            >
-              {expanded ? abstract : truncated}
-            </motion.p>
-          </AnimatePresence>
-          {abstract.length > 320 && (
-            <button
-              type="button"
-              onClick={toggleExpand}
-              className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-indigo-300 hover:text-indigo-200 transition-colors focus:outline-none focus:underline"
-              aria-expanded={expanded}
-            >
-              {expanded ? 'Show less' : 'Read more'}{' '}
-              <ChevronDown
-                className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`}
-              />
-            </button>
-          )}
-        </div>
+        {/* The full abstract lives on the article page, reachable via Details. */}
+        <p className="text-sm text-gray-200 leading-relaxed line-clamp-3">{truncated}</p>
       </div>
 
       <div className="space-y-4 pt-2">
@@ -197,35 +158,30 @@ export default function DocumentCard({
               </span>
             </Link>
           )}
-          {/* Save button (only interactive if connected) */}
-          <button
-            type="button"
-            disabled={!isConnected || isSaving}
-            onClick={saveArticle}
-            aria-pressed={saved}
-            aria-label={
-              isConnected ? (saved ? 'Unsave article' : 'Save article') : 'Sign in to save'
-            }
-            className={`px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border backdrop-blur-sm inline-flex items-center gap-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 disabled:opacity-40 disabled:cursor-not-allowed ${
-              saved
-                ? 'bg-background text-foreground hover:bg-background/80'
-                : 'bg-white/10 border-white/10 hover:bg-white/15'
-            }`}
-            title={
-              !isConnected
-                ? 'Sign in to save this article'
-                : saved
-                  ? 'Click to remove from saved'
-                  : 'Click to save'
-            }
-          >
-            {saved ? (
-              <BookmarkCheck className="w-3.5 h-3.5" />
-            ) : (
-              <BookmarkPlus className="w-3.5 h-3.5" />
-            )}
-            {isSaving ? '...' : saved ? 'Saved' : 'Save'}
-          </button>
+          {/* Saving needs an account, so the control is absent rather than dead
+              when signed out — the footer explains why. */}
+          {isConnected && (
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={saveArticle}
+              aria-pressed={saved}
+              aria-label={saved ? 'Unsave article' : 'Save article'}
+              className={`px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border backdrop-blur-sm inline-flex items-center gap-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 disabled:opacity-40 disabled:cursor-not-allowed ${
+                saved
+                  ? 'bg-background text-foreground hover:bg-background/80'
+                  : 'bg-white/10 border-white/10 hover:bg-white/15'
+              }`}
+              title={saved ? 'Click to remove from saved' : 'Click to save'}
+            >
+              {saved ? (
+                <BookmarkCheck className="w-3.5 h-3.5" />
+              ) : (
+                <BookmarkPlus className="w-3.5 h-3.5" />
+              )}
+              {isSaving ? '...' : saved ? 'Saved' : 'Save'}
+            </button>
+          )}
           {arxivId && (
             <button
               type="button"
