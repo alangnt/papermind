@@ -20,6 +20,7 @@ import AuthComponent from '@/components/ui/Auth';
 import { GooeyEffect } from '@/components/effects/GooeyEffect';
 
 import { apiFetch, logout } from '@/lib/api';
+import { loadSearchSession, saveSearchSession } from '@/lib/searchSession';
 
 import { Document, SystemType } from '@/types/documents';
 import { BaseUser } from '@/types/users';
@@ -39,14 +40,9 @@ export default function App() {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const [system, setSystem] = useState<SystemType>('classic');
-  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
-  const toggleCard = (index: number) =>
-    setExpandedCards(prev => {
-      const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
-      return next;
-    });
+  // Gates the save effect until the stored search has had its chance to load.
+  const [hasRestored, setHasRestored] = useState<boolean>(false);
 
   // Swipe the card animation
   const x = useMotionValue(0);
@@ -61,7 +57,7 @@ export default function App() {
         return 1;
       }
 
-      const data = await res.json() as BaseUser;
+      const data = (await res.json()) as BaseUser;
       setUser(data as BaseUser);
       return 0;
     } catch (error) {
@@ -101,7 +97,6 @@ export default function App() {
       setAreDocumentsLoading(true);
       setPage(1);
       setCardIndex(0);
-      setExpandedCards(new Set());
     }
     setSearchError(null);
 
@@ -254,7 +249,7 @@ export default function App() {
     } finally {
       setIsSigningOut(false);
     }
-  }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -266,6 +261,50 @@ export default function App() {
       cancelled = true;
     };
   }, [getUserAccess]);
+
+  // Bring back the last search so returning from an article page does not throw
+  // the results away. Restoring inside a microtask rather than straight in the
+  // effect body keeps this off the server render, where there is no storage.
+  useEffect(() => {
+    let cancelled = false;
+
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+
+      const restored = loadSearchSession();
+      if (restored) {
+        setQuery(restored.query);
+        setDocuments(restored.documents);
+        setPage(restored.page);
+        setCardIndex(restored.cardIndex);
+        setSystem(restored.system);
+      }
+
+      // Set even when there was nothing to restore, otherwise the save effect
+      // below would stay gated shut and no search would ever be persisted.
+      setHasRestored(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist whatever is on screen now. Skipped until a restore has been
+  // attempted, so an empty initial render cannot overwrite a stored search.
+  //
+  // Debounced because `query` changes on every keystroke and a full result set
+  // serialises to a few hundred kilobytes — one write per typed character would
+  // be pointless work.
+  useEffect(() => {
+    if (!hasRestored || documents.length === 0) return;
+
+    const timer = setTimeout(
+      () => saveSearchSession({ query, documents, page, cardIndex, system }),
+      400
+    );
+    return () => clearTimeout(timer);
+  }, [hasRestored, query, documents, page, cardIndex, system]);
 
   return (
     <div className="relative w-full overflow-hidden">
@@ -328,26 +367,34 @@ export default function App() {
 
               {user && (
                 <motion.button
-                  className='relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2'
-                  aria-label='User profile'
-                  initial='rest'
-                  animate='rest'
-                  whileHover='hover'
+                  className="relative text-background bg-foreground/80 z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2"
+                  aria-label="User profile"
+                  initial="rest"
+                  animate="rest"
+                  whileHover="hover"
                   variants={{
                     rest: { paddingRight: '0.5rem' },
-                    hover: { paddingRight: '1.75rem', transition: { type: 'spring', stiffness: 260, damping: 20 } }
+                    hover: {
+                      paddingRight: '1.75rem',
+                      transition: { type: 'spring', stiffness: 260, damping: 20 },
+                    },
                   }}
                 >
-                  <Link href={"/profile"}>
-                    <User className='w-4 h-4' />
+                  <Link href={'/profile'}>
+                    <User className="w-4 h-4" />
                     <motion.span
-                      className='absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2'
+                      className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
                       variants={{
                         rest: { opacity: 0, x: 6, scale: 0.6 },
-                        hover: { opacity: 1, x: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 18 } }
+                        hover: {
+                          opacity: 1,
+                          x: 0,
+                          scale: 1,
+                          transition: { type: 'spring', stiffness: 300, damping: 18 },
+                        },
                       }}
                     >
-                      <ArrowRight className='w-3 h-3' />
+                      <ArrowRight className="w-3 h-3" />
                     </motion.span>
                   </Link>
                 </motion.button>
@@ -404,12 +451,27 @@ export default function App() {
                 </p>
               </div>
 
-              <div className='flex items-center gap-2'>
+              <div className="flex items-center gap-2">
                 {!user ? (
-                  <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }} onClick={() => setIsAuthVisible(true)}>
+                  <div
+                    id="gooey-btn"
+                    className="relative flex items-center group"
+                    style={{ filter: 'url(#gooey-filter)' }}
+                    onClick={() => setIsAuthVisible(true)}
+                  >
                     <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-20 z-0">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 17L17 7M17 7H7M17 7V17"
+                        />
                       </svg>
                     </div>
 
@@ -419,29 +481,46 @@ export default function App() {
                     </div>
                     {/* Mobile/Tablet View */}
                     <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
-                      <User className='w-4 h-4' />
+                      <User className="w-4 h-4" />
                     </div>
                   </div>
                 ) : (
-                  <div id="gooey-btn" className="relative flex items-center group z-80" style={{ filter: "url(#gooey-filter)" }} onClick={() => handleLogout()}>
+                  <div
+                    id="gooey-btn"
+                    className="relative flex items-center group z-80"
+                    style={{ filter: 'url(#gooey-filter)' }}
+                    onClick={() => handleLogout()}
+                  >
                     {!isSigningOut && (
                       <div className="absolute right-0 px-2.5 py-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center justify-center lg:-translate-x-10 lg:group-hover:-translate-x-23 z-0">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 17L17 7M17 7H7M17 7V17"
+                          />
                         </svg>
                       </div>
                     )}
-                    
 
                     <div className="max-lg:hidden px-6 py-2 space-x-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
-                      {isSigningOut && <Loader2 className='w-4 h-4 animate-spin' />}
+                      {isSigningOut && <Loader2 className="w-4 h-4 animate-spin" />}
                       <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
                     </div>
                     <div className="lg:hidden p-2 rounded-full bg-background text-foreground font-semibold text-xs transition-all duration-300 hover:bg-background/90 cursor-pointer h-8 flex items-center z-10">
-                      {isSigningOut ? <Loader2 className='w-4 h-4 animate-spin' /> : <LogOut className='w-4 h-4' />}
+                      {isSigningOut ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <LogOut className="w-4 h-4" />
+                      )}
                     </div>
                   </div>
-                  
                 )}
 
                 <button
@@ -493,17 +572,14 @@ export default function App() {
               {Array.from({ length: Math.ceil(documents.length / 2) }, (_, rowIndex) => {
                 const base = rowIndex * 2;
                 const rowDocs = documents.slice(base, base + 2);
-                const rowExpanded = expandedCards.has(base) || expandedCards.has(base + 1);
                 return (
-                  <div key={rowIndex} className={`grid grid-cols-1 sm:grid-cols-2 gap-4${rowExpanded ? ' sm:items-start' : ''}`}>
+                  <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {rowDocs.map((doc, i) => (
                       <DocumentCard
                         key={base + i}
                         username={user?.username ?? undefined}
                         document={doc}
                         isSaved={!!user?.saved_articles?.find((article) => article.id === doc.id)}
-                        expanded={expandedCards.has(base + i)}
-                        onToggleExpand={() => toggleCard(base + i)}
                       />
                     ))}
                   </div>
@@ -513,22 +589,33 @@ export default function App() {
           )}
 
           {/* Swipe System */}
-          {documents.length > 0 && system === 'swipe' && cardIndex >= 0 && cardIndex < documents.length && (
-            <div className="relative w-full min-h-[360px] sm:min-h-[420px] md:min-h-[460px]">
-              <motion.div
-                style={{ rotate }}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                whileHover={{ scale: 1.01 }}
-                onDrag={(_e, info) => x.set(info.offset.x)}
-                onDragEnd={async (event, info) => swipeDocument(event, info)}
-                animate={controls}
-                className="absolute inset-0 flex items-center justify-center cursor-pointer"
-              >
-                <DocumentCard username={user?.username ?? undefined} document={documents[cardIndex]} isSaved={!!user?.saved_articles?.find(article => article.id === documents[cardIndex].id)}></DocumentCard>
-              </motion.div>
-            </div>
-          )}
+          {documents.length > 0 &&
+            system === 'swipe' &&
+            cardIndex >= 0 &&
+            cardIndex < documents.length && (
+              <div className="relative w-full min-h-[360px] sm:min-h-[420px] md:min-h-[460px]">
+                <motion.div
+                  style={{ rotate }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  whileHover={{ scale: 1.01 }}
+                  onDrag={(_e, info) => x.set(info.offset.x)}
+                  onDragEnd={async (event, info) => swipeDocument(event, info)}
+                  animate={controls}
+                  className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                >
+                  <DocumentCard
+                    username={user?.username ?? undefined}
+                    document={documents[cardIndex]}
+                    isSaved={
+                      !!user?.saved_articles?.find(
+                        (article) => article.id === documents[cardIndex].id
+                      )
+                    }
+                  ></DocumentCard>
+                </motion.div>
+              </div>
+            )}
 
           {(system === 'swipe'
             ? documents.length > 0 && cardIndex === documents.length

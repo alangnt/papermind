@@ -1,5 +1,6 @@
 import { parseStringPromise } from 'xml2js';
 import { Document } from '@/types/models';
+import { parseArxivId } from '@/lib/arxiv-id';
 
 const ARXIV_API_URL = 'http://export.arxiv.org/api/query';
 
@@ -33,14 +34,18 @@ function buildQueryUrl(query: string, start: number = 0, maxResults: number = 10
 /**
  * Fetch XML data from arXiv API
  */
-async function fetchArxivXml(query: string, start: number = 0, maxResults: number = 10): Promise<string> {
+async function fetchArxivXml(
+  query: string,
+  start: number = 0,
+  maxResults: number = 10
+): Promise<string> {
   const url = buildQueryUrl(query, start, maxResults);
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`ArXiv API error: ${response.status} ${response.statusText}`);
   }
-  
+
   return response.text();
 }
 
@@ -87,6 +92,45 @@ async function parseArxivXml(xmlData: string): Promise<Document[]> {
       category,
     };
   });
+}
+
+/**
+ * Fetch a single article by ID via the arXiv `id_list` parameter.
+ *
+ * Cached for a day by the Next data cache so a popular article costs one
+ * upstream request per day rather than one per view — arXiv asks for no more
+ * than a request every few seconds.
+ *
+ * Returns null for an unknown or malformed ID; throws if arXiv itself fails,
+ * so callers can distinguish "no such paper" from "upstream is down".
+ */
+export async function getArxivById(rawId: string): Promise<Document | null> {
+  const id = parseArxivId(rawId);
+  if (!id) return null;
+
+  // Old-style IDs contain a slash (cs/0701001) which arXiv expects unencoded.
+  // parseArxivId has already validated `id` against a strict allowlist, so
+  // interpolating it here cannot inject extra query parameters.
+  const url = `${ARXIV_API_URL}?id_list=${id}&max_results=1`;
+  const response = await fetch(url, { next: { revalidate: 86400 } });
+
+  if (!response.ok) {
+    throw new Error(`ArXiv API error: ${response.status} ${response.statusText}`);
+  }
+
+  const documents = await parseArxivXml(await response.text());
+  const document = documents[0];
+
+  // arXiv answers an unresolvable ID with a 200 and a single error entry
+  // whose id points at its error namespace rather than /abs/.
+  if (!document || document.id.includes('/api/errors')) {
+    return null;
+  }
+
+  // `id` is deliberately left as arXiv returned it (the versioned abs URL), so a
+  // document from here compares equal to one from searchArxiv — saved articles
+  // are keyed on that value. Callers wanting the bare ID use parseArxivId.
+  return document;
 }
 
 /**

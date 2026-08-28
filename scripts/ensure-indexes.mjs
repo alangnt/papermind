@@ -17,6 +17,23 @@ const DRY_RUN = process.argv.includes('--dry-run');
 const INDEXES = [
   { collection: 'users', spec: { username: 1 }, options: { name: 'username_unique', unique: true } },
   { collection: 'users', spec: { email: 1 }, options: { name: 'email_unique', unique: true } },
+  {
+    collection: 'articles',
+    spec: { arxiv_id: 1 },
+    options: { name: 'arxiv_id_unique', unique: true },
+  },
+  // Sitemap: most-viewed articles first.
+  {
+    collection: 'articles',
+    spec: { view_count: -1, 'document.published': -1 },
+    options: { name: 'articles_by_views' },
+  },
+  // "More in <category>" on the article page.
+  {
+    collection: 'articles',
+    spec: { 'document.category': 1, 'document.published': -1 },
+    options: { name: 'articles_by_category' },
+  },
 ];
 
 const uri = process.env.MONGODB_URI;
