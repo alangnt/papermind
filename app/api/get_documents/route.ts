@@ -22,10 +22,7 @@ export async function POST(req: NextRequest) {
     const { query, page = 1 } = body;
 
     if (!query) {
-      return NextResponse.json(
-        { error: 'Query is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
     const safePage = Math.min(Math.max(1, Number(page) || 1), 20);
@@ -35,10 +32,7 @@ export async function POST(req: NextRequest) {
     const documents = await searchArxiv(query, 0, limit);
 
     if (!documents || documents.length === 0) {
-      return NextResponse.json(
-        { error: 'No results found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'No results found' }, { status: 404 });
     }
 
     // Keep a copy of everything we just fetched so any of these papers stays
@@ -49,9 +43,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ documents });
   } catch (error) {
     console.error('Get documents error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

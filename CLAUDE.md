@@ -28,6 +28,7 @@ The UI is essentially **one client component**: [app/page.tsx](app/page.tsx) hol
 ### Search flow
 
 A search is two hops, both from the client:
+
 1. `POST /api/askAi` — Groq (`openai/gpt-oss-120b` via Vercel AI SDK `generateText`) distills the natural-language query into a ≤3-word keyword.
 2. `POST /api/get_documents` — that keyword goes to the arXiv Atom API via [lib/arxiv.ts](lib/arxiv.ts) (xml2js parsing), rate-limited per IP.
 
@@ -36,10 +37,11 @@ A search is two hops, both from the client:
 ### Auth
 
 Custom JWT + cookie auth, no auth library:
+
 - [lib/auth.ts](lib/auth.ts) — bcrypt hashing, access/refresh token signing & verification. Tokens carry `{ sub: username, type: 'access' | 'refresh' }`; the `type` claim is checked on verify so tokens aren't interchangeable. `sub` is the **username**, not the `_id`.
 - [lib/cookies.ts](lib/cookies.ts) — `httpOnly` cookies `access_token` (30 min) / `refresh_token` (30 days), `SameSite=Lax`, `Secure` only in production.
 - [lib/middleware.ts](lib/middleware.ts) — `withAuth(handler)` HOF wrapping route exports; reads the cookie (falling back to `Authorization: Bearer`), verifies, loads the `User` from Mongo, and passes it as `context.user`. **Not** Next.js middleware despite the filename.
-- [proxy.ts](proxy.ts) — this *is* the Next.js middleware (renamed to `proxy.ts` in Next 16). Sets CSP and security headers only; no auth logic.
+- [proxy.ts](proxy.ts) — this _is_ the Next.js middleware (renamed to `proxy.ts` in Next 16). Sets CSP and security headers only; no auth logic.
 - [lib/api.ts](lib/api.ts) — client-side `apiFetch`: always `credentials: 'include'`, and on a 401 does a single de-duplicated `POST /api/auth/refresh` then retries. Client code should use `apiFetch`, not bare `fetch`, for anything authenticated.
 
 Password reset writes a token doc to the `reset_tokens` collection and mails the link via Postmark.

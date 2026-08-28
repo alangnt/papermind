@@ -28,10 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid input' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
     // Rate limiting: 3 sign-ups per hour per IP
@@ -41,15 +38,15 @@ export async function POST(req: NextRequest) {
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
       return NextResponse.json(
-        { 
+        {
           error: 'Too many sign-up attempts. Please try again later.',
-          retryAfter 
+          retryAfter,
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': retryAfter.toString(),
-          }
+          },
         }
       );
     }
@@ -58,9 +55,9 @@ export async function POST(req: NextRequest) {
     const passwordValidation = validatePasswordStrength(password);
     if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { 
+        {
           error: 'Password does not meet requirements',
-          details: passwordValidation.errors 
+          details: passwordValidation.errors,
         },
         { status: 400 }
       );
@@ -71,19 +68,13 @@ export async function POST(req: NextRequest) {
     // Check if username exists
     const usernameExists = await usersCollection.findOne({ username });
     if (usernameExists) {
-      return NextResponse.json(
-        { code: 2001, message: 'Username already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ code: 2001, message: 'Username already exists' }, { status: 409 });
     }
 
     // Check if email exists
     const emailExists = await usersCollection.findOne({ email });
     if (emailExists) {
-      return NextResponse.json(
-        { code: 2002, message: 'Email already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ code: 2002, message: 'Email already exists' }, { status: 409 });
     }
 
     // Hash password and create user
@@ -120,10 +111,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!result.insertedId) {
-      return NextResponse.json(
-        { error: 'User creation failed' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User creation failed' }, { status: 400 });
     }
 
     // Create tokens
@@ -132,19 +120,19 @@ export async function POST(req: NextRequest) {
 
     // Return success without tokens in body
     const response = NextResponse.json(
-      { 
+      {
         message: 'Sign up successful',
         user: {
           username: newUser.username,
           email: newUser.email,
-        }
+        },
       },
       { status: 201 }
     );
 
     // Set cookies using Next.js cookies API
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     response.cookies.set('access_token', access_token, {
       httpOnly: true,
       secure: isProduction,
@@ -164,9 +152,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Sign up error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

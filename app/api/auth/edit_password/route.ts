@@ -14,15 +14,15 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
       return NextResponse.json(
-        { 
+        {
           error: 'Too many password change attempts. Please try again later.',
-          retryAfter 
+          retryAfter,
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': retryAfter.toString(),
-          }
+          },
         }
       );
     }
@@ -31,26 +31,20 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     const { old_password, new_password, confirm_new_password } = body;
 
     if (!old_password || !new_password || !confirm_new_password) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
     if (new_password !== confirm_new_password) {
-      return NextResponse.json(
-        { error: 'The new passwords do not match' },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: 'The new passwords do not match' }, { status: 409 });
     }
 
     // Validate new password strength
     const passwordValidation = validatePasswordStrength(new_password);
     if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { 
+        {
           error: 'Password does not meet requirements',
-          details: passwordValidation.errors 
+          details: passwordValidation.errors,
         },
         { status: 400 }
       );
@@ -61,19 +55,13 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     const userWithPassword = await usersCollection.findOne({ email: user.email });
 
     if (!userWithPassword) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Verify old password
     const isOldPasswordValid = await verifyPassword(old_password, userWithPassword.password);
     if (!isOldPasswordValid) {
-      return NextResponse.json(
-        { error: 'Old password is invalid' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Old password is invalid' }, { status: 400 });
     }
 
     // Hash and update new password
@@ -87,10 +75,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     );
 
     if (result.modifiedCount === 0) {
-      return NextResponse.json(
-        { error: 'Changing password failed' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Changing password failed' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -99,9 +84,6 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     });
   } catch (error) {
     console.error('Edit password error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

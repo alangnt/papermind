@@ -1,4 +1,4 @@
-import { Document } from "./documents";
+import { Document } from './documents';
 
 export interface BaseUser {
   _id: string;
@@ -6,5 +6,5 @@ export interface BaseUser {
   email: string;
   first_name?: string;
   last_name?: string;
-  saved_articles?: Document[]
+  saved_articles?: Document[];
 }

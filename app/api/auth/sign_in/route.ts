@@ -12,10 +12,7 @@ export async function POST(req: NextRequest) {
     const password = formData.get('password') as string;
 
     if (!username || !password) {
-      return NextResponse.json(
-        { error: 'Username and password are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
     // Rate limiting: Check before processing
@@ -25,15 +22,15 @@ export async function POST(req: NextRequest) {
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
       return NextResponse.json(
-        { 
+        {
           error: 'Too many sign-in attempts. Please try again later.',
-          retryAfter 
+          retryAfter,
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': retryAfter.toString(),
-          }
+          },
         }
       );
     }
@@ -45,15 +42,14 @@ export async function POST(req: NextRequest) {
     // Always hash password even if user doesn't exist (timing-safe)
     if (!user) {
       await hashPassword(password); // Constant-time operation
-      return NextResponse.json(
-        { error: 'Incorrect username or password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Incorrect username or password' }, { status: 401 });
     }
 
     // Check if account is locked
     if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
-      const lockDuration = Math.ceil((new Date(user.lockedUntil).getTime() - Date.now()) / 1000 / 60);
+      const lockDuration = Math.ceil(
+        (new Date(user.lockedUntil).getTime() - Date.now()) / 1000 / 60
+      );
       return NextResponse.json(
         { error: `Account is locked. Try again in ${lockDuration} minutes.` },
         { status: 403 }
@@ -72,23 +68,14 @@ export async function POST(req: NextRequest) {
         updateData.lockedUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
       }
 
-      await usersCollection.updateOne(
-        { username },
-        { $set: updateData }
-      );
+      await usersCollection.updateOne({ username }, { $set: updateData });
 
-      return NextResponse.json(
-        { error: 'Incorrect username or password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Incorrect username or password' }, { status: 401 });
     }
 
     // Check if account is disabled
     if (user.disabled) {
-      return NextResponse.json(
-        { error: 'Account is disabled' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Account is disabled' }, { status: 403 });
     }
 
     // Reset failed login attempts on successful login
@@ -107,19 +94,19 @@ export async function POST(req: NextRequest) {
 
     // Return success without tokens in body
     const response = NextResponse.json(
-      { 
+      {
         message: 'Sign in successful',
         user: {
           username: user.username,
           email: user.email,
-        }
+        },
       },
       { status: 200 }
     );
 
     // Set cookies using Next.js cookies API
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     response.cookies.set('access_token', access_token, {
       httpOnly: true,
       secure: isProduction,
@@ -139,9 +126,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Sign in error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

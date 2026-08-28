@@ -14,11 +14,7 @@ interface CookieOptions {
 /**
  * Serialize a cookie with secure defaults
  */
-function serializeCookie(
-  name: string,
-  value: string,
-  options: CookieOptions = {}
-): string {
+function serializeCookie(name: string, value: string, options: CookieOptions = {}): string {
   const {
     httpOnly = true,
     secure = process.env.NODE_ENV === 'production',
@@ -46,14 +42,17 @@ function serializeCookie(
 function parseCookies(cookieHeader: string | null): Record<string, string> {
   if (!cookieHeader) return {};
 
-  return cookieHeader.split(';').reduce((cookies, cookie) => {
-    const [name, ...rest] = cookie.split('=');
-    const value = rest.join('=');
-    if (name && value) {
-      cookies[decodeURIComponent(name.trim())] = decodeURIComponent(value.trim());
-    }
-    return cookies;
-  }, {} as Record<string, string>);
+  return cookieHeader.split(';').reduce(
+    (cookies, cookie) => {
+      const [name, ...rest] = cookie.split('=');
+      const value = rest.join('=');
+      if (name && value) {
+        cookies[decodeURIComponent(name.trim())] = decodeURIComponent(value.trim());
+      }
+      return cookies;
+    },
+    {} as Record<string, string>
+  );
 }
 
 /**
@@ -79,7 +78,7 @@ export function getCookie(cookieHeader: string | null, name: string): string | n
  */
 export function createAuthCookies(accessToken: string, refreshToken: string): string[] {
   const isProduction = process.env.NODE_ENV === 'production';
-  
+
   // Access token: 30 minutes
   const accessCookie = serializeCookie('access_token', accessToken, {
     httpOnly: true,
@@ -105,8 +104,5 @@ export function createAuthCookies(accessToken: string, refreshToken: string): st
  * Clear auth cookies
  */
 export function clearAuthCookies(): string[] {
-  return [
-    clearCookie('access_token', { path: '/' }),
-    clearCookie('refresh_token', { path: '/' }),
-  ];
+  return [clearCookie('access_token', { path: '/' }), clearCookie('refresh_token', { path: '/' })];
 }

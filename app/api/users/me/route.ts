@@ -7,7 +7,7 @@ export const GET = withAuth(async (req: NextRequest, { user }) => {
   try {
     // Remove sensitive fields
     const { password, ...userWithoutPassword } = user as any;
-    
+
     // Convert ObjectId to string for JSON serialization
     const userResponse: User = {
       ...userWithoutPassword,
@@ -17,9 +17,6 @@ export const GET = withAuth(async (req: NextRequest, { user }) => {
     return NextResponse.json(userResponse);
   } catch (error) {
     console.error('Get user error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

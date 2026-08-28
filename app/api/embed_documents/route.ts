@@ -3,14 +3,14 @@ import { NextResponse } from 'next/server';
 /*
  * NOTE: This endpoint currently requires Python's sentence-transformers library
  * for vector embeddings. As discussed in the migration plan, we have two options:
- * 
+ *
  * 1. Use @xenova/transformers (JavaScript library for transformers)
  * 2. Use OpenAI or another embeddings API
- * 
+ *
  * This is a placeholder implementation. To fully implement this endpoint:
  * - Install @xenova/transformers: npm install @xenova/transformers
  * - Or integrate with an embeddings API (OpenAI, Cohere, etc.)
- * 
+ *
  * For now, this endpoint returns a 501 Not Implemented status.
  */
 
@@ -92,9 +92,6 @@ export async function POST() {
     */
   } catch (error) {
     console.error('Embed documents error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

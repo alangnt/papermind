@@ -12,10 +12,10 @@ import { getCookie } from '@/lib/cookies';
 export async function POST(req: NextRequest) {
   try {
     const cookieHeader = req.headers.get('cookie');
-    
+
     // Get refresh token from cookies (primary method)
     let refresh_token = getCookie(cookieHeader, 'refresh_token');
-    
+
     // Fallback to request body for backward compatibility
     if (!refresh_token) {
       try {
@@ -27,10 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!refresh_token) {
-      return NextResponse.json(
-        { error: 'Refresh token is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Refresh token is required' }, { status: 400 });
     }
 
     // Verify refresh token
@@ -38,18 +35,12 @@ export async function POST(req: NextRequest) {
     try {
       payload = verifyRefreshToken(refresh_token);
     } catch {
-      return NextResponse.json(
-        { error: 'Invalid refresh token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
     }
 
     const username = payload.sub;
     if (!username) {
-      return NextResponse.json(
-        { error: 'Invalid refresh token payload' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid refresh token payload' }, { status: 401 });
     }
 
     // A valid signature is not enough: the user must still exist and the
@@ -65,10 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (user.disabled) {
-      return NextResponse.json(
-        { error: 'Account is disabled' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Account is disabled' }, { status: 403 });
     }
 
     // Create new access token and refresh token
@@ -84,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     // Set cookies using Next.js cookies API
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     response.cookies.set('access_token', access_token, {
       httpOnly: true,
       secure: isProduction,
@@ -104,9 +92,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Token refresh error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

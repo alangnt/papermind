@@ -9,10 +9,7 @@ export async function POST(req: NextRequest) {
     const { token, email, password, confirm_password } = body;
 
     if (!token || !email || !password || !confirm_password) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
     if (typeof token !== 'string' || typeof email !== 'string') {
@@ -20,10 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (password !== confirm_password) {
-      return NextResponse.json(
-        { error: "Passwords don't match" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Passwords don't match" }, { status: 400 });
     }
 
     const passwordValidation = validatePasswordStrength(password);
@@ -42,10 +36,7 @@ export async function POST(req: NextRequest) {
     const resetToken = await resetTokensCollection.findOne({ token, email });
 
     if (!resetToken || new Date(resetToken.expiration_date) < new Date()) {
-      return NextResponse.json(
-        { error: 'Invalid or expired reset link' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid or expired reset link' }, { status: 400 });
     }
 
     // Hash and update the new password
@@ -60,10 +51,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (result.modifiedCount === 0) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Consume the token
@@ -75,9 +63,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Reset password service error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

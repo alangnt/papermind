@@ -14,10 +14,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     );
 
     if (result.modifiedCount === 0) {
-      return NextResponse.json(
-        { error: 'Failed to update user' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -27,9 +24,6 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     });
   } catch (error) {
     console.error('Edit profile error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

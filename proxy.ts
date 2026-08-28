@@ -20,10 +20,7 @@ export function proxy(_request: NextRequest) {
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Restrict permissions for features
-  headers.set(
-    'Permissions-Policy',
-    'geolocation=(), microphone=(), camera=(), payment=()'
-  );
+  headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=()');
 
   // Content Security Policy
   headers.set(
@@ -41,10 +38,7 @@ export function proxy(_request: NextRequest) {
 
   // Strict-Transport-Security (HSTS) - Only in production with HTTPS
   if (process.env.NODE_ENV === 'production') {
-    headers.set(
-      'Strict-Transport-Security',
-      'max-age=63072000; includeSubDomains; preload'
-    );
+    headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   }
 
   return response;

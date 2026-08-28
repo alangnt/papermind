@@ -9,20 +9,14 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     const { article } = body;
 
     if (!article) {
-      return NextResponse.json(
-        { error: 'Article is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Article is required' }, { status: 400 });
     }
 
     const usersCollection = await getCollection('users');
     const dbUser = await usersCollection.findOne({ username: user.username });
 
     if (!dbUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const savedArticles: Document[] = dbUser.saved_articles || [];
@@ -38,10 +32,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     );
 
     if (result.modifiedCount === 0 && !articleExists) {
-      return NextResponse.json(
-        { error: 'Failed to save article' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to save article' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -51,10 +42,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     });
   } catch (error) {
     console.error('Save article error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 });
 
@@ -64,30 +52,21 @@ export const DELETE = withAuth(async (req: NextRequest, { user }) => {
     const { article_id } = body;
 
     if (!article_id) {
-      return NextResponse.json(
-        { error: 'Article id is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Article id is required' }, { status: 400 });
     }
 
     const usersCollection = await getCollection('users');
     const dbUser = await usersCollection.findOne({ username: user.username });
 
     if (!dbUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const savedArticles: Document[] = dbUser.saved_articles || [];
     const remaining = savedArticles.filter((a) => a.id !== article_id);
 
     if (remaining.length === savedArticles.length) {
-      return NextResponse.json(
-        { error: 'Article not found in saved list' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Article not found in saved list' }, { status: 404 });
     }
 
     const result = await usersCollection.updateOne(
@@ -96,10 +75,7 @@ export const DELETE = withAuth(async (req: NextRequest, { user }) => {
     );
 
     if (result.modifiedCount === 0) {
-      return NextResponse.json(
-        { error: 'Failed to delete article' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to delete article' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -109,9 +85,6 @@ export const DELETE = withAuth(async (req: NextRequest, { user }) => {
     });
   } catch (error) {
     console.error('Delete saved article error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

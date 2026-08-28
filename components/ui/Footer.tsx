@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className={'text-[10px] text-center w-full mt-12 p-2 text-black'}>
       <p>
-        @ 2025 Papermind - Made by Alan GEIRNAERT -{' '}
+        @ 2026 Papermind - Made by Alan GEIRNAERT -{' '}
         <Link href={'https://github.com/alangnt'} className={'underline'} target={'_blank'}>
           GitHub
         </Link>{' '}
@@ -15,13 +15,9 @@ export default function Footer() {
           target={'_blank'}
         >
           LinkedIn
-        </Link> -{' '}
-        Powered by{' '}
-        <Link 
-          href={'https://arxiv.org/'}
-          className={'underline'}
-          target={'_blank'}
-        >
+        </Link>{' '}
+        - Powered by{' '}
+        <Link href={'https://arxiv.org/'} className={'underline'} target={'_blank'}>
           arXiv&apos;s API
         </Link>
       </p>

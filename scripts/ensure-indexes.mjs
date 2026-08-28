@@ -15,7 +15,11 @@ import { MongoClient } from 'mongodb';
 const DRY_RUN = process.argv.includes('--dry-run');
 
 const INDEXES = [
-  { collection: 'users', spec: { username: 1 }, options: { name: 'username_unique', unique: true } },
+  {
+    collection: 'users',
+    spec: { username: 1 },
+    options: { name: 'username_unique', unique: true },
+  },
   { collection: 'users', spec: { email: 1 }, options: { name: 'email_unique', unique: true } },
   {
     collection: 'articles',
@@ -107,8 +111,11 @@ try {
       const duplicates = await findDuplicates(collection, field);
       if (duplicates.length > 0) {
         failed++;
-        console.error(`x ${label}: ${duplicates.length} duplicate value(s), cannot build unique index`);
-        for (const d of duplicates) console.error(`    ${JSON.stringify(d._id)} appears ${d.count}x`);
+        console.error(
+          `x ${label}: ${duplicates.length} duplicate value(s), cannot build unique index`
+        );
+        for (const d of duplicates)
+          console.error(`    ${JSON.stringify(d._id)} appears ${d.count}x`);
         continue;
       }
     }
