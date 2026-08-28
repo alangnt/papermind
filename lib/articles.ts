@@ -1,4 +1,5 @@
-import { getArxivById, parseArxivId } from '@/lib/arxiv';
+import { getArxivById } from '@/lib/arxiv';
+import { parseArxivId } from '@/lib/arxiv-id';
 import { getCollection } from '@/lib/mongodb';
 import { Document } from '@/types/models';
 
@@ -11,7 +12,7 @@ import { Document } from '@/types/models';
  * form so a cached article is interchangeable with a searched one; `arxiv_id`
  * is the bare, versionless key the article route uses.
  */
-export interface CachedArticle {
+interface CachedArticle {
   arxiv_id: string;
   document: Document;
   cached_at: Date;

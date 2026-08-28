@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Check, Copy, Download, Loader2, Share2, X } from 'lucide-react';
 
@@ -84,7 +85,12 @@ export default function ShareCard({ arxivId, title, onClose }: Props) {
   const canShareNatively =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  return (
+  // Rendered into the body rather than in place: the swipe deck applies a rotate
+  // transform to its card, and a transformed ancestor makes a fixed overlay
+  // position against that card instead of against the viewport.
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -182,6 +188,7 @@ export default function ShareCard({ arxivId, title, onClose }: Props) {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    window.document.body
   );
 }
