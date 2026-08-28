@@ -8,6 +8,7 @@ import { LoaderCircle, LogIn, UserPlus, Users } from 'lucide-react';
 import AuthComponent from '@/components/ui/Auth';
 import Footer from '@/components/ui/Footer';
 import { Waves } from '@/components/ui/WavesBackground';
+import SiteNav from '@/components/ui/SiteNav';
 
 import { apiFetch } from '@/lib/api';
 
@@ -20,6 +21,9 @@ type Preview = {
 };
 
 type Status = 'loading' | 'signed-out' | 'ready' | 'invalid';
+
+/** Same dark card the rest of the app uses over the wave backdrop. */
+const SURFACE = 'rounded-2xl border border-gray-700 bg-foreground text-white shadow-lg p-5 md:p-6';
 
 export default function JoinGroupPage() {
   const params = useParams<{ token: string }>();
@@ -127,83 +131,85 @@ export default function JoinGroupPage() {
         <AuthComponent onLoggedIn={loadPreview} setIsAuthVisible={setIsAuthVisible} />
       )}
 
-      <div className="relative z-40 flex flex-col items-center justify-center grow w-full max-w-lg place-self-center min-h-screen px-4 py-8">
-        {status === 'loading' ? (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <LoaderCircle className="w-4 h-4 animate-spin" /> Checking this invite…
-          </div>
-        ) : status === 'invalid' ? (
-          <div className="text-center space-y-3">
-            <h1 className="text-xl font-semibold text-gray-800">This invite is no longer valid</h1>
-            <p className="text-sm text-gray-600">
-              Invite links expire after a week, and are replaced whenever the owner creates a new
-              one. Ask them for a fresh link.
-            </p>
-            <Link
-              href="/"
-              className="inline-block px-4 py-2 text-xs font-medium rounded-md bg-foreground text-white hover:bg-foreground/90 transition-colors"
-            >
-              Go to Papermind
-            </Link>
-          </div>
-        ) : status === 'signed-out' ? (
-          <div className="text-center space-y-3">
-            <Users className="w-7 h-7 mx-auto text-gray-500" />
-            <h1 className="text-xl font-semibold text-gray-800">
-              You have been invited to a group
-            </h1>
-            <p className="text-sm text-gray-600">
-              Sign in or create an account to join it. The invite stays valid while you do.
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsAuthVisible(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-foreground text-white hover:bg-foreground/90 transition-colors cursor-pointer"
-            >
-              <LogIn className="w-3.5 h-3.5" /> Sign in to continue
-            </button>
-          </div>
-        ) : (
-          preview && (
-            <div className="w-full bg-foreground border border-gray-700 rounded-2xl p-6 shadow-lg text-white space-y-5 text-center">
-              <div className="space-y-1">
-                <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                  You have been invited to
-                </p>
-                <h1 className="text-xl font-semibold leading-snug">{preview.name}</h1>
-                <p className="text-[11px] text-gray-400">
-                  Owned by {preview.owner} · {preview.memberCount}{' '}
-                  {preview.memberCount === 1 ? 'member' : 'members'} · {preview.articleCount}{' '}
-                  {preview.articleCount === 1 ? 'paper' : 'papers'}
-                </p>
-              </div>
+      <div className="relative z-40 flex flex-col items-center w-full max-w-lg place-self-center min-h-screen px-4 py-8">
+        <SiteNav />
 
+        <main className="grow flex flex-col items-center justify-center w-full">
+          {status === 'loading' ? (
+            <div className={`${SURFACE} flex items-center gap-2 text-sm text-gray-300`}>
+              <LoaderCircle className="w-4 h-4 animate-spin" /> Checking this invite…
+            </div>
+          ) : status === 'invalid' ? (
+            <div className={`${SURFACE} text-center space-y-3`}>
+              <h1 className="text-xl font-semibold text-white">This invite is no longer valid</h1>
+              <p className="text-sm text-gray-400">
+                Invite links expire after a week, and are replaced whenever the owner creates a new
+                one. Ask them for a fresh link.
+              </p>
+              <Link
+                href="/"
+                className="inline-block px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-gray-200 transition-colors"
+              >
+                Go to Papermind
+              </Link>
+            </div>
+          ) : status === 'signed-out' ? (
+            <div className={`${SURFACE} text-center space-y-3`}>
+              <Users className="w-7 h-7 mx-auto text-gray-400" />
+              <h1 className="text-xl font-semibold text-white">You have been invited to a group</h1>
+              <p className="text-sm text-gray-400">
+                Sign in or create an account to join it. The invite stays valid while you do.
+              </p>
               <button
                 type="button"
-                onClick={join}
-                disabled={isJoining}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-40"
+                onClick={() => setIsAuthVisible(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-gray-200 transition-colors cursor-pointer"
               >
-                {isJoining ? (
-                  <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <UserPlus className="w-3.5 h-3.5" />
-                )}
-                Join this group
+                <LogIn className="w-3.5 h-3.5" /> Sign in to continue
               </button>
-
-              {error && (
-                <p role="alert" className="text-[11px] text-red-300">
-                  {error}
-                </p>
-              )}
-
-              <p className="text-[10px] text-gray-500">
-                Members can add and remove papers. You can leave at any time.
-              </p>
             </div>
-          )
-        )}
+          ) : (
+            preview && (
+              <div className="w-full bg-foreground border border-gray-700 rounded-2xl p-6 shadow-lg text-white space-y-5 text-center">
+                <div className="space-y-1">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                    You have been invited to
+                  </p>
+                  <h1 className="text-xl font-semibold leading-snug">{preview.name}</h1>
+                  <p className="text-[11px] text-gray-400">
+                    Owned by {preview.owner} · {preview.memberCount}{' '}
+                    {preview.memberCount === 1 ? 'member' : 'members'} · {preview.articleCount}{' '}
+                    {preview.articleCount === 1 ? 'paper' : 'papers'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={join}
+                  disabled={isJoining}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  {isJoining ? (
+                    <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <UserPlus className="w-3.5 h-3.5" />
+                  )}
+                  Join this group
+                </button>
+
+                {error && (
+                  <p role="alert" className="text-[11px] text-red-300">
+                    {error}
+                  </p>
+                )}
+
+                <p className="text-[10px] text-gray-500">
+                  Members can add and remove papers. You can leave at any time.
+                </p>
+              </div>
+            )
+          )}
+        </main>
 
         <Footer />
       </div>

@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useCallback, FormEvent, useRef, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ChevronRight, Home, ArrowRight, EyeOff, Eye } from 'lucide-react';
+import { Loader2, ChevronRight, EyeOff, Eye } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import Link from 'next/link';
 
 import DocumentCard from '@/components/cards/DocumentCard';
-import { GooeyEffect } from "@/components/effects/GooeyEffect";
-import { Waves } from "@/components/ui/WavesBackground";
+import SiteNav from '@/components/ui/SiteNav';
+import { GooeyEffect } from '@/components/effects/GooeyEffect';
+import { Waves } from '@/components/ui/WavesBackground';
 
-import { BaseUser } from "@/types/users";
-import { Document } from "@/types/documents";
+import { BaseUser } from '@/types/users';
+import { Document } from '@/types/documents';
 import { apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
@@ -22,11 +22,15 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [validation, setValidation] = useState<string | null>(null);
 
-  const [currentTab, setCurrentTab] = useState<"fullname" | "password">("fullname");
+  const [currentTab, setCurrentTab] = useState<'fullname' | 'password'>('fullname');
   const [showPassword, setShowPassword] = useState(false);
 
-  const [fullNameFormData, setFullNameFormData] = useState({ first_name: "", last_name: "" });
-  const [passwordFormData, setPasswordFormData] = useState({ old_password: "", new_password: "", confirm_new_password: "" });
+  const [fullNameFormData, setFullNameFormData] = useState({ first_name: '', last_name: '' });
+  const [passwordFormData, setPasswordFormData] = useState({
+    old_password: '',
+    new_password: '',
+    confirm_new_password: '',
+  });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const firstNameRef = useRef<HTMLInputElement | null>(null);
@@ -37,7 +41,8 @@ export default function ProfilePage() {
   const submitBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const validateNewPassword = () => {
-    if (passwordFormData.new_password !== passwordFormData.confirm_new_password) return "Both passwords must match"
+    if (passwordFormData.new_password !== passwordFormData.confirm_new_password)
+      return 'Both passwords must match';
     return null;
   };
 
@@ -54,36 +59,36 @@ export default function ProfilePage() {
       const body = {
         username: user?.username,
         first_name: fullNameFormData.first_name.trim(),
-        last_name: fullNameFormData.last_name.trim()
-      }
+        last_name: fullNameFormData.last_name.trim(),
+      };
 
       const res = await fetch('/api/users/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
-      
-      if (!res.ok) return setError("Failed to update the user");
+
+      if (!res.ok) return setError('Failed to update the user');
 
       const data = await res.json();
 
       if (data) {
         setFullNameFormData({
           first_name: data.data.first_name,
-          last_name: data.data.last_name
+          last_name: data.data.last_name,
         });
 
         setError(null);
-        return setValidation("Name changed successfully");
+        return setValidation('Name changed successfully');
       }
     } catch (error) {
       console.error(error);
-      setError("Failed to update the user");
+      setError('Failed to update the user');
     } finally {
       setIsSubmitting(false);
       router.refresh();
     }
-  }
+  };
 
   const submitNewPassword = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -100,35 +105,35 @@ export default function ProfilePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(passwordFormData)
+        body: JSON.stringify(passwordFormData),
       });
 
       if (!res.ok) {
-        if (res.status === 400) return setError("Your old password is incorrect");
-        if (res.status === 401) return setError("Some data are missing");
-        if (res.status === 409) return setError("Both passwords must match");
-        if (res.status === 500) return setError("Failed to update the password");
+        if (res.status === 400) return setError('Your old password is incorrect');
+        if (res.status === 401) return setError('Some data are missing');
+        if (res.status === 409) return setError('Both passwords must match');
+        if (res.status === 500) return setError('Failed to update the password');
       }
 
       const data = await res.json();
 
-      if (data.status === 400) return setError("Your old password is incorrect");
+      if (data.status === 400) return setError('Your old password is incorrect');
 
       setError(null);
       setPasswordFormData({
-        old_password: "",
-        new_password: "",
-        confirm_new_password: "",
-      })
+        old_password: '',
+        new_password: '',
+        confirm_new_password: '',
+      });
       setShowPassword(false);
-      return setValidation("Password changed successfully");
+      return setValidation('Password changed successfully');
     } catch (error) {
       console.error(error);
-      return setError("Failed to update the password");
+      return setError('Failed to update the password');
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   const getUserAccess = useCallback(async (): Promise<BaseUser | null> => {
     try {
@@ -141,38 +146,52 @@ export default function ProfilePage() {
     }
   }, []);
 
-  const switchTab = (tab: "fullname" | "password") => {
+  const switchTab = (tab: 'fullname' | 'password') => {
     // Reset Forms
     setFullNameFormData({
-      first_name: user?.first_name ?? "",
-      last_name: user?.last_name ?? "",
+      first_name: user?.first_name ?? '',
+      last_name: user?.last_name ?? '',
     });
     setPasswordFormData({
-      old_password: "",
-      new_password: "",
-      confirm_new_password: ""
+      old_password: '',
+      new_password: '',
+      confirm_new_password: '',
     });
 
     setError(null);
     setValidation(null);
     setCurrentTab(tab);
-  }
+  };
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key !== 'Tab') return;
-    const focusableRefs = currentTab === "fullname" ? [firstNameRef, lastNameRef, submitBtnRef] : [oldPasswordRef, newPasswordRef, confirmNewPasswordRef, submitBtnRef];
-    const elements = focusableRefs.map(r => r.current).filter(Boolean) as HTMLElement[];
-    if (!elements.length) return;
-    const first = elements[0];
-    const last = elements[elements.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }, [firstNameRef, lastNameRef, oldPasswordRef, newPasswordRef, confirmNewPasswordRef, submitBtnRef, currentTab]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusableRefs =
+        currentTab === 'fullname'
+          ? [firstNameRef, lastNameRef, submitBtnRef]
+          : [oldPasswordRef, newPasswordRef, confirmNewPasswordRef, submitBtnRef];
+      const elements = focusableRefs.map((r) => r.current).filter(Boolean) as HTMLElement[];
+      if (!elements.length) return;
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    },
+    [
+      firstNameRef,
+      lastNameRef,
+      oldPasswordRef,
+      newPasswordRef,
+      confirmNewPasswordRef,
+      submitBtnRef,
+      currentTab,
+    ]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -198,7 +217,8 @@ export default function ProfilePage() {
     };
   }, [getUserAccess, router]);
 
-  const inputBase = 'p-2 border rounded-lg text-sm text-foreground bg-background backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
+  const inputBase =
+    'p-2 border rounded-lg text-sm text-foreground bg-background backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-foreground/40 transition shadow-sm border-border';
 
   return (
     <>
@@ -222,50 +242,25 @@ export default function ProfilePage() {
 
         <div className="flex flex-col gap-y-2 grow w-full max-w-3xl place-self-center text-gray-300 min-h-screen z-40">
           <main className="flex flex-col gap-2 items-center grow py-4 px-4 lg:px-0 overflow-hidden">
+            <SiteNav />
+
             {!user ? (
               <p className="text-sm text-gray-400">Checking access…</p>
             ) : (
               <>
-                <motion.button
-                  className="relative text-background bg-foreground z-80 flex items-center justify-center rounded-full cursor-pointer transition overflow-visible focus:outline-none p-2 w-fit place-self-center"
-                  aria-label="User profile"
-                  initial="rest"
-                  animate="rest"
-                  whileHover="hover"
-                  variants={{
-                    rest: { paddingRight: '0.5rem' },
-                    hover: {
-                      paddingRight: '1.75rem',
-                      transition: { type: 'spring', stiffness: 260, damping: 20 },
-                    },
-                  }}
-                >
-                  <Link href={'/'}>
-                    <Home className="w-4 h-4" />
-                    <motion.span
-                      className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center justify-center p-2"
-                      variants={{
-                        rest: { opacity: 0, x: 6, scale: 0.6 },
-                        hover: {
-                          opacity: 1,
-                          x: 0,
-                          scale: 1,
-                          transition: { type: 'spring', stiffness: 300, damping: 18 },
-                        },
-                      }}
-                    >
-                      <ArrowRight className="w-3 h-3" />
-                    </motion.span>
-                  </Link>
-                </motion.button>
-
                 <AnimatePresence>
-                  <motion.div className='z-110 flex items-center justify-center' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18, ease: 'easeOut' }}>
+                  <motion.div
+                    className="z-110 flex items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                  >
                     <motion.div
                       ref={containerRef}
-                      role='dialog'
-                      aria-modal='true'
-                      aria-labelledby='login-title'
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="login-title"
                       onKeyDown={handleKeyDown}
                       className={' z-10'}
                       initial={{ y: 28, opacity: 0, scale: 0.94 }}
@@ -294,8 +289,11 @@ export default function ProfilePage() {
                               className="flex flex-col gap-5 text-background"
                             >
                               {/* Edit full name */}
-                              {currentTab === "fullname" && (
-                                <form className="flex flex-col gap-5 text-background" onSubmit={editProfile}>
+                              {currentTab === 'fullname' && (
+                                <form
+                                  className="flex flex-col gap-5 text-background"
+                                  onSubmit={editProfile}
+                                >
                                   {error && (
                                     <motion.div
                                       initial={{ opacity: 0, y: -6 }}
@@ -313,8 +311,8 @@ export default function ProfilePage() {
                                       initial={{ opacity: 0, y: -6 }}
                                       animate={{ opacity: 1, y: 0 }}
                                       exit={{ opacity: 0, y: -4 }}
-                                      className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
-                                      role='alert'
+                                      className="text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md"
+                                      role="alert"
                                     >
                                       {validation}
                                     </motion.div>
@@ -330,7 +328,10 @@ export default function ProfilePage() {
                                       id="first_name"
                                       value={fullNameFormData.first_name}
                                       onChange={(e) =>
-                                        setFullNameFormData((p) => ({ ...p, first_name: e.target.value }))
+                                        setFullNameFormData((p) => ({
+                                          ...p,
+                                          first_name: e.target.value,
+                                        }))
                                       }
                                       placeholder="John"
                                       autoComplete="first_name"
@@ -350,7 +351,10 @@ export default function ProfilePage() {
                                       id="last_name"
                                       value={fullNameFormData.last_name}
                                       onChange={(e) =>
-                                        setFullNameFormData((p) => ({ ...p, last_name: e.target.value }))
+                                        setFullNameFormData((p) => ({
+                                          ...p,
+                                          last_name: e.target.value,
+                                        }))
                                       }
                                       placeholder="Doe"
                                       autoComplete="last_name"
@@ -365,7 +369,8 @@ export default function ProfilePage() {
                                     type="submit"
                                     disabled={
                                       isSubmitting ||
-                                      (!fullNameFormData.first_name && !fullNameFormData.last_name) ||
+                                      (!fullNameFormData.first_name &&
+                                        !fullNameFormData.last_name) ||
                                       (fullNameFormData.first_name === user.first_name &&
                                         fullNameFormData.last_name === user.last_name)
                                     }
@@ -375,25 +380,30 @@ export default function ProfilePage() {
                                     <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
                                   </button>
                                   <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
-                                    <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
+                                    <span className="text-[10px] tracking-wide text-muted-foreground">
+                                      OR
+                                    </span>
                                   </div>
                                   <button
                                     type="button"
                                     className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
                                     disabled={isSubmitting}
-                                    onClick={() => switchTab("password")}
+                                    onClick={() => switchTab('password')}
                                   >
                                     Change my password
                                     <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
-                          <ChevronRight className="w-4 h-4" />
-                        </span>
+                                      <ChevronRight className="w-4 h-4" />
+                                    </span>
                                   </button>
                                 </form>
                               )}
 
                               {/* Edit password */}
-                              {currentTab === "password" && (
-                                <form className="flex flex-col gap-5 text-background" onSubmit={submitNewPassword}>
+                              {currentTab === 'password' && (
+                                <form
+                                  className="flex flex-col gap-5 text-background"
+                                  onSubmit={submitNewPassword}
+                                >
                                   {error && (
                                     <motion.div
                                       initial={{ opacity: 0, y: -6 }}
@@ -411,8 +421,8 @@ export default function ProfilePage() {
                                       initial={{ opacity: 0, y: -6 }}
                                       animate={{ opacity: 1, y: 0 }}
                                       exit={{ opacity: 0, y: -4 }}
-                                      className='text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md'
-                                      role='alert'
+                                      className="text-green-600 text-xs bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md"
+                                      role="alert"
                                     >
                                       {validation}
                                     </motion.div>
@@ -422,27 +432,38 @@ export default function ProfilePage() {
                                     <label className="text-xs font-medium" htmlFor="old_password">
                                       Old Password
                                     </label>
-                                    <div className='relative'>
+                                    <div className="relative">
                                       <input
                                         ref={oldPasswordRef}
                                         type={showPassword ? 'text' : 'password'}
-                                        id='old_password'
+                                        id="old_password"
                                         value={passwordFormData.old_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, old_password: e.target.value }))}
-                                        placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='old_password'
+                                        onChange={(e) =>
+                                          setPasswordFormData((p) => ({
+                                            ...p,
+                                            old_password: e.target.value,
+                                          }))
+                                        }
+                                        placeholder={showPassword ? 'password' : '********'}
+                                        autoComplete="old_password"
                                         className={inputBase + ' w-full pr-8'}
                                         disabled={isSubmitting}
-                                        aria-required='true'
+                                        aria-required="true"
                                       />
                                       <button
-                                        type='button'
-                                        onClick={() => setShowPassword(s => !s)}
-                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        type="button"
+                                        onClick={() => setShowPassword((s) => !s)}
+                                        className="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none"
+                                        aria-label={
+                                          showPassword ? 'Hide password' : 'Show password'
+                                        }
                                         tabIndex={-1}
                                       >
-                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                        {showPassword ? (
+                                          <EyeOff className="w-4 h-4" />
+                                        ) : (
+                                          <Eye className="w-4 h-4" />
+                                        )}
                                       </button>
                                     </div>
                                   </div>
@@ -451,81 +472,113 @@ export default function ProfilePage() {
                                     <label className="text-xs font-medium" htmlFor="new_password">
                                       New Password
                                     </label>
-                                    <div className='relative'>
+                                    <div className="relative">
                                       <input
                                         ref={newPasswordRef}
                                         type={showPassword ? 'text' : 'password'}
-                                        id='new_password'
+                                        id="new_password"
                                         value={passwordFormData.new_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, new_password: e.target.value }))}
-                                        placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='new_password'
+                                        onChange={(e) =>
+                                          setPasswordFormData((p) => ({
+                                            ...p,
+                                            new_password: e.target.value,
+                                          }))
+                                        }
+                                        placeholder={showPassword ? 'password' : '********'}
+                                        autoComplete="new_password"
                                         className={inputBase + ' w-full pr-8'}
                                         disabled={isSubmitting}
-                                        aria-required='true'
+                                        aria-required="true"
                                       />
                                       <button
-                                        type='button'
-                                        onClick={() => setShowPassword(s => !s)}
-                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        type="button"
+                                        onClick={() => setShowPassword((s) => !s)}
+                                        className="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none"
+                                        aria-label={
+                                          showPassword ? 'Hide password' : 'Show password'
+                                        }
                                         tabIndex={-1}
                                       >
-                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                        {showPassword ? (
+                                          <EyeOff className="w-4 h-4" />
+                                        ) : (
+                                          <Eye className="w-4 h-4" />
+                                        )}
                                       </button>
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-xs font-medium" htmlFor="confirm_new_password">
+                                    <label
+                                      className="text-xs font-medium"
+                                      htmlFor="confirm_new_password"
+                                    >
                                       Confirm New Password
                                     </label>
-                                    <div className='relative'>
+                                    <div className="relative">
                                       <input
                                         ref={confirmNewPasswordRef}
                                         type={showPassword ? 'text' : 'password'}
-                                        id='confirm_new_password'
+                                        id="confirm_new_password"
                                         value={passwordFormData.confirm_new_password}
-                                        onChange={(e) => setPasswordFormData(p => ({ ...p, confirm_new_password: e.target.value }))}
-                                        placeholder={showPassword ? "password" : "********"}
-                                        autoComplete='confirm_new_password'
+                                        onChange={(e) =>
+                                          setPasswordFormData((p) => ({
+                                            ...p,
+                                            confirm_new_password: e.target.value,
+                                          }))
+                                        }
+                                        placeholder={showPassword ? 'password' : '********'}
+                                        autoComplete="confirm_new_password"
                                         className={inputBase + ' w-full pr-8'}
                                         disabled={isSubmitting}
-                                        aria-required='true'
+                                        aria-required="true"
                                       />
                                       <button
-                                        type='button'
-                                        onClick={() => setShowPassword(s => !s)}
-                                        className='absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none'
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        type="button"
+                                        onClick={() => setShowPassword((s) => !s)}
+                                        className="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-foreground focus:outline-none"
+                                        aria-label={
+                                          showPassword ? 'Hide password' : 'Show password'
+                                        }
                                         tabIndex={-1}
                                       >
-                                        {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                                        {showPassword ? (
+                                          <EyeOff className="w-4 h-4" />
+                                        ) : (
+                                          <Eye className="w-4 h-4" />
+                                        )}
                                       </button>
                                     </div>
                                   </div>
 
                                   <button
                                     type="submit"
-                                    disabled={isSubmitting || !passwordFormData.old_password || !passwordFormData.new_password || !passwordFormData.confirm_new_password}
+                                    disabled={
+                                      isSubmitting ||
+                                      !passwordFormData.old_password ||
+                                      !passwordFormData.new_password ||
+                                      !passwordFormData.confirm_new_password
+                                    }
                                     className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-background text-foreground text-sm font-medium hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed shadow focus:outline-none focus:ring-2 focus:ring-background/40 transition cursor-pointer"
                                   >
                                     {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                                     <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
                                   </button>
                                   <div className="flex items-center gap-3 before:h-px before:flex-1 before:bg-border/70 after:h-px after:flex-1 after:bg-border/70">
-                                    <span className="text-[10px] tracking-wide text-muted-foreground">OR</span>
+                                    <span className="text-[10px] tracking-wide text-muted-foreground">
+                                      OR
+                                    </span>
                                   </div>
                                   <button
                                     type="button"
                                     className="group relative flex items-center justify-center gap-2 pl-3 pr-9 py-2 rounded-md border border-border/30 bg-foreground/40 hover:bg-foreground/60 text-sm font-medium transition shadow focus:outline-none focus:ring-2 focus:ring-background/30 disabled:bg-gray-700 cursor-pointer disabled:cursor-default"
                                     disabled={isSubmitting}
-                                    onClick={() => switchTab("fullname")}
+                                    onClick={() => switchTab('fullname')}
                                   >
                                     Edit my full name
                                     <span className="absolute right-3 opacity-60 group-hover:opacity-100 transition-transform group-hover:translate-x-0.5">
-                                  <ChevronRight className="w-4 h-4" />
-                                </span>
+                                      <ChevronRight className="w-4 h-4" />
+                                    </span>
                                   </button>
                                 </form>
                               )}
@@ -543,7 +596,11 @@ export default function ProfilePage() {
                                 key={document.id}
                                 document={document}
                                 username={user.username ?? undefined}
-                                isSaved={!!user?.saved_articles?.find((article) => article.id === document.id)}
+                                isSaved={
+                                  !!user?.saved_articles?.find(
+                                    (article) => article.id === document.id
+                                  )
+                                }
                               />
                             ))}
                         </div>

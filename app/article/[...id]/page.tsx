@@ -7,6 +7,7 @@ import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 import ArticleActions from '@/components/article/ArticleActions';
 import RelatedArticles from '@/components/article/RelatedArticles';
 import Footer from '@/components/ui/Footer';
+import SiteNav from '@/components/ui/SiteNav';
 import { Waves } from '@/components/ui/WavesBackground';
 import { getArticle, listRelatedArticles, recordArticleView } from '@/lib/articles';
 import { categoryBadgeClass } from '@/lib/categories';
@@ -148,99 +149,107 @@ export default async function ArticlePage({ params }: Props) {
       />
 
       <div className="relative z-40 flex flex-col grow w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 py-8">
+        <SiteNav />
+
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors mb-6 w-fit"
+          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors mb-4 w-fit"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back to search
         </Link>
 
-        <article className="bg-foreground border border-gray-700 rounded-2xl p-6 md:p-8 shadow-lg text-white space-y-6">
-          <header className="space-y-3">
-            <h1 className="font-semibold leading-snug text-xl md:text-2xl">{document.title}</h1>
+        <main className="grow">
+          <article className="bg-foreground border border-gray-700 rounded-2xl p-6 md:p-8 shadow-lg text-white space-y-6">
+            <header className="space-y-3">
+              <h1 className="font-semibold leading-snug text-xl md:text-2xl">{document.title}</h1>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {document.category && (
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] tracking-wide uppercase font-medium border border-white/10 ${categoryBadgeClass(document.category)}`}
-                >
-                  {document.category}
+              <div className="flex flex-wrap items-center gap-2">
+                {document.category && (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] tracking-wide uppercase font-medium border border-white/10 ${categoryBadgeClass(document.category)}`}
+                  >
+                    {document.category}
+                  </span>
+                )}
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 border border-white/10 text-gray-300">
+                  arXiv:{arxivId}
                 </span>
+                {document.doi && (
+                  <a
+                    href={`https://doi.org/${document.doi}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 transition-colors"
+                  >
+                    DOI: {document.doi}
+                  </a>
+                )}
+              </div>
+
+              {document.authors?.length > 0 && (
+                <p className="text-xs text-gray-400">{document.authors.join(', ')}</p>
               )}
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 border border-white/10 text-gray-300">
-                arXiv:{arxivId}
-              </span>
-              {document.doi && (
-                <a
-                  href={`https://doi.org/${document.doi}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 transition-colors"
-                >
-                  DOI: {document.doi}
-                </a>
-              )}
-            </div>
 
-            {document.authors?.length > 0 && (
-              <p className="text-xs text-gray-400">{document.authors.join(', ')}</p>
-            )}
+              <p className="text-[11px] text-gray-500">
+                {publishedDate && <>Published {publishedDate}</>}
+                {updatedDate && updatedDate !== publishedDate && <> · Updated {updatedDate}</>}
+              </p>
+            </header>
 
-            <p className="text-[11px] text-gray-500">
-              {publishedDate && <>Published {publishedDate}</>}
-              {updatedDate && updatedDate !== publishedDate && <> · Updated {updatedDate}</>}
-            </p>
-          </header>
-
-          <section className="space-y-2">
-            <h2 className="text-xs uppercase tracking-wide text-gray-500 font-medium">Abstract</h2>
-            <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-line">{abstract}</p>
-          </section>
-
-          {document.comment && (
             <section className="space-y-2">
               <h2 className="text-xs uppercase tracking-wide text-gray-500 font-medium">
-                Author comment
+                Abstract
               </h2>
-              <p className="text-sm text-gray-300 leading-relaxed">{document.comment}</p>
+              <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-line">
+                {abstract}
+              </p>
             </section>
-          )}
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 border border-white/10 transition-colors"
-            >
-              <FileText className="w-3.5 h-3.5" /> Read the PDF
-            </a>
-            <a
-              href={absUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 border border-white/10 transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> View on arXiv
-            </a>
-            <ArticleActions document={document} arxivId={arxivId} />
-          </div>
-
-          {related.length > 0 && document.category && (
-            <RelatedArticles category={document.category} articles={related} />
-          )}
-
-          <footer className="text-[10px] text-gray-500 pt-4 border-t border-gray-700">
-            {source === 'cache' ? (
-              <>
-                Served from Papermind&apos;s copy, last checked against arXiv on{' '}
-                {formatDate(refreshedAt.toISOString())}.
-              </>
-            ) : (
-              <>Metadata from arXiv.</>
+            {document.comment && (
+              <section className="space-y-2">
+                <h2 className="text-xs uppercase tracking-wide text-gray-500 font-medium">
+                  Author comment
+                </h2>
+                <p className="text-sm text-gray-300 leading-relaxed">{document.comment}</p>
+              </section>
             )}
-          </footer>
-        </article>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <a
+                href={pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 border border-white/10 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5" /> Read the PDF
+              </a>
+              <a
+                href={absUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 border border-white/10 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> View on arXiv
+              </a>
+              <ArticleActions document={document} arxivId={arxivId} />
+            </div>
+
+            {related.length > 0 && document.category && (
+              <RelatedArticles category={document.category} articles={related} />
+            )}
+
+            <footer className="text-[10px] text-gray-500 pt-4 border-t border-gray-700">
+              {source === 'cache' ? (
+                <>
+                  Served from Papermind&apos;s copy, last checked against arXiv on{' '}
+                  {formatDate(refreshedAt.toISOString())}.
+                </>
+              ) : (
+                <>Metadata from arXiv.</>
+              )}
+            </footer>
+          </article>
+        </main>
 
         <Footer />
       </div>

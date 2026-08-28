@@ -10,6 +10,7 @@ import GroupInvite from '@/components/groups/GroupInvite';
 import GroupMembers from '@/components/groups/GroupMembers';
 import Footer from '@/components/ui/Footer';
 import { Waves } from '@/components/ui/WavesBackground';
+import SiteNav from '@/components/ui/SiteNav';
 
 import { apiFetch } from '@/lib/api';
 import { Document } from '@/types/documents';
@@ -185,150 +186,156 @@ export default function GroupPage() {
       </div>
 
       <div className="relative z-40 flex flex-col grow w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 py-8">
+        <SiteNav />
+
         <Link
           href="/groups"
-          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors mb-6 w-fit"
+          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors mb-4 w-fit"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> All groups
         </Link>
 
-        {isLoading ? (
-          <div className="h-40 rounded-2xl bg-foreground/10 border border-black/5 animate-pulse" />
-        ) : loadError || !group ? (
-          <div className="text-center space-y-3 py-10">
-            <h1 className="text-xl font-semibold text-gray-800">Group unavailable</h1>
-            <p className="text-sm text-gray-600 max-w-md mx-auto">{loadError}</p>
-            <Link
-              href="/groups"
-              className="inline-block px-4 py-2 text-xs font-medium rounded-md bg-foreground text-white hover:bg-foreground/90 transition-colors"
-            >
-              Back to your groups
-            </Link>
-          </div>
-        ) : (
-          <div className="bg-foreground border border-gray-700 rounded-2xl p-6 md:p-8 shadow-lg text-white space-y-6">
-            <header className="space-y-2">
-              {isRenaming ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    value={draftName}
-                    onChange={(event) => setDraftName(event.target.value)}
-                    maxLength={MAX_NAME_LENGTH}
-                    autoFocus
-                    aria-label="Group name"
-                    className="flex-1 px-2 py-1 rounded-md bg-white/10 border border-white/20 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-white/30"
-                  />
-                  <button
-                    type="button"
-                    onClick={rename}
-                    disabled={isBusy}
-                    aria-label="Save the new name"
-                    className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsRenaming(false)}
-                    aria-label="Cancel renaming"
-                    className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl md:text-2xl font-semibold leading-snug flex-1">
-                    {group.name}
-                  </h1>
-                  {group.isOwner && (
+        <main className="grow">
+          {isLoading ? (
+            <div className="h-40 rounded-2xl bg-foreground/20 border border-black/5 animate-pulse" />
+          ) : loadError || !group ? (
+            <div className="text-center space-y-3 py-10 px-5 rounded-2xl border border-gray-700 bg-foreground text-white shadow-lg">
+              <h1 className="text-xl font-semibold">Group unavailable</h1>
+              <p className="text-sm text-gray-400 max-w-md mx-auto">{loadError}</p>
+              <Link
+                href="/groups"
+                className="inline-block px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-gray-200 transition-colors"
+              >
+                Back to your groups
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-foreground border border-gray-700 rounded-2xl p-6 md:p-8 shadow-lg text-white space-y-6">
+              <header className="space-y-2">
+                {isRenaming ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={draftName}
+                      onChange={(event) => setDraftName(event.target.value)}
+                      maxLength={MAX_NAME_LENGTH}
+                      autoFocus
+                      aria-label="Group name"
+                      className="flex-1 px-2 py-1 rounded-md bg-white/10 border border-white/20 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-white/30"
+                    />
                     <button
                       type="button"
-                      onClick={() => {
-                        setDraftName(group.name);
-                        setIsRenaming(true);
-                      }}
-                      aria-label="Rename this group"
-                      className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                      onClick={rename}
+                      disabled={isBusy}
+                      aria-label="Save the new name"
+                      className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Check className="w-4 h-4" />
                     </button>
-                  )}
-                </div>
-              )}
-              <p className="text-[11px] text-gray-400">
-                {group.isOwner ? 'You own this group' : `Owned by ${group.owner}`} ·{' '}
-                {group.articleCount} {group.articleCount === 1 ? 'paper' : 'papers'}
-              </p>
-            </header>
-
-            <GroupMembers
-              members={group.members}
-              owner={group.owner}
-              currentUser={user?.username ?? ''}
-              isOwner={group.isOwner}
-              onRemove={removeMember}
-            />
-
-            {group.isOwner && <GroupInvite groupId={group.id} />}
-
-            <section className="space-y-3">
-              <h2 className="text-xs uppercase tracking-wide text-gray-500 font-medium">Papers</h2>
-
-              {documents.length === 0 ? (
-                <p className="text-sm text-gray-400">
-                  No papers yet. Search on the home page and use{' '}
-                  <span className="text-gray-200">Add to group</span> on any result.
+                    <button
+                      type="button"
+                      onClick={() => setIsRenaming(false)}
+                      aria-label="Cancel renaming"
+                      className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl md:text-2xl font-semibold leading-snug flex-1">
+                      {group.name}
+                    </h1>
+                    {group.isOwner && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraftName(group.name);
+                          setIsRenaming(true);
+                        }}
+                        aria-label="Rename this group"
+                        className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                <p className="text-[11px] text-gray-400">
+                  {group.isOwner ? 'You own this group' : `Owned by ${group.owner}`} ·{' '}
+                  {group.articleCount} {group.articleCount === 1 ? 'paper' : 'papers'}
                 </p>
-              ) : (
-                <div className="grid grid-cols-1 gap-3">
-                  {documents.map((doc) => (
-                    <DocumentCard
-                      key={doc.id}
-                      document={doc}
-                      username={user?.username ?? undefined}
-                      isSaved={!!user?.saved_articles?.some((saved) => saved.id === doc.id)}
-                      onRemove={() => removePaper(doc.id)}
-                      removeLabel="Remove from group"
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
+              </header>
 
-            <footer className="pt-4 border-t border-gray-700 flex flex-wrap gap-2">
-              {group.isOwner ? (
-                <button
-                  type="button"
-                  onClick={destroy}
-                  disabled={isBusy}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md border border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-40"
-                >
-                  {isBusy ? (
-                    <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
-                  )}
-                  Delete this group
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={leave}
-                  disabled={isBusy}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 border border-white/10 transition-colors cursor-pointer disabled:opacity-40"
-                >
-                  {isBusy ? (
-                    <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <LogOut className="w-3.5 h-3.5" />
-                  )}
-                  Leave this group
-                </button>
-              )}
-            </footer>
-          </div>
-        )}
+              <GroupMembers
+                members={group.members}
+                owner={group.owner}
+                currentUser={user?.username ?? ''}
+                isOwner={group.isOwner}
+                onRemove={removeMember}
+              />
+
+              {group.isOwner && <GroupInvite groupId={group.id} />}
+
+              <section className="space-y-3">
+                <h2 className="text-xs uppercase tracking-wide text-gray-500 font-medium">
+                  Papers
+                </h2>
+
+                {documents.length === 0 ? (
+                  <p className="text-sm text-gray-400">
+                    No papers yet. Search on the home page and use{' '}
+                    <span className="text-gray-200">Add to group</span> on any result.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {documents.map((doc) => (
+                      <DocumentCard
+                        key={doc.id}
+                        document={doc}
+                        username={user?.username ?? undefined}
+                        isSaved={!!user?.saved_articles?.some((saved) => saved.id === doc.id)}
+                        onRemove={() => removePaper(doc.id)}
+                        removeLabel="Remove from group"
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <footer className="pt-4 border-t border-gray-700 flex flex-wrap gap-2">
+                {group.isOwner ? (
+                  <button
+                    type="button"
+                    onClick={destroy}
+                    disabled={isBusy}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md border border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    {isBusy ? (
+                      <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    Delete this group
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={leave}
+                    disabled={isBusy}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md bg-white/10 hover:bg-white/15 border border-white/10 transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    {isBusy ? (
+                      <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <LogOut className="w-3.5 h-3.5" />
+                    )}
+                    Leave this group
+                  </button>
+                )}
+              </footer>
+            </div>
+          )}
+        </main>
 
         <Footer />
       </div>
