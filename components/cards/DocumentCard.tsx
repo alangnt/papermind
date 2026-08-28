@@ -10,12 +10,14 @@ import {
   Maximize2,
   Share2,
   Trash2,
+  FolderPlus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Document } from '@/types/documents';
 import { categoryBadgeClass } from '@/lib/categories';
 import { parseArxivId } from '@/lib/arxiv-id';
 import ShareCard from '@/components/cards/ShareCard';
+import AddToGroup from '@/components/groups/AddToGroup';
 
 type Props = {
   document: Document;
@@ -38,6 +40,7 @@ export default function DocumentCard({
 
   // UI state
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isGroupPickerOpen, setIsGroupPickerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(isSaved);
   const isConnected = !!username;
@@ -202,6 +205,17 @@ export default function DocumentCard({
               <Share2 className="w-3.5 h-3.5" /> Share
             </button>
           )}
+          {/* Grouping needs an account, so the control is absent when signed out. */}
+          {arxivId && isConnected && (
+            <button
+              type="button"
+              onClick={() => setIsGroupPickerOpen(true)}
+              aria-label="Add this article to a group"
+              className="px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border border-white/10 bg-white/10 hover:bg-white/15 backdrop-blur-sm inline-flex items-center gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+            >
+              <FolderPlus className="w-3.5 h-3.5" /> Group
+            </button>
+          )}
           {onRemove && (
             <button
               type="button"
@@ -232,6 +246,10 @@ export default function DocumentCard({
 
       {isShareOpen && arxivId && (
         <ShareCard arxivId={arxivId} title={title} onClose={() => setIsShareOpen(false)} />
+      )}
+
+      {isGroupPickerOpen && arxivId && (
+        <AddToGroup arxivId={arxivId} title={title} onClose={() => setIsGroupPickerOpen(false)} />
       )}
     </motion.article>
   );
