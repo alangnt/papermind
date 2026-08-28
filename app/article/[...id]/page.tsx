@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 
 import ArticleActions from '@/components/article/ArticleActions';
+import RelatedArticles from '@/components/article/RelatedArticles';
 import Footer from '@/components/ui/Footer';
+import { Waves } from '@/components/ui/WavesBackground';
 import { getArticle, listRelatedArticles, recordArticleView } from '@/lib/articles';
 import { categoryBadgeClass } from '@/lib/categories';
 import { articleUrl } from '@/lib/site';
@@ -107,7 +109,24 @@ export default async function ArticlePage({ params }: Props) {
   const pdfUrl = document.pdfLink || `https://arxiv.org/pdf/${arxivId}`;
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full overflow-hidden">
+      {/* Same backdrop as the search page, so a shared link still looks like Papermind. */}
+      <div className="absolute inset-0 w-full pointer-events-none">
+        <Waves
+          lineColor={'rgba(0, 0, 0, 0.3)'}
+          backgroundColor="transparent"
+          waveSpeedX={0.02}
+          waveSpeedY={0.01}
+          waveAmpX={40}
+          waveAmpY={20}
+          friction={0.9}
+          tension={0.01}
+          maxCursorMove={120}
+          xGap={12}
+          yGap={36}
+        />
+      </div>
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -128,7 +147,7 @@ export default async function ArticlePage({ params }: Props) {
         }}
       />
 
-      <div className="flex flex-col grow w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 py-8">
+      <div className="relative z-40 flex flex-col grow w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 py-8">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors mb-6 w-fit"
@@ -207,32 +226,8 @@ export default async function ArticlePage({ params }: Props) {
             <ArticleActions document={document} arxivId={arxivId} />
           </div>
 
-          {related.length > 0 && (
-            <section className="space-y-2 pt-2">
-              <h2 className="text-xs uppercase tracking-wide text-gray-500 font-medium">
-                More in {document.category}
-              </h2>
-              <ul className="space-y-1">
-                {related.map((paper) => (
-                  <li key={paper.arxivId}>
-                    <Link
-                      href={`/article/${paper.arxivId}`}
-                      className="block rounded-md px-2 py-1.5 -mx-2 hover:bg-white/5 transition-colors"
-                    >
-                      <span className="block text-sm text-gray-200 leading-snug">
-                        {paper.title}
-                      </span>
-                      {paper.authors.length > 0 && (
-                        <span className="block text-[11px] text-gray-500">
-                          {paper.authors.slice(0, 3).join(', ')}
-                          {paper.authors.length > 3 && ` +${paper.authors.length - 3}`}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {related.length > 0 && document.category && (
+            <RelatedArticles category={document.category} articles={related} />
           )}
 
           <footer className="text-[10px] text-gray-500 pt-4 border-t border-gray-700">
