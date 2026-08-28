@@ -34,6 +34,18 @@ const INDEXES = [
     spec: { 'document.category': 1, 'document.published': -1 },
     options: { name: 'articles_by_category' },
   },
+  // "My groups", listed most recently touched first.
+  {
+    collection: 'groups',
+    spec: { members: 1, updated_at: -1 },
+    options: { name: 'groups_by_member' },
+  },
+  // Invite-link lookup. Sparse: most groups have no live invite.
+  {
+    collection: 'groups',
+    spec: { 'invite.token': 1 },
+    options: { name: 'groups_invite_token', unique: true, sparse: true },
+  },
 ];
 
 const uri = process.env.MONGODB_URI;
@@ -55,6 +67,9 @@ const client = new MongoClient(uri);
 async function findDuplicates(collection, field) {
   return collection
     .aggregate([
+      // A sparse unique index ignores docs missing the field, so grouping them
+      // together here would report a duplicate that would not actually block it.
+      { $match: { [field]: { $exists: true, $ne: null } } },
       { $group: { _id: `$${field}`, count: { $sum: 1 } } },
       { $match: { count: { $gt: 1 } } },
       { $sort: { count: -1 } },
