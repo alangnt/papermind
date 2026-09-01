@@ -8,14 +8,16 @@ Package manager is **bun** (`bun.lock` is committed); npm scripts work equally.
 
 ```bash
 bun install
-bun run dev      # next dev --turbopack, http://localhost:3000
+bun run dev        # next dev --turbopack, http://localhost:3000
 bun run build
-bun run format   # prettier --write .
-bun run knip     # dead-code / unused-dependency check
-bun run test     # placeholder: echoes "No tests yet" and exits 0
+bun run format     # prettier --write .
+bun run knip       # dead-code / unused-dependency check
+bun run test       # vitest run — everything, needs MONGODB_URI
+bun run test:unit  # everything except *.db.test.ts — no network
+bun run test:watch # vitest
 ```
 
-There is **no test framework yet** — `bun run test` is a stub, and the husky `pre-commit` hook just runs it. Manual auth smoke test: `./test-cookies.sh` (curls sign-in → `/api/users/me` against a running dev server with a `testuser` account).
+The husky `pre-commit` hook runs `bun run lint` then `bun run test:unit`, so a commit never depends on the network. Run `bun run test` yourself, or in CI, for the full set.
 
 Requires `.env.local` with: `WEBSITE_URL`, `MONGODB_URI`, `MONGODB_NAME`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_SECRET_KEY`, `REFRESH_ALGORITHM`, `REFRESH_TOKEN_EXPIRE_MINUTES`, `POSTMARK_SERVER_TOKEN`, `GROQ_API_KEY`.
 
@@ -28,18 +30,20 @@ The UI is essentially **one client component**: [app/page.tsx](app/page.tsx) hol
 ### Search flow
 
 A search is two hops, both from the client:
+
 1. `POST /api/askAi` — Groq (`openai/gpt-oss-120b` via Vercel AI SDK `generateText`) distills the natural-language query into a ≤3-word keyword.
 2. `POST /api/get_documents` — that keyword goes to the arXiv Atom API via [lib/arxiv.ts](lib/arxiv.ts) (xml2js parsing), rate-limited per IP.
 
-**Vector search is not implemented.** [app/api/vector_search/route.ts](app/api/vector_search/route.ts) and [app/api/embed_documents/route.ts](app/api/embed_documents/route.ts) both return 501 with the intended MongoDB `$vectorSearch` aggregation preserved in comments. The README's claims about embeddings/RAG describe the target state, not the current code.
+**Vector search is not implemented.** It is still the headline goal — see the Roadmap in [README.md](README.md), which holds the intended MongoDB `$vectorSearch` aggregation. Two stub routes used to return 501 for it; they were removed rather than shipped as dead public endpoints, and are recoverable from git history.
 
 ### Auth
 
 Custom JWT + cookie auth, no auth library:
+
 - [lib/auth.ts](lib/auth.ts) — bcrypt hashing, access/refresh token signing & verification. Tokens carry `{ sub: username, type: 'access' | 'refresh' }`; the `type` claim is checked on verify so tokens aren't interchangeable. `sub` is the **username**, not the `_id`.
 - [lib/cookies.ts](lib/cookies.ts) — `httpOnly` cookies `access_token` (30 min) / `refresh_token` (30 days), `SameSite=Lax`, `Secure` only in production.
 - [lib/middleware.ts](lib/middleware.ts) — `withAuth(handler)` HOF wrapping route exports; reads the cookie (falling back to `Authorization: Bearer`), verifies, loads the `User` from Mongo, and passes it as `context.user`. **Not** Next.js middleware despite the filename.
-- [proxy.ts](proxy.ts) — this *is* the Next.js middleware (renamed to `proxy.ts` in Next 16). Sets CSP and security headers only; no auth logic.
+- [proxy.ts](proxy.ts) — this _is_ the Next.js middleware (renamed to `proxy.ts` in Next 16). Sets CSP and security headers only; no auth logic.
 - [lib/api.ts](lib/api.ts) — client-side `apiFetch`: always `credentials: 'include'`, and on a 401 does a single de-duplicated `POST /api/auth/refresh` then retries. Client code should use `apiFetch`, not bare `fetch`, for anything authenticated.
 
 Password reset writes a token doc to the `reset_tokens` collection and mails the link via Postmark.
@@ -48,13 +52,25 @@ Password reset writes a token doc to the `reset_tokens` collection and mails the
 
 [lib/mongodb.ts](lib/mongodb.ts) exposes only `getCollection<T>(name, dbName?)`. The client promise is cached on `globalThis` in development to survive HMR. Note the default database name is hardcoded to `'Astra'` (the `MONGODB_NAME` env var is not read by this module). Collections in use: `users`, `reset_tokens`, `documents` (documents only in the disabled embedding routes). Saved articles are embedded in the user document as `saved_articles`, rewritten wholesale on save/delete.
 
-### Types caveat
+### Types
 
-Two overlapping document/user type sets exist and both are imported in different places: [types/models.ts](types/models.ts) (server-side, mostly-optional fields, `_id: string | ObjectId`) and [types/documents.d.ts](types/documents.d.ts) + [types/users.d.ts](types/users.d.ts) (client-side, all-required fields). Match whichever the surrounding file already uses rather than unifying them incidentally.
+[types/models.ts](types/models.ts) is the single source of truth for `Document` and `User`. The client-side files derive from it rather than restating it: [types/documents.d.ts](types/documents.d.ts) re-exports `Document` unchanged (plus `SearchType`/`SystemType`), and [types/users.d.ts](types/users.d.ts) defines `BaseUser` as a `Pick` of `User` with `_id` narrowed to `string`, since the route stringifies the ObjectId on the way out.
+
+Import from `@/types/documents` and `@/types/users` in client components, `@/types/models` on the server — they resolve to the same types, so the split is only about which file reads naturally where. `Document` fields other than `id`, `title`, `summary`, `authors` and `published` are optional because arXiv genuinely omits them; do not re-add a variant that marks them required.
 
 ### Rate limiting
 
 [lib/ratelimit.ts](lib/ratelimit.ts) is a single in-process `Map` with a sliding window and per-operation helpers (`checkSignInRateLimit`, `checkSearchRateLimit`, …). It does not survive restarts and is per-instance, so it provides no guarantee on serverless/multi-instance deploys.
+
+## Testing
+
+**Add or update tests whenever you change behaviour.** New rules, permission changes, parsing, expiry, and anything with a state machine all need covering; a bug fix needs a test that fails without the fix. Tests live in [tests/](tests/) — Vitest, configured in [vitest.config.mts](vitest.config.mts).
+
+- **Name a suite `*.db.test.ts` if it touches MongoDB.** Those run against a scratch database (`papermind_test`) on the same cluster, wiped before and after by [tests/globalSetup.ts](tests/globalSetup.ts). The config leaves them uncollected when `MONGODB_URI` is absent — necessary because [lib/mongodb.ts](lib/mongodb.ts) throws at _import_, so a `describe.skipIf` inside the file is too late.
+- **Do not mock MongoDB.** Most bugs found here were driver semantics — `matchedCount` vs `modifiedCount`, `$or` filters, `$size` guards, `arrayFilters` — and a mock passes all of them. Put the conditions in the update filter and assert against a real server.
+- **The scratch database name is hardcoded in the config**, not read from the environment, and [tests/globalSetup.ts](tests/globalSetup.ts) refuses to run if it ever resolves to the application database. Do not make it configurable.
+- `test.env` reaches the test workers but not `globalSetup`; the config sets `process.env` as well for that reason.
+- Prefer testing `lib/` directly over route handlers — the rules live there, and the routes are thin translations to status codes.
 
 ## Conventions
 

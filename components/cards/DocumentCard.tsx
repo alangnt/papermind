@@ -9,25 +9,41 @@ import {
   FileText,
   Maximize2,
   Share2,
+  Trash2,
+  FolderPlus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Document } from '@/types/documents';
 import { categoryBadgeClass } from '@/lib/categories';
 import { parseArxivId } from '@/lib/arxiv-id';
 import ShareCard from '@/components/cards/ShareCard';
+import AddToGroup from '@/components/groups/AddToGroup';
 
 type Props = {
   document: Document;
   username?: string;
   isSaved?: boolean;
+  /** Supplied by the group page; absent everywhere else, which hides the control. */
+  onRemove?: () => void;
+  removeLabel?: string;
+  /** Who put this paper in the group. Only the group page knows this. */
+  addedBy?: string;
 };
 
-export default function DocumentCard({ document, username, isSaved = false }: Props) {
+export default function DocumentCard({
+  document,
+  username,
+  isSaved = false,
+  onRemove,
+  removeLabel = 'Remove',
+  addedBy,
+}: Props) {
   const { title, authors, published, summary, pdfLink, id, category, doi } = document;
   const publishedDate = published ? new Date(published).toLocaleDateString() : 'Unknown';
 
   // UI state
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isGroupPickerOpen, setIsGroupPickerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(isSaved);
   const isConnected = !!username;
@@ -192,6 +208,27 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
               <Share2 className="w-3.5 h-3.5" /> Share
             </button>
           )}
+          {/* Grouping needs an account, so the control is absent when signed out. */}
+          {arxivId && isConnected && (
+            <button
+              type="button"
+              onClick={() => setIsGroupPickerOpen(true)}
+              aria-label="Add this article to a group"
+              className="px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border border-white/10 bg-white/10 hover:bg-white/15 backdrop-blur-sm inline-flex items-center gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+            >
+              <FolderPlus className="w-3.5 h-3.5" /> Group
+            </button>
+          )}
+          {onRemove && (
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label={removeLabel}
+              className="px-3 py-1.5 text-[11px] cursor-pointer font-medium rounded-md border border-red-500/20 bg-red-500/10 text-red-200 hover:bg-red-500/20 backdrop-blur-sm inline-flex items-center gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400/40"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> {removeLabel}
+            </button>
+          )}
         </div>
         <footer className="text-[10px] text-gray-500 pt-2 border-t border-gray-700 mt-2 flex items-center justify-between">
           <span>
@@ -206,12 +243,37 @@ export default function DocumentCard({ document, username, isSaved = false }: Pr
             </Link>
           </span>
           {!isConnected && <span className="text-[9px] text-gray-600 italic">Sign in to save</span>}
-          {isConnected && <span className="text-gray-600/70">@{username}</span>}
+          {/* In a group the useful name is whoever added the paper, not whoever
+              happens to be reading it. An empty string means they have since
+              deleted their account; undefined means we are not in a group. */}
+          {addedBy !== undefined ? (
+            <span className="text-gray-600/70">
+              {addedBy === '' ? (
+                'Added by a former member'
+              ) : (
+                <>
+                  Added by @{addedBy}
+                  {addedBy === username && ' (you)'}
+                </>
+              )}
+            </span>
+          ) : (
+            isConnected && <span className="text-gray-600/70">@{username}</span>
+          )}
         </footer>
       </div>
 
       {isShareOpen && arxivId && (
         <ShareCard arxivId={arxivId} title={title} onClose={() => setIsShareOpen(false)} />
+      )}
+
+      {isGroupPickerOpen && arxivId && (
+        <AddToGroup
+          arxivId={arxivId}
+          title={title}
+          username={username ?? ''}
+          onClose={() => setIsGroupPickerOpen(false)}
+        />
       )}
     </motion.article>
   );

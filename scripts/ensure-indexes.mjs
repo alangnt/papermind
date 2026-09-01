@@ -15,7 +15,11 @@ import { MongoClient } from 'mongodb';
 const DRY_RUN = process.argv.includes('--dry-run');
 
 const INDEXES = [
-  { collection: 'users', spec: { username: 1 }, options: { name: 'username_unique', unique: true } },
+  {
+    collection: 'users',
+    spec: { username: 1 },
+    options: { name: 'username_unique', unique: true },
+  },
   { collection: 'users', spec: { email: 1 }, options: { name: 'email_unique', unique: true } },
   {
     collection: 'articles',
@@ -33,6 +37,32 @@ const INDEXES = [
     collection: 'articles',
     spec: { 'document.category': 1, 'document.published': -1 },
     options: { name: 'articles_by_category' },
+  },
+  // "My groups", listed most recently touched first.
+  {
+    collection: 'groups',
+    spec: { members: 1, updated_at: -1 },
+    options: { name: 'groups_by_member' },
+  },
+  // Invite-link lookup. Sparse: most groups have no live invite.
+  {
+    collection: 'groups',
+    spec: { 'invite.token': 1 },
+    options: { name: 'groups_invite_token', unique: true, sparse: true },
+  },
+  // Password-reset tokens expire themselves. Used tokens are deleted on
+  // redemption, but an abandoned request would otherwise sit there forever.
+  // expireAfterSeconds: 0 means "remove once expiration_date has passed".
+  {
+    collection: 'reset_tokens',
+    spec: { expiration_date: 1 },
+    options: { name: 'reset_tokens_ttl', expireAfterSeconds: 0 },
+  },
+  // Rate-limit windows clean themselves up once they have elapsed.
+  {
+    collection: 'rate_limits',
+    spec: { resetAt: 1 },
+    options: { name: 'rate_limits_ttl', expireAfterSeconds: 0 },
   },
 ];
 
@@ -55,6 +85,9 @@ const client = new MongoClient(uri);
 async function findDuplicates(collection, field) {
   return collection
     .aggregate([
+      // A sparse unique index ignores docs missing the field, so grouping them
+      // together here would report a duplicate that would not actually block it.
+      { $match: { [field]: { $exists: true, $ne: null } } },
       { $group: { _id: `$${field}`, count: { $sum: 1 } } },
       { $match: { count: { $gt: 1 } } },
       { $sort: { count: -1 } },
@@ -92,8 +125,11 @@ try {
       const duplicates = await findDuplicates(collection, field);
       if (duplicates.length > 0) {
         failed++;
-        console.error(`x ${label}: ${duplicates.length} duplicate value(s), cannot build unique index`);
-        for (const d of duplicates) console.error(`    ${JSON.stringify(d._id)} appears ${d.count}x`);
+        console.error(
+          `x ${label}: ${duplicates.length} duplicate value(s), cannot build unique index`
+        );
+        for (const d of duplicates)
+          console.error(`    ${JSON.stringify(d._id)} appears ${d.count}x`);
         continue;
       }
     }

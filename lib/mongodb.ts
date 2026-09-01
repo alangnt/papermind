@@ -69,4 +69,3 @@ export async function getCollection<TSchema extends Record<string, any> = any>(
   const db = await getDatabase(dbName);
   return db.collection<TSchema>(collectionName);
 }
-

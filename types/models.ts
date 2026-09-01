@@ -59,4 +59,3 @@ export interface EditPassword {
 export interface ResetPasswordToken {
   email: string;
 }
-

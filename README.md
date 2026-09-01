@@ -39,9 +39,23 @@ If the model is unavailable, the search falls back to your raw query rather than
 
 Every card links to the PDF and the arXiv abstract page.
 
+### 📄 A page per paper
+
+Every result opens onto `/article/<arXiv id>` — the full abstract, authors, categories, DOI, author comments, and links to the PDF and the arXiv record. Old-style identifiers with a slash (`cs/0701001`) work as well as modern ones.
+
+Papermind keeps its own copy of every paper it has seen, so these pages keep resolving when arXiv is rate limiting or down — which, in practice, is often.
+
+### 🔗 Share cards
+
+Any paper can be shared as a card image with a QR code that points back at its Papermind page. It is the same image social platforms show when the link is posted, so the preview and the downloaded PNG never drift apart.
+
+### 👥 Groups
+
+Shared folders of papers. Create one, add papers from anywhere in the app, and invite people with a link that expires after a week. Members add and remove their own papers; the owner can remove any of them, rename the group, hand it over, or delete it while they are still its only member.
+
 ### 🔐 Accounts and saved papers
 
-Sign up to bookmark papers to your profile. Auth is a hand-rolled JWT setup in `HttpOnly` cookies with bcrypt hashing, silent token refresh, per-IP rate limiting, account lockout after repeated failures, and Postmark-delivered password resets.
+Sign up to bookmark papers to your profile. Auth is a hand-rolled JWT setup in `HttpOnly` cookies with bcrypt hashing, silent token refresh, distributed rate limiting, account lockout after repeated failures, and Postmark-delivered password resets. Accounts can be deleted outright: owned groups pass to their longest-standing member, and contributions stay behind without a name.
 
 ---
 
@@ -127,21 +141,52 @@ Open [http://localhost:3000](http://localhost:3000).
 | `bun run format`     | Prettier across the repo                         |
 | `bun run knip`       | Report unused files, exports and dependencies    |
 | `bun run db:indexes` | Create the required MongoDB indexes (idempotent) |
+| `bun run test`       | Vitest — the whole suite, needs `MONGODB_URI`    |
+| `bun run test:unit`  | Everything that does not touch the database      |
+| `bun run test:watch` | Vitest in watch mode                             |
 
-A husky `pre-commit` hook runs `lint` and blocks the commit on any finding.
+A husky `pre-commit` hook runs `lint` and `test:unit`, and blocks the commit on any finding. The database-backed suites run against a scratch database on the same cluster, wiped before and after; they are skipped when no connection string is available, so a commit never depends on the network.
 
 ---
 
 ## 🗺 Roadmap
 
-**Semantic vector search** is the headline goal and is _not_ implemented yet. `/api/vector_search` and `/api/embed_documents` exist as stubs that return `501`, with the intended MongoDB `$vectorSearch` aggregation preserved in comments. Finishing it needs an embedding model wired in — either `@xenova/transformers` in-process or a hosted embeddings API.
+**Semantic vector search** is the headline goal and is _not_ implemented yet. Finishing it needs an embedding model wired in — either `@xenova/transformers` in-process or a hosted embeddings API — and then the aggregation below over a `documents` collection carrying an `embedding` field.
+
+```js
+[
+  {
+    $vectorSearch: {
+      index: 'search_similar',
+      path: 'embedding',
+      queryVector: [], // the embedded query goes here
+      numCandidates: 200,
+      limit: 10,
+    },
+  },
+  {
+    $project: {
+      _id: 0,
+      id: 1,
+      pdfLink: 1,
+      title: 1,
+      summary: 1,
+      authors: 1,
+      published: 1,
+      score: { $meta: 'vectorSearchScore' },
+    },
+  },
+];
+```
 
 - [ ] 🧠 **Vector search** — embed abstracts, retrieve by concept similarity
 - [ ] 💬 **RAG answers** — synthesise a cited answer from retrieved abstracts
-- [ ] ⚡ **Query caching** — cache arXiv responses to cut latency and API load
-- [ ] 📊 **Distributed rate limiting** — the current limiter is in-memory, so limits reset on cold start and are per-instance
 - [ ] ✉️ **Email verification** — accounts are currently auto-verified on sign-up
-- [ ] 🧪 **Test suite** — there is none today
+- [ ] 🔎 **Group discovery** — public groups, browsable, alongside today's invite-only ones
+- [ ] 🔔 **Notifications** — tell members when a paper lands in a group they are in
+- [x] ⚡ **Query caching** — arXiv responses are cached for a day
+- [x] 📊 **Distributed rate limiting** — limits live in MongoDB, shared across instances
+- [x] 🧪 **Test suite** — Vitest, with the database-backed rules covered against a real server
 
 ---
 

@@ -1,194 +1,144 @@
 /**
- * In-memory rate limiting using sliding window algorithm
+ * Rate limiting, backed by MongoDB.
+ *
+ * This used to be an in-process Map, which does not survive the environment it
+ * runs in: on serverless every instance keeps its own counters and a cold start
+ * wipes them, so a documented "5 attempts per 15 minutes" was really 5 per
+ * instance. Keeping the window in the database makes one limit mean one limit.
  */
+import { getCollection } from '@/lib/mongodb';
 
-interface RateLimitEntry {
+interface RateLimitWindow {
+  /** The limiter key, e.g. "signin:1.2.3.4:alice". */
+  _id: string;
   count: number;
+  resetAt: Date;
+}
+
+const COLLECTION = 'rate_limits';
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
   resetAt: number;
 }
 
-class RateLimiter {
-  private store: Map<string, RateLimitEntry> = new Map();
-  private cleanupInterval: NodeJS.Timeout;
+/**
+ * Count one hit against a key and report whether it is still under the limit.
+ *
+ * The increment and the window roll-over happen in a single aggregation-pipeline
+ * update, so concurrent requests cannot both see an expired window and each
+ * start a fresh one — which is exactly how a limiter gets talked past.
+ *
+ * Fails open. If the database is unreachable the app is already broken in more
+ * visible ways, and refusing every request would turn an outage into an outage
+ * nobody can sign in to report.
+ */
+async function check(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
+  const now = new Date();
+  const freshReset = new Date(now.getTime() + windowMs);
 
-  constructor() {
-    // Clean up expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
-  }
+  try {
+    const windows = await getCollection<RateLimitWindow>(COLLECTION);
+    const updated = await windows.findOneAndUpdate(
+      { _id: key },
+      [
+        {
+          $set: {
+            // Still inside the window: keep counting. Otherwise this hit is the
+            // first of a new one.
+            count: {
+              $cond: [{ $gt: ['$resetAt', now] }, { $add: ['$count', 1] }, 1],
+            },
+            resetAt: {
+              $cond: [{ $gt: ['$resetAt', now] }, '$resetAt', freshReset],
+            },
+          },
+        },
+      ],
+      { upsert: true, returnDocument: 'after' }
+    );
 
-  /**
-   * Check if rate limit is exceeded
-   * @param key - Unique identifier (e.g., "signin:192.168.1.1:username")
-   * @param limit - Maximum number of attempts
-   * @param windowMs - Time window in milliseconds
-   * @returns Object with allowed status and remaining attempts
-   */
-  check(key: string, limit: number, windowMs: number): {
-    allowed: boolean;
-    remaining: number;
-    resetAt: number;
-  } {
-    const now = Date.now();
-    const entry = this.store.get(key);
-
-    // No entry or expired entry
-    if (!entry || entry.resetAt < now) {
-      this.store.set(key, { count: 1, resetAt: now + windowMs });
-      return {
-        allowed: true,
-        remaining: limit - 1,
-        resetAt: now + windowMs,
-      };
-    }
-
-    // Increment count
-    entry.count++;
-    this.store.set(key, entry);
-
-    const allowed = entry.count <= limit;
-    const remaining = Math.max(0, limit - entry.count);
+    const count = updated?.count ?? 1;
+    const resetAt = updated?.resetAt ?? freshReset;
 
     return {
-      allowed,
-      remaining,
-      resetAt: entry.resetAt,
+      allowed: count <= limit,
+      remaining: Math.max(0, limit - count),
+      resetAt: resetAt.getTime(),
     };
-  }
-
-  /**
-   * Reset rate limit for a specific key
-   */
-  reset(key: string): void {
-    this.store.delete(key);
-  }
-
-  /**
-   * Clean up expired entries
-   */
-  private cleanup(): void {
-    const now = Date.now();
-    for (const [key, entry] of this.store.entries()) {
-      if (entry.resetAt < now) {
-        this.store.delete(key);
-      }
-    }
-  }
-
-  /**
-   * Get current count for a key
-   */
-  getCount(key: string): number {
-    const entry = this.store.get(key);
-    if (!entry || entry.resetAt < Date.now()) {
-      return 0;
-    }
-    return entry.count;
-  }
-
-  /**
-   * Destroy the rate limiter and clear interval
-   */
-  destroy(): void {
-    clearInterval(this.cleanupInterval);
-    this.store.clear();
+  } catch (error) {
+    console.error('Rate limit check error:', error);
+    return { allowed: true, remaining: limit, resetAt: freshReset.getTime() };
   }
 }
 
-// Global rate limiter instance
-const rateLimiter = new RateLimiter();
+/** Drop a key's window — used after a successful sign-in. */
+export async function resetRateLimit(operation: string, identifier: string): Promise<void> {
+  try {
+    const windows = await getCollection<RateLimitWindow>(COLLECTION);
+    await windows.deleteOne({ _id: `${operation}:${identifier}` });
+  } catch (error) {
+    console.error('Rate limit reset error:', error);
+  }
+}
 
-/**
- * Rate limit configurations
- */
 const RATE_LIMITS = {
-  SIGN_IN: {
-    limit: 5,
-    windowMs: 15 * 60 * 1000, // 15 minutes
-  },
-  SIGN_UP: {
-    limit: 3,
-    windowMs: 60 * 60 * 1000, // 1 hour
-  },
-  PASSWORD_RESET: {
-    limit: 3,
-    windowMs: 60 * 60 * 1000, // 1 hour
-  },
-  PASSWORD_CHANGE: {
-    limit: 5,
-    windowMs: 60 * 60 * 1000, // 1 hour
-  },
-  SEARCH: {
-    limit: 20,
-    windowMs: 60 * 1000, // 1 minute
-  },
-  ASK_AI: {
-    limit: 10,
-    windowMs: 60 * 1000, // 1 minute
-  },
-};
+  SIGN_IN: { limit: 5, windowMs: 15 * 60 * 1000 },
+  SIGN_UP: { limit: 3, windowMs: 60 * 60 * 1000 },
+  PASSWORD_RESET: { limit: 3, windowMs: 60 * 60 * 1000 },
+  PASSWORD_CHANGE: { limit: 5, windowMs: 60 * 60 * 1000 },
+  SEARCH: { limit: 20, windowMs: 60 * 1000 },
+  ASK_AI: { limit: 10, windowMs: 60 * 1000 },
+  GROUP_WRITE: { limit: 30, windowMs: 60 * 1000 },
+} as const;
 
-/**
- * Check rate limit for sign-in attempts
- */
 export function checkSignInRateLimit(ip: string, username: string) {
-  const key = `signin:${ip}:${username}`;
-  return rateLimiter.check(key, RATE_LIMITS.SIGN_IN.limit, RATE_LIMITS.SIGN_IN.windowMs);
+  return check(`signin:${ip}:${username}`, RATE_LIMITS.SIGN_IN.limit, RATE_LIMITS.SIGN_IN.windowMs);
 }
 
-/**
- * Check rate limit for sign-up attempts
- */
 export function checkSignUpRateLimit(ip: string) {
-  const key = `signup:${ip}`;
-  return rateLimiter.check(key, RATE_LIMITS.SIGN_UP.limit, RATE_LIMITS.SIGN_UP.windowMs);
+  return check(`signup:${ip}`, RATE_LIMITS.SIGN_UP.limit, RATE_LIMITS.SIGN_UP.windowMs);
 }
 
-/**
- * Check rate limit for password reset requests
- */
 export function checkPasswordResetRateLimit(email: string) {
-  const key = `password-reset:${email}`;
-  return rateLimiter.check(key, RATE_LIMITS.PASSWORD_RESET.limit, RATE_LIMITS.PASSWORD_RESET.windowMs);
+  return check(
+    `password-reset:${email}`,
+    RATE_LIMITS.PASSWORD_RESET.limit,
+    RATE_LIMITS.PASSWORD_RESET.windowMs
+  );
 }
 
-/**
- * Check rate limit for password change attempts
- */
 export function checkPasswordChangeRateLimit(userId: string) {
-  const key = `password-change:${userId}`;
-  return rateLimiter.check(key, RATE_LIMITS.PASSWORD_CHANGE.limit, RATE_LIMITS.PASSWORD_CHANGE.windowMs);
+  return check(
+    `password-change:${userId}`,
+    RATE_LIMITS.PASSWORD_CHANGE.limit,
+    RATE_LIMITS.PASSWORD_CHANGE.windowMs
+  );
 }
 
-/**
- * Check rate limit for arXiv search requests
- */
 export function checkSearchRateLimit(ip: string) {
-  const key = `search:${ip}`;
-  return rateLimiter.check(key, RATE_LIMITS.SEARCH.limit, RATE_LIMITS.SEARCH.windowMs);
+  return check(`search:${ip}`, RATE_LIMITS.SEARCH.limit, RATE_LIMITS.SEARCH.windowMs);
 }
 
-/**
- * Check rate limit for LLM keyword-extraction requests.
- * Tighter than SEARCH because each call costs Groq credits.
- */
+/** Tighter than SEARCH because each call costs Groq credits. */
 export function checkAskAiRateLimit(ip: string) {
-  const key = `askai:${ip}`;
-  return rateLimiter.check(key, RATE_LIMITS.ASK_AI.limit, RATE_LIMITS.ASK_AI.windowMs);
+  return check(`askai:${ip}`, RATE_LIMITS.ASK_AI.limit, RATE_LIMITS.ASK_AI.windowMs);
 }
 
 /**
- * Reset rate limit for a specific operation
+ * Keyed on the username rather than the IP: these routes are authenticated, and
+ * the thing worth bounding is one account creating groups or spamming invites.
  */
-export function resetRateLimit(operation: string, identifier: string) {
-  const key = `${operation}:${identifier}`;
-  rateLimiter.reset(key);
+export function checkGroupWriteRateLimit(username: string) {
+  return check(
+    `group-write:${username}`,
+    RATE_LIMITS.GROUP_WRITE.limit,
+    RATE_LIMITS.GROUP_WRITE.windowMs
+  );
 }
 
-/**
- * Get client IP from request
- */
+/** Get client IP from request */
 export function getClientIp(headers: Headers): string {
   // Check common headers for real IP (when behind proxy/CDN)
   const forwarded = headers.get('x-forwarded-for');
@@ -204,4 +154,3 @@ export function getClientIp(headers: Headers): string {
   // Fallback to connection IP (not reliable behind proxies)
   return 'unknown';
 }
-

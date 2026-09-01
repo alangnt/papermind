@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { BookmarkCheck, BookmarkPlus, Share2 } from 'lucide-react';
+import { BookmarkCheck, BookmarkPlus, FolderPlus, Share2 } from 'lucide-react';
 
 import ShareCard from '@/components/cards/ShareCard';
+import AddToGroup from '@/components/groups/AddToGroup';
 import { apiFetch } from '@/lib/api';
 import { Document } from '@/types/models';
 import { BaseUser } from '@/types/users';
@@ -27,6 +28,7 @@ export default function ArticleActions({ document: article, arxivId }: Props) {
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isGroupPickerOpen, setIsGroupPickerOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +102,25 @@ export default function ArticleActions({ document: article, arxivId }: Props) {
         )}
         {isSaving ? '…' : saved ? 'Saved' : 'Save'}
       </button>
+
+      {username && (
+        <button
+          type="button"
+          onClick={() => setIsGroupPickerOpen(true)}
+          className={`${BUTTON_CLASS} bg-white/10 hover:bg-white/15`}
+        >
+          <FolderPlus className="w-3.5 h-3.5" /> Add to group
+        </button>
+      )}
+
+      {isGroupPickerOpen && (
+        <AddToGroup
+          arxivId={arxivId}
+          title={article.title}
+          username={username ?? ''}
+          onClose={() => setIsGroupPickerOpen(false)}
+        />
+      )}
 
       {isShareOpen && (
         <ShareCard arxivId={arxivId} title={article.title} onClose={() => setIsShareOpen(false)} />

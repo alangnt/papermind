@@ -12,31 +12,22 @@ const WEBSITE_URL = process.env.WEBSITE_URL || 'http://localhost:3000';
 export async function POST(req: NextRequest) {
   try {
     if (!POSTMARK_TOKEN) {
-      return NextResponse.json(
-        { error: 'POSTMARK_SERVER_TOKEN not configured' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'POSTMARK_SERVER_TOKEN not configured' }, { status: 500 });
     }
 
     const body: ResetPasswordToken = await req.json();
     const { email } = body;
 
     if (!email) {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
     if (typeof email !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid input' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
     // Rate limiting: 3 reset requests per hour per email
-    const rateLimit = checkPasswordResetRateLimit(email);
+    const rateLimit = await checkPasswordResetRateLimit(email);
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
       return NextResponse.json(
@@ -78,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     // Send email via Postmark
     const client = new postmark.ServerClient(POSTMARK_TOKEN);
-    
+
     await client.sendEmail({
       From: 'info@papermind.ch',
       To: email,
@@ -93,9 +84,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Send reset password link error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

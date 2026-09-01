@@ -261,3 +261,26 @@ export async function listRelatedArticles(
     return [];
   }
 }
+
+/**
+ * Cached copies for a set of arXiv IDs, returned in the order asked for.
+ *
+ * Used to turn a group's list of paper references into displayable articles in
+ * one query. IDs with nothing cached are simply absent from the result.
+ */
+export async function listArticlesByIds(arxivIds: string[]): Promise<Document[]> {
+  if (arxivIds.length === 0) return [];
+
+  try {
+    const articles = await getCollection<CachedArticle>(COLLECTION);
+    const rows = await articles
+      .find({ arxiv_id: { $in: arxivIds } }, { projection: { arxiv_id: 1, document: 1 } })
+      .toArray();
+
+    const byId = new Map(rows.map((row) => [row.arxiv_id, row.document]));
+    return arxivIds.map((id) => byId.get(id)).filter((doc): doc is Document => Boolean(doc));
+  } catch (error) {
+    console.error('Article batch lookup error:', error);
+    return [];
+  }
+}

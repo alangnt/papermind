@@ -3,6 +3,13 @@ import { getCollection } from '@/lib/mongodb';
 import { hashPassword, createAccessToken, createRefreshToken } from '@/lib/auth';
 import { UserInDB, BaseSignUp } from '@/types/models';
 import { validatePasswordStrength } from '@/lib/password';
+import {
+  EMAIL_RULE,
+  USERNAME_RULE,
+  normaliseEmail,
+  normaliseUsername,
+  usernameFilter,
+} from '@/lib/identity';
 import { checkSignUpRateLimit, getClientIp } from '@/lib/ratelimit';
 
 function isDuplicateKeyError(error: unknown): boolean {
@@ -28,28 +35,35 @@ export async function POST(req: NextRequest) {
     }
 
     if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid input' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+
+    const cleanUsername = normaliseUsername(username);
+    if (!cleanUsername) {
+      return NextResponse.json({ error: USERNAME_RULE }, { status: 400 });
+    }
+
+    const cleanEmail = normaliseEmail(email);
+    if (!cleanEmail) {
+      return NextResponse.json({ error: EMAIL_RULE }, { status: 400 });
     }
 
     // Rate limiting: 3 sign-ups per hour per IP
     const clientIp = getClientIp(req.headers);
-    const rateLimit = checkSignUpRateLimit(clientIp);
+    const rateLimit = await checkSignUpRateLimit(clientIp);
 
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
       return NextResponse.json(
-        { 
+        {
           error: 'Too many sign-up attempts. Please try again later.',
-          retryAfter 
+          retryAfter,
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': retryAfter.toString(),
-          }
+          },
         }
       );
     }
@@ -58,9 +72,9 @@ export async function POST(req: NextRequest) {
     const passwordValidation = validatePasswordStrength(password);
     if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { 
+        {
           error: 'Password does not meet requirements',
-          details: passwordValidation.errors 
+          details: passwordValidation.errors,
         },
         { status: 400 }
       );
@@ -68,22 +82,16 @@ export async function POST(req: NextRequest) {
 
     const usersCollection = await getCollection<UserInDB>('users');
 
-    // Check if username exists
-    const usernameExists = await usersCollection.findOne({ username });
+    // Case-insensitive, so "Alice" cannot be registered next to "alice" and
+    // pass for them in a group's member list.
+    const usernameExists = await usersCollection.findOne(usernameFilter(cleanUsername));
     if (usernameExists) {
-      return NextResponse.json(
-        { code: 2001, message: 'Username already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ code: 2001, message: 'Username already exists' }, { status: 409 });
     }
 
-    // Check if email exists
-    const emailExists = await usersCollection.findOne({ email });
+    const emailExists = await usersCollection.findOne({ email: cleanEmail });
     if (emailExists) {
-      return NextResponse.json(
-        { code: 2002, message: 'Email already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ code: 2002, message: 'Email already exists' }, { status: 409 });
     }
 
     // Hash password and create user
@@ -91,8 +99,8 @@ export async function POST(req: NextRequest) {
     const now = new Date();
 
     const newUser = {
-      username,
-      email,
+      username: cleanUsername,
+      email: cleanEmail,
       password: hashedPassword,
       created_at: now,
       updated_at: now,
@@ -120,10 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!result.insertedId) {
-      return NextResponse.json(
-        { error: 'User creation failed' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User creation failed' }, { status: 400 });
     }
 
     // Create tokens
@@ -132,19 +137,19 @@ export async function POST(req: NextRequest) {
 
     // Return success without tokens in body
     const response = NextResponse.json(
-      { 
+      {
         message: 'Sign up successful',
         user: {
           username: newUser.username,
           email: newUser.email,
-        }
+        },
       },
       { status: 201 }
     );
 
     // Set cookies using Next.js cookies API
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     response.cookies.set('access_token', access_token, {
       httpOnly: true,
       secure: isProduction,
@@ -164,9 +169,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Sign up error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
