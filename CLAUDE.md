@@ -17,7 +17,7 @@ bun run test:unit  # everything except *.db.test.ts — no network
 bun run test:watch # vitest
 ```
 
-The husky `pre-commit` hook runs `bun run lint` then `bun run test:unit`, so a commit never depends on the network. Run `bun run test` yourself, or in CI, for the full set. Manual auth smoke test: `./test-cookies.sh` (curls sign-in → `/api/users/me` against a running dev server with a `testuser` account).
+The husky `pre-commit` hook runs `bun run lint` then `bun run test:unit`, so a commit never depends on the network. Run `bun run test` yourself, or in CI, for the full set.
 
 Requires `.env.local` with: `WEBSITE_URL`, `MONGODB_URI`, `MONGODB_NAME`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_SECRET_KEY`, `REFRESH_ALGORITHM`, `REFRESH_TOKEN_EXPIRE_MINUTES`, `POSTMARK_SERVER_TOKEN`, `GROQ_API_KEY`.
 
@@ -34,7 +34,7 @@ A search is two hops, both from the client:
 1. `POST /api/askAi` — Groq (`openai/gpt-oss-120b` via Vercel AI SDK `generateText`) distills the natural-language query into a ≤3-word keyword.
 2. `POST /api/get_documents` — that keyword goes to the arXiv Atom API via [lib/arxiv.ts](lib/arxiv.ts) (xml2js parsing), rate-limited per IP.
 
-**Vector search is not implemented.** [app/api/vector_search/route.ts](app/api/vector_search/route.ts) and [app/api/embed_documents/route.ts](app/api/embed_documents/route.ts) both return 501 with the intended MongoDB `$vectorSearch` aggregation preserved in comments. The README's claims about embeddings/RAG describe the target state, not the current code.
+**Vector search is not implemented.** It is still the headline goal — see the Roadmap in [README.md](README.md), which holds the intended MongoDB `$vectorSearch` aggregation. Two stub routes used to return 501 for it; they were removed rather than shipped as dead public endpoints, and are recoverable from git history.
 
 ### Auth
 
@@ -66,7 +66,7 @@ Import from `@/types/documents` and `@/types/users` in client components, `@/typ
 
 **Add or update tests whenever you change behaviour.** New rules, permission changes, parsing, expiry, and anything with a state machine all need covering; a bug fix needs a test that fails without the fix. Tests live in [tests/](tests/) — Vitest, configured in [vitest.config.mts](vitest.config.mts).
 
-- **Name a suite `*.db.test.ts` if it touches MongoDB.** Those run against a scratch database (`papermind_test`) on the same cluster, wiped before and after by [tests/globalSetup.ts](tests/globalSetup.ts). The config leaves them uncollected when `MONGODB_URI` is absent — necessary because [lib/mongodb.ts](lib/mongodb.ts) throws at *import*, so a `describe.skipIf` inside the file is too late.
+- **Name a suite `*.db.test.ts` if it touches MongoDB.** Those run against a scratch database (`papermind_test`) on the same cluster, wiped before and after by [tests/globalSetup.ts](tests/globalSetup.ts). The config leaves them uncollected when `MONGODB_URI` is absent — necessary because [lib/mongodb.ts](lib/mongodb.ts) throws at _import_, so a `describe.skipIf` inside the file is too late.
 - **Do not mock MongoDB.** Most bugs found here were driver semantics — `matchedCount` vs `modifiedCount`, `$or` filters, `$size` guards, `arrayFilters` — and a mock passes all of them. Put the conditions in the update filter and assert against a real server.
 - **The scratch database name is hardcoded in the config**, not read from the environment, and [tests/globalSetup.ts](tests/globalSetup.ts) refuses to run if it ever resolves to the application database. Do not make it configurable.
 - `test.env` reaches the test workers but not `globalSetup`; the config sets `process.env` as well for that reason.
