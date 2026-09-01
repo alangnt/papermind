@@ -133,7 +133,7 @@ export default function GroupsPage() {
 
       {/* min-h-screen plus a growing <main> is what pins the footer to the
           bottom edge instead of leaving it under short content. */}
-      <div className="relative z-40 flex flex-col w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 py-8">
+      <div className="relative z-40 flex flex-col w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 pt-8">
         <SiteNav />
 
         <main className="grow flex flex-col">

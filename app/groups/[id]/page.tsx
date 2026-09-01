@@ -185,7 +185,7 @@ export default function GroupPage() {
         />
       </div>
 
-      <div className="relative z-40 flex flex-col grow w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 py-8">
+      <div className="relative z-40 flex flex-col grow w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 pt-8">
         <SiteNav />
 
         <Link
