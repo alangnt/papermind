@@ -23,11 +23,23 @@ export function proxy(_request: NextRequest) {
   headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=()');
 
   // Content Security Policy
+  //
+  // @vercel/analytics pulls its debug script from va.vercel-scripts.com in
+  // development only; a deployed build loads it same-origin from
+  // /_vercel/insights/script.js. Allowing the host in production would widen
+  // the policy for a script that is never requested there.
+  const scriptSrc = [
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    process.env.NODE_ENV === 'development' ? 'https://va.vercel-scripts.com' : '',
+  ]
+    .join(' ')
+    .trim();
+
   headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Adjust based on your needs
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
