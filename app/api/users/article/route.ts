@@ -1,45 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
 import { getCollection } from '@/lib/mongodb';
-import { Document } from '@/types/models';
+import { User } from '@/types/models';
+
+/**
+ * Saved articles live in an array inside the user document, so they need a
+ * ceiling: MongoDB caps a document at 16MB and an arXiv record is not small.
+ */
+const MAX_SAVED_ARTICLES = 500;
 
 export const POST = withAuth(async (req: NextRequest, { user }) => {
   try {
-    const body = await req.json();
-    const { article } = body;
+    const body = await req.json().catch(() => null);
+    const { article } = body ?? {};
 
-    if (!article) {
+    if (!article || typeof article.id !== 'string') {
       return NextResponse.json({ error: 'Article is required' }, { status: 400 });
     }
 
-    const usersCollection = await getCollection('users');
-    const dbUser = await usersCollection.findOne({ username: user.username });
+    const usersCollection = await getCollection<User>('users');
+
+    // Membership, the duplicate check and the cap all sit in the filter, so this
+    // is one atomic update. Reading the array and writing it back whole — as
+    // this route used to — silently dropped a concurrent save from another tab.
+    const result = await usersCollection.updateOne(
+      {
+        username: user.username,
+        'saved_articles.id': { $ne: article.id },
+        [`saved_articles.${MAX_SAVED_ARTICLES - 1}`]: { $exists: false },
+      },
+      { $push: { saved_articles: article } }
+    );
+
+    if (result.matchedCount > 0) {
+      return NextResponse.json({ message: 'Article saved', data: article });
+    }
+
+    // Nothing matched: work out which of the conditions failed.
+    const dbUser = await usersCollection.findOne(
+      { username: user.username },
+      { projection: { saved_articles: 1 } }
+    );
 
     if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const savedArticles: Document[] = dbUser.saved_articles || [];
-    const articleExists = savedArticles.some((a) => a.id === article.id);
-
-    if (!articleExists) {
-      savedArticles.push(article);
+    const saved = dbUser.saved_articles ?? [];
+    if (saved.some((candidate) => candidate.id === article.id)) {
+      // Saving something already saved is the caller getting what they wanted.
+      return NextResponse.json({ message: 'Article already saved', data: article });
     }
 
-    const result = await usersCollection.updateOne(
-      { username: user.username },
-      { $set: { saved_articles: savedArticles } }
+    return NextResponse.json(
+      { error: `You can save at most ${MAX_SAVED_ARTICLES} articles` },
+      { status: 409 }
     );
-
-    if (result.modifiedCount === 0 && !articleExists) {
-      return NextResponse.json({ error: 'Failed to save article' }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      message: 'Article saved',
-      status: 200,
-      data: article,
-    });
   } catch (error) {
     console.error('Save article error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -48,41 +64,27 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
 
 export const DELETE = withAuth(async (req: NextRequest, { user }) => {
   try {
-    const body = await req.json();
-    const { article_id } = body;
+    const body = await req.json().catch(() => null);
+    const { article_id } = body ?? {};
 
-    if (!article_id) {
+    if (typeof article_id !== 'string' || !article_id) {
       return NextResponse.json({ error: 'Article id is required' }, { status: 400 });
     }
 
-    const usersCollection = await getCollection('users');
-    const dbUser = await usersCollection.findOne({ username: user.username });
+    const usersCollection = await getCollection<User>('users');
 
-    if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    // The id is in the filter, not just the $pull, so matchedCount tells us
+    // whether the article was actually there.
+    const result = await usersCollection.updateOne(
+      { username: user.username, 'saved_articles.id': article_id },
+      { $pull: { saved_articles: { id: article_id } } }
+    );
 
-    const savedArticles: Document[] = dbUser.saved_articles || [];
-    const remaining = savedArticles.filter((a) => a.id !== article_id);
-
-    if (remaining.length === savedArticles.length) {
+    if (result.matchedCount === 0) {
       return NextResponse.json({ error: 'Article not found in saved list' }, { status: 404 });
     }
 
-    const result = await usersCollection.updateOne(
-      { username: user.username },
-      { $set: { saved_articles: remaining } }
-    );
-
-    if (result.modifiedCount === 0) {
-      return NextResponse.json({ error: 'Failed to delete article' }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      message: 'Article deleted',
-      status: 200,
-      data: { deleted_id: article_id },
-    });
+    return NextResponse.json({ message: 'Article deleted', data: { deleted_id: article_id } });
   } catch (error) {
     console.error('Delete saved article error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

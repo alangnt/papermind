@@ -50,6 +50,14 @@ const INDEXES = [
     spec: { 'invite.token': 1 },
     options: { name: 'groups_invite_token', unique: true, sparse: true },
   },
+  // Password-reset tokens expire themselves. Used tokens are deleted on
+  // redemption, but an abandoned request would otherwise sit there forever.
+  // expireAfterSeconds: 0 means "remove once expiration_date has passed".
+  {
+    collection: 'reset_tokens',
+    spec: { expiration_date: 1 },
+    options: { name: 'reset_tokens_ttl', expireAfterSeconds: 0 },
+  },
 ];
 
 const uri = process.env.MONGODB_URI;
