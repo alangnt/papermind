@@ -17,4 +17,6 @@ bun run lint || {
   exit 1
 }
 
-bun run test
+# Unit suites only: the database-backed ones need Atlas, and a commit should
+# not depend on the network. CI runs `bun run test` for the full set.
+bun run test:unit
