@@ -13,6 +13,7 @@ import { Waves } from '@/components/ui/WavesBackground';
 import { getArticle, listRelatedArticles, recordArticleView } from '@/lib/articles';
 import { categoryBadgeClass } from '@/lib/categories';
 import { articleUrl } from '@/lib/site';
+import { serialiseJsonLd } from '@/lib/structuredData';
 
 type Props = {
   // Catch-all: old-style arXiv IDs contain a slash (cs/0701001), so the ID
@@ -134,7 +135,7 @@ export default async function ArticlePage({ params }: Props) {
         type="application/ld+json"
         nonce={nonce}
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serialiseJsonLd({
             '@context': 'https://schema.org',
             '@type': 'ScholarlyArticle',
             headline: document.title,

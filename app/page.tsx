@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 
 import SearchPage from '@/components/pages/SearchPage';
+import { serialiseJsonLd } from '@/lib/structuredData';
 
 /**
  * A server shell so the route can opt into dynamic rendering. The CSP in
@@ -22,7 +23,7 @@ export default async function Page() {
         type="application/ld+json"
         nonce={nonce}
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serialiseJsonLd({
             '@context': 'https://schema.org',
             '@type': 'WebApplication',
             name: 'PaperMind',
