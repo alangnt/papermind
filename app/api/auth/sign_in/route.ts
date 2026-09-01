@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     // Rate limiting: Check before processing
     const clientIp = getClientIp(req.headers);
-    const rateLimit = checkSignInRateLimit(clientIp, username);
+    const rateLimit = await checkSignInRateLimit(clientIp, username);
 
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Reset rate limit on successful login
-    resetRateLimit('signin', `${clientIp}:${username}`);
+    await resetRateLimit('signin', `${clientIp}:${username}`);
 
     // Create tokens
     const tokenVersion = user.tokenVersion ?? 0;

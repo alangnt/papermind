@@ -9,7 +9,7 @@ import { checkPasswordChangeRateLimit } from '@/lib/ratelimit';
 export const POST = withAuth(async (req: NextRequest, { user }) => {
   try {
     // Rate limiting for password changes
-    const rateLimit = checkPasswordChangeRateLimit(user._id.toString());
+    const rateLimit = await checkPasswordChangeRateLimit(user._id.toString());
 
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);

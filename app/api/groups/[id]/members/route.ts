@@ -13,7 +13,7 @@ type Params = Promise<{ id: string }>;
  * removing a member. lib/groups enforces which of those the caller may do.
  */
 export const DELETE = withAuth<Params>(async (req: NextRequest, { user, params }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {

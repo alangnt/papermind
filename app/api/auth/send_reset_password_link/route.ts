@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limiting: 3 reset requests per hour per email
-    const rateLimit = checkPasswordResetRateLimit(email);
+    const rateLimit = await checkPasswordResetRateLimit(email);
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
       return NextResponse.json(

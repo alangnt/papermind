@@ -41,7 +41,7 @@ export const GET = withAuth<Params>(async (_req: NextRequest, { user, params }) 
 });
 
 export const PATCH = withAuth<Params>(async (req: NextRequest, { user, params }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {
@@ -69,7 +69,7 @@ export const PATCH = withAuth<Params>(async (req: NextRequest, { user, params })
 });
 
 export const DELETE = withAuth<Params>(async (_req: NextRequest, { user, params }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {

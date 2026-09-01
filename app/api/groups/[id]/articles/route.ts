@@ -13,7 +13,7 @@ import { groupWriteLimit } from '@/lib/groups-api';
 type Params = Promise<{ id: string }>;
 
 export const POST = withAuth<Params>(async (req: NextRequest, { user, params }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {
@@ -54,7 +54,7 @@ export const POST = withAuth<Params>(async (req: NextRequest, { user, params }) 
 });
 
 export const DELETE = withAuth<Params>(async (req: NextRequest, { user, params }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {

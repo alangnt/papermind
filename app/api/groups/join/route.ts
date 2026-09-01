@@ -35,7 +35,7 @@ export const GET = withAuth(async (req: NextRequest) => {
 });
 
 export const POST = withAuth(async (req: NextRequest, { user }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {

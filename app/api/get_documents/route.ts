@@ -6,7 +6,7 @@ import { Query } from '@/types/models';
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
-  const { allowed, resetAt } = checkSearchRateLimit(ip);
+  const { allowed, resetAt } = await checkSearchRateLimit(ip);
   if (!allowed) {
     return NextResponse.json(
       { error: 'Too many requests' },

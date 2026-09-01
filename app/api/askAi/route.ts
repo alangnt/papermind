@@ -5,7 +5,7 @@ import { checkAskAiRateLimit, getClientIp } from '@/lib/ratelimit';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request.headers);
-  const { allowed, resetAt } = checkAskAiRateLimit(ip);
+  const { allowed, resetAt } = await checkAskAiRateLimit(ip);
   if (!allowed) {
     return NextResponse.json(
       { error: 'Too many requests' },

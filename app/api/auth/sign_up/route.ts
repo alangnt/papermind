@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     // Rate limiting: 3 sign-ups per hour per IP
     const clientIp = getClientIp(req.headers);
-    const rateLimit = checkSignUpRateLimit(clientIp);
+    const rateLimit = await checkSignUpRateLimit(clientIp);
 
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);

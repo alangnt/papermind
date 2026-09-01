@@ -14,7 +14,7 @@ type Params = Promise<{ id: string }>;
  * exposes the token, so a member cannot read one back out and pass it on.
  */
 export const POST = withAuth<Params>(async (_req: NextRequest, { user, params }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {
@@ -39,7 +39,7 @@ export const POST = withAuth<Params>(async (_req: NextRequest, { user, params })
 });
 
 export const DELETE = withAuth<Params>(async (_req: NextRequest, { user, params }) => {
-  const limited = groupWriteLimit(user.username);
+  const limited = await groupWriteLimit(user.username);
   if (limited) return limited;
 
   try {

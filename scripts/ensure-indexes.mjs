@@ -58,6 +58,12 @@ const INDEXES = [
     spec: { expiration_date: 1 },
     options: { name: 'reset_tokens_ttl', expireAfterSeconds: 0 },
   },
+  // Rate-limit windows clean themselves up once they have elapsed.
+  {
+    collection: 'rate_limits',
+    spec: { resetAt: 1 },
+    options: { name: 'rate_limits_ttl', expireAfterSeconds: 0 },
+  },
 ];
 
 const uri = process.env.MONGODB_URI;

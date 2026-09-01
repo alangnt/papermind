@@ -35,8 +35,8 @@ export function toGroupResponse(group: Group, username: string): GroupResponse {
 }
 
 /** Shared 429 for the group write routes, matching the shape used elsewhere. */
-export function groupWriteLimit(username: string): NextResponse | null {
-  const { allowed, resetAt } = checkGroupWriteRateLimit(username);
+export async function groupWriteLimit(username: string): Promise<NextResponse | null> {
+  const { allowed, resetAt } = await checkGroupWriteRateLimit(username);
   if (allowed) return null;
 
   return NextResponse.json(
