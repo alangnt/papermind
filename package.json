@@ -16,10 +16,10 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@ai-sdk/groq": "^3.0.64",
+    "@ai-sdk/groq": "^4.0.35",
     "@types/jsonwebtoken": "^9.0.10",
     "@vercel/analytics": "^2.0.1",
-    "ai": "^6.0.273",
+    "ai": "^7.0.87",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.3",
