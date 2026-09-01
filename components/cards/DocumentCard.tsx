@@ -261,7 +261,12 @@ export default function DocumentCard({
       )}
 
       {isGroupPickerOpen && arxivId && (
-        <AddToGroup arxivId={arxivId} title={title} onClose={() => setIsGroupPickerOpen(false)} />
+        <AddToGroup
+          arxivId={arxivId}
+          title={title}
+          username={username ?? ''}
+          onClose={() => setIsGroupPickerOpen(false)}
+        />
       )}
     </motion.article>
   );

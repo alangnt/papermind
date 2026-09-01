@@ -117,6 +117,7 @@ export default function ArticleActions({ document: article, arxivId }: Props) {
         <AddToGroup
           arxivId={arxivId}
           title={article.title}
+          username={username ?? ''}
           onClose={() => setIsGroupPickerOpen(false)}
         />
       )}

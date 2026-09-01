@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, FolderPlus, LoaderCircle, Plus, X } from 'lucide-react';
+import { Check, FolderPlus, Lock, LoaderCircle, Plus, X } from 'lucide-react';
 
 import { apiFetch } from '@/lib/api';
 import { Group } from '@/types/groups';
@@ -11,6 +11,8 @@ import { Group } from '@/types/groups';
 type Props = {
   arxivId: string;
   title: string;
+  /** Who is looking: decides which papers they may take back out. */
+  username: string;
   onClose: () => void;
 };
 
@@ -23,7 +25,7 @@ const MAX_NAME_LENGTH = 60;
  * the swipe deck rotates its card, and a transformed ancestor would both
  * mis-position a fixed overlay and clip an absolutely positioned one.
  */
-export default function AddToGroup({ arxivId, title, onClose }: Props) {
+export default function AddToGroup({ arxivId, title, username, onClose }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
@@ -68,8 +70,19 @@ export default function AddToGroup({ arxivId, title, onClose }: Props) {
     };
   }, []);
 
-  const holdsPaper = (group: Group) =>
-    group.articles.some((article) => article.arxiv_id === arxivId);
+  const entryFor = (group: Group) => group.articles.find((article) => article.arxiv_id === arxivId);
+
+  /**
+   * Only the person who added a paper, or the group's owner, can remove it — so
+   * for anyone else the row shows as already-in rather than as a toggle that
+   * would fail. Two people adding the same paper leaves one entry credited to
+   * whoever got there first, which is exactly this case.
+   */
+  const removableBy = (group: Group) => {
+    const entry = entryFor(group);
+    if (!entry) return false;
+    return group.isOwner || entry.added_by === username;
+  };
 
   const toggle = useCallback(
     async (group: Group) => {
@@ -106,7 +119,13 @@ export default function AddToGroup({ arxivId, title, onClose }: Props) {
                     ? candidate.articles.filter((article) => article.arxiv_id !== arxivId)
                     : [
                         ...candidate.articles,
-                        { arxiv_id: arxivId, added_by: '', added_at: new Date().toISOString() },
+                        {
+                          arxiv_id: arxivId,
+                          // 201 means we created the entry, so it is ours; a 200
+                          // means it was already there under someone else's name.
+                          added_by: res.status === 201 ? username : '',
+                          added_at: new Date().toISOString(),
+                        },
                       ],
                 }
           )
@@ -118,7 +137,7 @@ export default function AddToGroup({ arxivId, title, onClose }: Props) {
         setPending(null);
       }
     },
-    [arxivId, pending]
+    [arxivId, pending, username]
   );
 
   const createAndAdd = async (event: FormEvent<HTMLFormElement>) => {
@@ -206,25 +225,39 @@ export default function AddToGroup({ arxivId, title, onClose }: Props) {
           ) : (
             <ul className="space-y-1 max-h-56 overflow-y-auto">
               {groups.map((group) => {
-                const isIn = holdsPaper(group);
+                const entry = entryFor(group);
+                const isIn = Boolean(entry);
+                const locked = isIn && !removableBy(group);
+                const addedByLabel =
+                  entry?.added_by && entry.added_by !== username
+                    ? `Added by ${entry.added_by}`
+                    : null;
 
                 return (
                   <li key={group.id}>
                     <button
                       type="button"
                       onClick={() => toggle(group)}
-                      disabled={pending !== null}
+                      disabled={pending !== null || locked}
                       aria-pressed={isIn}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-left bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer disabled:opacity-50"
+                      title={
+                        locked
+                          ? `${addedByLabel ?? 'Someone else added this'} — only they or the owner can remove it`
+                          : undefined
+                      }
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-left bg-white/5 enabled:hover:bg-white/10 border border-white/10 transition-colors enabled:cursor-pointer disabled:opacity-60 disabled:cursor-default"
                     >
                       <span className="flex-1 min-w-0">
                         <span className="block text-xs truncate">{group.name}</span>
-                        <span className="block text-[10px] text-gray-500">
-                          {group.articleCount} {group.articleCount === 1 ? 'paper' : 'papers'}
+                        <span className="block text-[10px] text-gray-500 truncate">
+                          {addedByLabel ??
+                            `${group.articleCount} ${group.articleCount === 1 ? 'paper' : 'papers'}`}
                         </span>
                       </span>
                       {pending === group.id ? (
                         <LoaderCircle className="w-3.5 h-3.5 animate-spin text-gray-400" />
+                      ) : locked ? (
+                        <Lock className="w-3.5 h-3.5 text-gray-500" />
                       ) : isIn ? (
                         <Check className="w-3.5 h-3.5 text-emerald-300" />
                       ) : (
