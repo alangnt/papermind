@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
     if (!isValid) {
       // Increment failed login attempts
       const failedAttempts = (user.failedLoginAttempts || 0) + 1;
-      const updateData: any = { failedLoginAttempts: failedAttempts };
+      const updateData: { failedLoginAttempts: number; lockedUntil?: Date } = {
+        failedLoginAttempts: failedAttempts,
+      };
 
       // Lock account after 10 failed attempts
       if (failedAttempts >= 10) {

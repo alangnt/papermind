@@ -3,6 +3,13 @@ import { getCollection } from '@/lib/mongodb';
 import { hashPassword, createAccessToken, createRefreshToken } from '@/lib/auth';
 import { UserInDB, BaseSignUp } from '@/types/models';
 import { validatePasswordStrength } from '@/lib/password';
+import {
+  EMAIL_RULE,
+  USERNAME_RULE,
+  normaliseEmail,
+  normaliseUsername,
+  usernameFilter,
+} from '@/lib/identity';
 import { checkSignUpRateLimit, getClientIp } from '@/lib/ratelimit';
 
 function isDuplicateKeyError(error: unknown): boolean {
@@ -29,6 +36,16 @@ export async function POST(req: NextRequest) {
 
     if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+
+    const cleanUsername = normaliseUsername(username);
+    if (!cleanUsername) {
+      return NextResponse.json({ error: USERNAME_RULE }, { status: 400 });
+    }
+
+    const cleanEmail = normaliseEmail(email);
+    if (!cleanEmail) {
+      return NextResponse.json({ error: EMAIL_RULE }, { status: 400 });
     }
 
     // Rate limiting: 3 sign-ups per hour per IP
@@ -65,14 +82,14 @@ export async function POST(req: NextRequest) {
 
     const usersCollection = await getCollection<UserInDB>('users');
 
-    // Check if username exists
-    const usernameExists = await usersCollection.findOne({ username });
+    // Case-insensitive, so "Alice" cannot be registered next to "alice" and
+    // pass for them in a group's member list.
+    const usernameExists = await usersCollection.findOne(usernameFilter(cleanUsername));
     if (usernameExists) {
       return NextResponse.json({ code: 2001, message: 'Username already exists' }, { status: 409 });
     }
 
-    // Check if email exists
-    const emailExists = await usersCollection.findOne({ email });
+    const emailExists = await usersCollection.findOne({ email: cleanEmail });
     if (emailExists) {
       return NextResponse.json({ code: 2002, message: 'Email already exists' }, { status: 409 });
     }
@@ -82,8 +99,8 @@ export async function POST(req: NextRequest) {
     const now = new Date();
 
     const newUser = {
-      username,
-      email,
+      username: cleanUsername,
+      email: cleanEmail,
       password: hashedPassword,
       created_at: now,
       updated_at: now,

@@ -14,12 +14,21 @@ interface PasswordValidationResult {
  * - At least one uppercase letter
  * - At least one lowercase letter
  * - At least one number
+ * - At most 200 characters
+ *
+ * Note that bcrypt only considers the first 72 bytes, so anything longer adds
+ * no strength. The cap is there to bound the work an unauthenticated request
+ * can ask for, not to reach that limit.
  */
 export function validatePasswordStrength(password: string): PasswordValidationResult {
   const errors: string[] = [];
 
   if (!password || password.length < 8) {
     errors.push('Password must be at least 8 characters long');
+  }
+
+  if (password && password.length > 200) {
+    errors.push('Password must be at most 200 characters long');
   }
 
   if (!/[A-Z]/.test(password)) {
