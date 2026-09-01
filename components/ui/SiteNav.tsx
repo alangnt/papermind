@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
 import { ArrowRight, Home, User, Users } from 'lucide-react';
 
 import { apiFetch } from '@/lib/api';
+import { getAuthSnapshot, getServerAuthSnapshot, subscribeAuth } from '@/lib/authState';
 import { cn } from '@/lib/utils';
 
 /** Letting motion drive the Link itself means the pill, not a wrapper, grows. */
@@ -47,24 +48,21 @@ const DESTINATIONS: Destination[] = [
  */
 export default function SiteNav({ className = '' }: { className?: string }) {
   const pathname = usePathname();
-  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  // Subscribed rather than fetched-once, so signing in or out anywhere in the
+  // app updates the header immediately instead of waiting for a reload.
+  const signedIn = useSyncExternalStore(subscribeAuth, getAuthSnapshot, getServerAuthSnapshot);
+  const isSignedIn = signedIn === true;
 
   useEffect(() => {
-    let cancelled = false;
+    // Only probe when nothing has established the session yet; apiFetch
+    // publishes the result into the shared store for every subscriber.
+    if (signedIn !== null) return;
 
-    (async () => {
-      try {
-        const res = await apiFetch('/api/users/me', { method: 'GET' });
-        if (!cancelled) setIsSignedIn(res.ok);
-      } catch {
-        // Signed out is the normal case here, not something to report.
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void apiFetch('/api/users/me', { method: 'GET' }).catch(() => {
+      // Signed out is the normal case here, not something to report.
+    });
+  }, [signedIn]);
 
   const visible = DESTINATIONS.filter((destination) => !destination.requiresAuth || isSignedIn);
 

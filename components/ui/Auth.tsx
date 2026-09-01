@@ -3,6 +3,7 @@ import { X, ChevronRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
+import { setSignedIn } from '@/lib/authState';
 
 export default function AuthComponent({
   onLoggedIn,
@@ -120,6 +121,7 @@ export default function AuthComponent({
       }
 
       // Success - tokens are now in HttpOnly cookies
+      setSignedIn(true);
       onLoggedIn?.();
       setIsAuthVisible(false);
     } catch (error) {
@@ -176,6 +178,7 @@ export default function AuthComponent({
       }
 
       // Success - tokens are now in HttpOnly cookies
+      setSignedIn(true);
       onLoggedIn?.();
       setIsAuthVisible(false);
     } catch (error) {
