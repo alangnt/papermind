@@ -50,9 +50,11 @@ Password reset writes a token doc to the `reset_tokens` collection and mails the
 
 [lib/mongodb.ts](lib/mongodb.ts) exposes only `getCollection<T>(name, dbName?)`. The client promise is cached on `globalThis` in development to survive HMR. Note the default database name is hardcoded to `'Astra'` (the `MONGODB_NAME` env var is not read by this module). Collections in use: `users`, `reset_tokens`, `documents` (documents only in the disabled embedding routes). Saved articles are embedded in the user document as `saved_articles`, rewritten wholesale on save/delete.
 
-### Types caveat
+### Types
 
-Two overlapping document/user type sets exist and both are imported in different places: [types/models.ts](types/models.ts) (server-side, mostly-optional fields, `_id: string | ObjectId`) and [types/documents.d.ts](types/documents.d.ts) + [types/users.d.ts](types/users.d.ts) (client-side, all-required fields). Match whichever the surrounding file already uses rather than unifying them incidentally.
+[types/models.ts](types/models.ts) is the single source of truth for `Document` and `User`. The client-side files derive from it rather than restating it: [types/documents.d.ts](types/documents.d.ts) re-exports `Document` unchanged (plus `SearchType`/`SystemType`), and [types/users.d.ts](types/users.d.ts) defines `BaseUser` as a `Pick` of `User` with `_id` narrowed to `string`, since the route stringifies the ObjectId on the way out.
+
+Import from `@/types/documents` and `@/types/users` in client components, `@/types/models` on the server — they resolve to the same types, so the split is only about which file reads naturally where. `Document` fields other than `id`, `title`, `summary`, `authors` and `published` are optional because arXiv genuinely omits them; do not re-add a variant that marks them required.
 
 ### Rate limiting
 

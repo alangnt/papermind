@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 import { listArticlesForSitemap } from '@/lib/articles';
-import { articleUrl } from '@/lib/site';
+import { SITE_URL, articleUrl } from '@/lib/site';
 
 // The article list changes as people search, but not urgently. Rebuilding daily
 // keeps the sitemap current without querying Mongo on every crawler request.
@@ -22,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     {
-      url: 'https://www.papermind.ch',
+      url: SITE_URL,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,
