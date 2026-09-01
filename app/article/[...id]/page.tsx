@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { cache } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
@@ -106,6 +107,7 @@ export default async function ArticlePage({ params }: Props) {
   const related = await listRelatedArticles(arxivId, document.category, 5);
   void recordArticleView(arxivId);
 
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   const absUrl = `https://arxiv.org/abs/${arxivId}`;
   const pdfUrl = document.pdfLink || `https://arxiv.org/pdf/${arxivId}`;
 
@@ -130,6 +132,7 @@ export default async function ArticlePage({ params }: Props) {
 
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',

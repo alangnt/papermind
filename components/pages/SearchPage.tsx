@@ -25,7 +25,7 @@ import { loadSearchSession, saveSearchSession } from '@/lib/searchSession';
 import { Document, SystemType } from '@/types/documents';
 import { BaseUser } from '@/types/users';
 
-export default function App() {
+export default function SearchPage() {
   const [user, setUser] = useState<BaseUser | null>(null);
   const [isAuthVisible, setIsAuthVisible] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
@@ -309,32 +309,6 @@ export default function App() {
   return (
     <div className="relative w-full overflow-hidden">
       <GooeyEffect />
-
-      {/* JSON-LD Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'WebApplication',
-            name: 'PaperMind',
-            description: 'AI research assistant for scientific papers with semantic search',
-            url: 'https://www.papermind.ch',
-            applicationCategory: 'EducationalApplication',
-            operatingSystem: 'Any',
-            offers: {
-              '@type': 'Offer',
-              price: '0',
-              priceCurrency: 'USD',
-            },
-            creator: {
-              '@type': 'Person',
-              name: 'Alan Geirnaert',
-              url: 'https://www.linkedin.com/in/alan-geirnaert/',
-            },
-          }),
-        }}
-      />
 
       <div className="absolute inset-0 w-full pointer-events-none">
         <Waves
