@@ -195,7 +195,7 @@ export default function GroupPage() {
           <ArrowLeft className="w-3.5 h-3.5" /> All groups
         </Link>
 
-        <main className="grow">
+        <main className="grow flex flex-col">
           {isLoading ? (
             <div className="h-40 rounded-2xl bg-foreground/20 border border-black/5 animate-pulse" />
           ) : loadError || !group ? (

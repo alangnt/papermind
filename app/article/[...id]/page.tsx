@@ -158,7 +158,7 @@ export default async function ArticlePage({ params }: Props) {
           <ArrowLeft className="w-3.5 h-3.5" /> Back to search
         </Link>
 
-        <main className="grow">
+        <main className="grow flex flex-col">
           <article className="bg-foreground border border-gray-700 rounded-2xl p-6 md:p-8 shadow-lg text-white space-y-6">
             <header className="space-y-3">
               <h1 className="font-semibold leading-snug text-xl md:text-2xl">{document.title}</h1>

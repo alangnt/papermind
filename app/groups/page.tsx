@@ -136,7 +136,7 @@ export default function GroupsPage() {
       <div className="relative z-40 flex flex-col w-full max-w-3xl place-self-center min-h-screen px-4 lg:px-0 py-8">
         <SiteNav />
 
-        <main className="grow">
+        <main className="grow flex flex-col">
           {/* The backdrop is busy line art, so content sits on an opaque card
               rather than directly on top of it. */}
           <div className={SURFACE}>

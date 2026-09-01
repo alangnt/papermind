@@ -13,6 +13,7 @@ import { Waves } from '@/components/ui/WavesBackground';
 import { BaseUser } from '@/types/users';
 import { Document } from '@/types/documents';
 import { apiFetch } from '@/lib/api';
+import Footer from '@/components/ui/Footer';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -611,6 +612,8 @@ export default function ProfilePage() {
               </>
             )}
           </main>
+
+          <Footer />
         </div>
       </div>
     </>
