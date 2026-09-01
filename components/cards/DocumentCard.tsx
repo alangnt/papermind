@@ -244,11 +244,18 @@ export default function DocumentCard({
           </span>
           {!isConnected && <span className="text-[9px] text-gray-600 italic">Sign in to save</span>}
           {/* In a group the useful name is whoever added the paper, not whoever
-              happens to be reading it. */}
-          {addedBy ? (
+              happens to be reading it. An empty string means they have since
+              deleted their account; undefined means we are not in a group. */}
+          {addedBy !== undefined ? (
             <span className="text-gray-600/70">
-              Added by @{addedBy}
-              {addedBy === username && ' (you)'}
+              {addedBy === '' ? (
+                'Added by a former member'
+              ) : (
+                <>
+                  Added by @{addedBy}
+                  {addedBy === username && ' (you)'}
+                </>
+              )}
             </span>
           ) : (
             isConnected && <span className="text-gray-600/70">@{username}</span>

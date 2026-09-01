@@ -56,7 +56,7 @@ export async function apiFetch(input: FetchArgs[0], init: FetchArgs[1] = {}): Pr
   const firstTry = await fetch(input, requestInit);
 
   if (firstTry.status !== 401) {
-    publishAuthState(input, firstTry);
+    publishAuthState(input, requestInit, firstTry);
     return firstTry;
   }
 
@@ -75,7 +75,7 @@ export async function apiFetch(input: FetchArgs[0], init: FetchArgs[1] = {}): Pr
 
   // retry original request (new access token is now in cookies)
   const retried = await fetch(input, requestInit);
-  publishAuthState(input, retried);
+  publishAuthState(input, requestInit, retried);
   return retried;
 }
 
@@ -83,14 +83,20 @@ export async function apiFetch(input: FetchArgs[0], init: FetchArgs[1] = {}): Pr
  * Keep the shared auth state in step with what the server just told us, so
  * every existing call site updates the header without knowing it exists.
  */
-function publishAuthState(input: FetchArgs[0], response: Response): void {
+function publishAuthState(input: FetchArgs[0], init: FetchArgs[1], response: Response): void {
   if (response.status === 401 || response.status === 403) {
     setSignedIn(false);
     return;
   }
 
+  if (!response.ok) return;
+
   const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url;
-  if (response.ok && url.includes('/api/users/me')) {
-    setSignedIn(true);
-  }
+  if (!url.includes('/api/users/me')) return;
+
+  // Only a read of /me proves a session. DELETE on the same path erases the
+  // account, and reporting that as "signed in" would leave the header lit up
+  // for a user who no longer exists.
+  const method = (init?.method ?? 'GET').toUpperCase();
+  setSignedIn(method === 'GET');
 }

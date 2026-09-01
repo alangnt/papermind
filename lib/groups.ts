@@ -339,3 +339,73 @@ export async function transferOwnership(
 
   return result.matchedCount > 0 ? 'transferred' : 'not-found';
 }
+
+export interface DetachSummary {
+  left: number;
+  handedOver: number;
+  deleted: number;
+}
+
+/**
+ * Take a departing account out of every group it belongs to.
+ *
+ * Owned groups pass to the longest-standing other member rather than being
+ * destroyed — the same principle as the delete rule, which refuses while other
+ * people are still in the group. Only a group where the leaver is the last
+ * member is deleted outright.
+ *
+ * `members` is appended to, so its order is join order and the first other
+ * member is the one who has been there longest.
+ */
+export async function detachUserFromAllGroups(username: string): Promise<DetachSummary> {
+  const collection = await groups();
+  const memberships = await collection
+    .find({ members: username }, { projection: { owner: 1, members: 1 } })
+    .toArray();
+
+  const summary: DetachSummary = { left: 0, handedOver: 0, deleted: 0 };
+  const now = new Date();
+
+  for (const group of memberships) {
+    if (group.owner !== username) {
+      await collection.updateOne(
+        { _id: group._id },
+        { $pull: { members: username }, $set: { updated_at: now } }
+      );
+      summary.left++;
+      continue;
+    }
+
+    const successor = group.members.find((member) => member !== username);
+
+    if (!successor) {
+      await collection.deleteOne({ _id: group._id });
+      summary.deleted++;
+      continue;
+    }
+
+    await collection.updateOne(
+      { _id: group._id },
+      { $set: { owner: successor, updated_at: now }, $pull: { members: username } }
+    );
+    summary.handedOver++;
+  }
+
+  return summary;
+}
+
+/**
+ * Blank the departing account's name off papers it contributed.
+ *
+ * The papers stay — they belong to the group now — but the credit cannot keep
+ * naming someone who has erased their account, and leaving it would hand
+ * removal rights to anyone who later registers the same username.
+ */
+export async function anonymiseContributions(username: string): Promise<void> {
+  const collection = await groups();
+  await collection.updateMany(
+    { 'articles.added_by': username },
+    { $set: { 'articles.$[contribution].added_by': '' } },
+    { arrayFilters: [{ 'contribution.added_by': username }] }
+  );
+}

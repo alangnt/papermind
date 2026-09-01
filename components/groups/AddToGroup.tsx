@@ -229,9 +229,11 @@ export default function AddToGroup({ arxivId, title, username, onClose }: Props)
                 const isIn = Boolean(entry);
                 const locked = isIn && !removableBy(group);
                 const addedByLabel =
-                  entry?.added_by && entry.added_by !== username
-                    ? `Added by ${entry.added_by}`
-                    : null;
+                  entry && entry.added_by === ''
+                    ? 'Added by a former member'
+                    : entry?.added_by && entry.added_by !== username
+                      ? `Added by ${entry.added_by}`
+                      : null;
 
                 return (
                   <li key={group.id}>

@@ -14,6 +14,7 @@ import { BaseUser } from '@/types/users';
 import { Document } from '@/types/documents';
 import { apiFetch } from '@/lib/api';
 import Footer from '@/components/ui/Footer';
+import DeleteAccount from '@/components/profile/DeleteAccount';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -585,6 +586,13 @@ export default function ProfilePage() {
                               )}
                             </motion.div>
                           </AnimatePresence>
+
+                          {/* Kept at the foot of the profile panel, behind a
+                              typed confirmation — it is the one irreversible
+                              action on this page. */}
+                          <div className="pt-4 mt-2 border-t border-white/10">
+                            <DeleteAccount username={user.username} />
+                          </div>
                         </div>
 
                         {/* Saved Articles */}
