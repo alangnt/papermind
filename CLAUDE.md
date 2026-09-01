@@ -8,14 +8,16 @@ Package manager is **bun** (`bun.lock` is committed); npm scripts work equally.
 
 ```bash
 bun install
-bun run dev      # next dev --turbopack, http://localhost:3000
+bun run dev        # next dev --turbopack, http://localhost:3000
 bun run build
-bun run format   # prettier --write .
-bun run knip     # dead-code / unused-dependency check
-bun run test     # placeholder: echoes "No tests yet" and exits 0
+bun run format     # prettier --write .
+bun run knip       # dead-code / unused-dependency check
+bun run test       # vitest run — everything, needs MONGODB_URI
+bun run test:unit  # everything except *.db.test.ts — no network
+bun run test:watch # vitest
 ```
 
-There is **no test framework yet** — `bun run test` is a stub, and the husky `pre-commit` hook just runs it. Manual auth smoke test: `./test-cookies.sh` (curls sign-in → `/api/users/me` against a running dev server with a `testuser` account).
+The husky `pre-commit` hook runs `bun run lint` then `bun run test:unit`, so a commit never depends on the network. Run `bun run test` yourself, or in CI, for the full set. Manual auth smoke test: `./test-cookies.sh` (curls sign-in → `/api/users/me` against a running dev server with a `testuser` account).
 
 Requires `.env.local` with: `WEBSITE_URL`, `MONGODB_URI`, `MONGODB_NAME`, `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_SECRET_KEY`, `REFRESH_ALGORITHM`, `REFRESH_TOKEN_EXPIRE_MINUTES`, `POSTMARK_SERVER_TOKEN`, `GROQ_API_KEY`.
 
@@ -59,6 +61,16 @@ Import from `@/types/documents` and `@/types/users` in client components, `@/typ
 ### Rate limiting
 
 [lib/ratelimit.ts](lib/ratelimit.ts) is a single in-process `Map` with a sliding window and per-operation helpers (`checkSignInRateLimit`, `checkSearchRateLimit`, …). It does not survive restarts and is per-instance, so it provides no guarantee on serverless/multi-instance deploys.
+
+## Testing
+
+**Add or update tests whenever you change behaviour.** New rules, permission changes, parsing, expiry, and anything with a state machine all need covering; a bug fix needs a test that fails without the fix. Tests live in [tests/](tests/) — Vitest, configured in [vitest.config.mts](vitest.config.mts).
+
+- **Name a suite `*.db.test.ts` if it touches MongoDB.** Those run against a scratch database (`papermind_test`) on the same cluster, wiped before and after by [tests/globalSetup.ts](tests/globalSetup.ts). The config leaves them uncollected when `MONGODB_URI` is absent — necessary because [lib/mongodb.ts](lib/mongodb.ts) throws at *import*, so a `describe.skipIf` inside the file is too late.
+- **Do not mock MongoDB.** Most bugs found here were driver semantics — `matchedCount` vs `modifiedCount`, `$or` filters, `$size` guards, `arrayFilters` — and a mock passes all of them. Put the conditions in the update filter and assert against a real server.
+- **The scratch database name is hardcoded in the config**, not read from the environment, and [tests/globalSetup.ts](tests/globalSetup.ts) refuses to run if it ever resolves to the application database. Do not make it configurable.
+- `test.env` reaches the test workers but not `globalSetup`; the config sets `process.env` as well for that reason.
+- Prefer testing `lib/` directly over route handlers — the rules live there, and the routes are thin translations to status codes.
 
 ## Conventions
 
