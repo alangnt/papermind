@@ -26,6 +26,8 @@ type Props = {
   /** Supplied by the group page; absent everywhere else, which hides the control. */
   onRemove?: () => void;
   removeLabel?: string;
+  /** Who put this paper in the group. Only the group page knows this. */
+  addedBy?: string;
 };
 
 export default function DocumentCard({
@@ -34,6 +36,7 @@ export default function DocumentCard({
   isSaved = false,
   onRemove,
   removeLabel = 'Remove',
+  addedBy,
 }: Props) {
   const { title, authors, published, summary, pdfLink, id, category, doi } = document;
   const publishedDate = published ? new Date(published).toLocaleDateString() : 'Unknown';
@@ -240,7 +243,16 @@ export default function DocumentCard({
             </Link>
           </span>
           {!isConnected && <span className="text-[9px] text-gray-600 italic">Sign in to save</span>}
-          {isConnected && <span className="text-gray-600/70">@{username}</span>}
+          {/* In a group the useful name is whoever added the paper, not whoever
+              happens to be reading it. */}
+          {addedBy ? (
+            <span className="text-gray-600/70">
+              Added by @{addedBy}
+              {addedBy === username && ' (you)'}
+            </span>
+          ) : (
+            isConnected && <span className="text-gray-600/70">@{username}</span>
+          )}
         </footer>
       </div>
 

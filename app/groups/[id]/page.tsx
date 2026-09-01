@@ -13,6 +13,7 @@ import { Waves } from '@/components/ui/WavesBackground';
 import SiteNav from '@/components/ui/SiteNav';
 
 import { apiFetch } from '@/lib/api';
+import { parseArxivId } from '@/lib/arxiv-id';
 import { Document } from '@/types/documents';
 import { Group } from '@/types/groups';
 import { BaseUser } from '@/types/users';
@@ -104,7 +105,15 @@ export default function GroupPage() {
 
     // Optimistic: the card disappears immediately, and is restored on failure.
     const previous = documents;
+    const previousGroup = group;
+    const bareId = parseArxivId(documentId);
+
     setDocuments((current) => current.filter((doc) => doc.id !== documentId));
+    setGroup({
+      ...group,
+      articles: group.articles.filter((ref) => ref.arxiv_id !== bareId),
+      articleCount: Math.max(0, group.articleCount - 1),
+    });
 
     try {
       const res = await apiFetch(`/api/groups/${group.id}/articles`, {
@@ -112,16 +121,24 @@ export default function GroupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ arxiv_id: documentId }),
       });
-      if (!res.ok) setDocuments(previous);
+      if (!res.ok) {
+        setDocuments(previous);
+        setGroup(previousGroup);
+      }
     } catch (error) {
       console.error(error);
       setDocuments(previous);
+      setGroup(previousGroup);
     }
   };
 
   // An owner alone in their group has nobody to hand it to, so deleting stays
   // available in exactly that case.
   const isLastMember = group?.members.length === 1;
+
+  // The documents come back as arXiv metadata; who added each one lives on the
+  // group's own reference list, keyed by the bare id.
+  const addedBy = new Map((group?.articles ?? []).map((ref) => [ref.arxiv_id, ref.added_by]));
 
   const removeMember = async (username: string) => {
     if (!group) return;
@@ -322,7 +339,15 @@ export default function GroupPage() {
                         document={doc}
                         username={user?.username ?? undefined}
                         isSaved={!!user?.saved_articles?.some((saved) => saved.id === doc.id)}
-                        onRemove={() => removePaper(doc.id)}
+                        addedBy={addedBy.get(parseArxivId(doc.id) ?? '')}
+                        // You can take back what you added; the owner can take
+                        // back anything. Anyone else gets no control at all.
+                        onRemove={
+                          group.isOwner ||
+                          addedBy.get(parseArxivId(doc.id) ?? '') === user?.username
+                            ? () => removePaper(doc.id)
+                            : undefined
+                        }
                         removeLabel="Remove from group"
                       />
                     ))}
@@ -368,8 +393,8 @@ export default function GroupPage() {
 
                 {leaveHint && (
                   <p role="status" className="text-[11px] text-amber-200">
-                    You own this group, so hand it to someone else before you go. Use the crown
-                    next to a member&apos;s name above.
+                    You own this group, so hand it to someone else before you go. Use the crown next
+                    to a member&apos;s name above.
                   </p>
                 )}
               </footer>

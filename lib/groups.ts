@@ -171,24 +171,47 @@ export async function addArticleToGroup(
   return 'full';
 }
 
+export type ArticleRemoveResult = 'removed' | 'forbidden' | 'not-found';
+
+/**
+ * Take a paper back out of a group.
+ *
+ * You may remove a paper you added; the owner may remove any of them. The rule
+ * lives in the filter's $or, so the check and the write are one operation and
+ * ownership cannot change underneath it.
+ */
 export async function removeArticleFromGroup(
   id: ObjectId,
   username: string,
   rawArxivId: string
-): Promise<boolean> {
+): Promise<ArticleRemoveResult> {
   const arxivId = parseArxivId(rawArxivId);
-  if (!arxivId) return false;
+  if (!arxivId) return 'not-found';
 
   const collection = await groups();
-  // `articles.arxiv_id` is part of the filter, not just the $pull: the $set of
-  // updated_at always counts as a modification, so modifiedCount alone would
-  // report success even when the paper was never in the group.
   const result = await collection.updateOne(
-    { _id: id, members: username, 'articles.arxiv_id': arxivId },
+    {
+      _id: id,
+      members: username,
+      $or: [
+        { owner: username, 'articles.arxiv_id': arxivId },
+        { articles: { $elemMatch: { arxiv_id: arxivId, added_by: username } } },
+      ],
+    },
     { $pull: { articles: { arxiv_id: arxivId } }, $set: { updated_at: new Date() } }
   );
 
-  return result.matchedCount > 0;
+  if (result.matchedCount > 0) return 'removed';
+
+  // Nothing matched: separate "you may not" from "there is nothing there".
+  const group = await collection.findOne(
+    { _id: id },
+    { projection: { owner: 1, members: 1, articles: 1 } }
+  );
+
+  if (!group || !group.members.includes(username)) return 'not-found';
+  if (!group.articles.some((article) => article.arxiv_id === arxivId)) return 'not-found';
+  return 'forbidden';
 }
 
 /**

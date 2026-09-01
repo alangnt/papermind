@@ -67,11 +67,17 @@ export const DELETE = withAuth<Params>(async (req: NextRequest, { user, params }
       return NextResponse.json({ error: 'An arXiv id is required' }, { status: 400 });
     }
 
-    if (!(await removeArticleFromGroup(id, user.username, arxivId))) {
-      return NextResponse.json({ error: 'Paper not found in this group' }, { status: 404 });
+    switch (await removeArticleFromGroup(id, user.username, arxivId)) {
+      case 'removed':
+        return NextResponse.json({ message: 'Paper removed' });
+      case 'forbidden':
+        return NextResponse.json(
+          { error: 'Only the person who added this paper, or the group owner, can remove it' },
+          { status: 403 }
+        );
+      default:
+        return NextResponse.json({ error: 'Paper not found in this group' }, { status: 404 });
     }
-
-    return NextResponse.json({ message: 'Paper removed' });
   } catch (error) {
     console.error('Remove group article error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
