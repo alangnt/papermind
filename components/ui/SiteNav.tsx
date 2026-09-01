@@ -4,7 +4,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ArrowRight, Home, User, Users } from 'lucide-react';
+import { ArrowRight, Home, Folders, User } from 'lucide-react';
 
 import { apiFetch } from '@/lib/api';
 import { getAuthSnapshot, getServerAuthSnapshot, subscribeAuth } from '@/lib/authState';
@@ -36,7 +36,7 @@ type Destination = {
 
 const DESTINATIONS: Destination[] = [
   { href: '/', label: 'Search', icon: Home, requiresAuth: false },
-  { href: '/groups', label: 'Groups', icon: Users, requiresAuth: true },
+  { href: '/groups', label: 'Groups', icon: Folders, requiresAuth: true },
   { href: '/profile', label: 'Profile', icon: User, requiresAuth: true },
 ];
 
