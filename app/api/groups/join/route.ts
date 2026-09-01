@@ -39,7 +39,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
   if (limited) return limited;
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const token = typeof body?.token === 'string' ? body.token : '';
 
     const outcome = await joinGroupByToken(token, user.username);

@@ -106,10 +106,28 @@ export async function renameGroup(id: ObjectId, owner: string, name: string): Pr
   return result.matchedCount > 0;
 }
 
-export async function deleteGroup(id: ObjectId, owner: string): Promise<boolean> {
+export type DeleteResult = 'deleted' | 'has-members' | 'not-owner' | 'not-found';
+
+/**
+ * Delete a group — only ever possible while the owner is its last member.
+ *
+ * Once other people have joined, the group is theirs too, so an owner who wants
+ * out hands it over and leaves rather than taking everyone's papers with them.
+ * The $size guard is in the filter, so a member joining concurrently cannot be
+ * deleted out from under.
+ */
+export async function deleteGroup(id: ObjectId, owner: string): Promise<DeleteResult> {
   const collection = await groups();
-  const result = await collection.deleteOne({ _id: id, owner });
-  return result.deletedCount > 0;
+  const result = await collection.deleteOne({ _id: id, owner, members: { $size: 1 } });
+  if (result.deletedCount > 0) return 'deleted';
+
+  const group = await collection.findOne({ _id: id }, { projection: { owner: 1, members: 1 } });
+
+  // A non-member must not be able to tell this group apart from one that does
+  // not exist, so that check comes first, as everywhere else.
+  if (!group || !group.members.includes(owner)) return 'not-found';
+  if (group.owner !== owner) return 'not-owner';
+  return 'has-members';
 }
 
 export type ArticleAddResult = 'added' | 'already-present' | 'not-a-member' | 'full' | 'bad-id';
@@ -239,8 +257,8 @@ export type LeaveResult = 'left' | 'owner-must-delete' | 'not-a-member';
 /**
  * Remove someone from a group.
  *
- * An owner cannot leave: the group would be left with no one able to manage it,
- * so they are told to delete it (or, later, hand ownership over) instead.
+ * An owner cannot leave: the group would be left with no one able to manage it.
+ * They hand ownership to another member first, then leave like anyone else.
  */
 export async function removeMember(
   id: ObjectId,
@@ -262,4 +280,39 @@ export async function removeMember(
   );
 
   return 'left';
+}
+
+export type TransferResult =
+  'transferred' | 'not-owner' | 'not-a-member' | 'already-owner' | 'not-found';
+
+/**
+ * Hand a group to another of its members.
+ *
+ * The whole check lives in the filter, so the group cannot change owner or lose
+ * the target member between validating and writing. The previous owner stays on
+ * as an ordinary member, free to leave afterwards.
+ */
+export async function transferOwnership(
+  id: ObjectId,
+  currentOwner: string,
+  target: string
+): Promise<TransferResult> {
+  const collection = await groups();
+  const group = await collection.findOne({ _id: id }, { projection: { owner: 1, members: 1 } });
+
+  // Order matters. A non-member must not be able to tell a group apart from one
+  // that does not exist, so that check comes before anything about ownership.
+  if (!group || !group.members.includes(currentOwner)) return 'not-found';
+  if (group.owner !== currentOwner) return 'not-owner';
+  if (target === currentOwner) return 'already-owner';
+  if (!group.members.includes(target)) return 'not-a-member';
+
+  // The conditions are repeated in the filter so a concurrent change between
+  // the read above and this write cannot slip past them.
+  const result = await collection.updateOne(
+    { _id: id, owner: currentOwner, members: target },
+    { $set: { owner: target, updated_at: new Date() } }
+  );
+
+  return result.matchedCount > 0 ? 'transferred' : 'not-found';
 }

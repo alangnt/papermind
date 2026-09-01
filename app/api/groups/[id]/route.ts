@@ -48,7 +48,7 @@ export const PATCH = withAuth<Params>(async (req: NextRequest, { user, params })
     const id = toGroupId((await params!).id);
     if (!id) return notFound();
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const name = normaliseGroupName(body?.name);
     if (!name) {
       return NextResponse.json({ error: 'A group name is required' }, { status: 400 });
@@ -76,13 +76,25 @@ export const DELETE = withAuth<Params>(async (_req: NextRequest, { user, params 
     const id = toGroupId((await params!).id);
     if (!id) return notFound();
 
-    if (!(await deleteGroup(id, user.username))) {
-      const group = await getGroupForMember(id, user.username);
-      if (!group) return notFound();
-      return NextResponse.json({ error: 'Only the owner can delete this group' }, { status: 403 });
+    switch (await deleteGroup(id, user.username)) {
+      case 'deleted':
+        return NextResponse.json({ message: 'Group deleted' });
+      case 'has-members':
+        return NextResponse.json(
+          {
+            error:
+              'This group has other members. Hand it to one of them and leave instead of deleting it.',
+          },
+          { status: 409 }
+        );
+      case 'not-owner':
+        return NextResponse.json(
+          { error: 'Only the owner can delete this group' },
+          { status: 403 }
+        );
+      default:
+        return notFound();
     }
-
-    return NextResponse.json({ message: 'Group deleted' });
   } catch (error) {
     console.error('Delete group error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

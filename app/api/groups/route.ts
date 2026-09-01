@@ -27,7 +27,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
   if (limited) return limited;
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const name = normaliseGroupName(body?.name);
 
     if (!name) {

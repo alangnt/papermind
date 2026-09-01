@@ -20,7 +20,7 @@ export const POST = withAuth<Params>(async (req: NextRequest, { user, params }) 
     const id = toGroupId((await params!).id);
     if (!id) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     // Accepts anything arXiv-shaped: a bare id, or the abs URL a Document carries.
     const arxivId = body?.arxiv_id ?? body?.article_id;
     if (typeof arxivId !== 'string') {
@@ -61,7 +61,7 @@ export const DELETE = withAuth<Params>(async (req: NextRequest, { user, params }
     const id = toGroupId((await params!).id);
     if (!id) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const arxivId = body?.arxiv_id ?? body?.article_id;
     if (typeof arxivId !== 'string') {
       return NextResponse.json({ error: 'An arXiv id is required' }, { status: 400 });

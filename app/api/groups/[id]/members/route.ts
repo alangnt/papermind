@@ -30,7 +30,7 @@ export const DELETE = withAuth<Params>(async (req: NextRequest, { user, params }
         });
       case 'owner-must-delete':
         return NextResponse.json(
-          { error: 'The owner cannot leave a group. Delete it instead.' },
+          { error: 'Hand the group to another member before you leave.' },
           { status: 409 }
         );
       case 'forbidden':
